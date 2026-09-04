@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>La Deuda Eterna</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <h1 style="color: #f39c12; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px;">La Deuda Eterna</h1>
+
+  <!-- Pantalla de Login / Reconexión Rediseñada -->
+  <div id="pantalla-login">
+    <div class="card-login">
+      <h2>🌐 Área de Registro</h2>
+      <p>Ingresa tu nombre o país para incorporarte al tablero financiero.</p>
+      <input type="text" id="nombre-input" placeholder="Nombre de Jugador / Nación">
+      <button id="btn-unirse">Entrar a la Partida 🚀</button>
+    </div>
+  </div>
+
+  <!-- Pantalla Principal del Juego -->
+  <div id="pantalla-juego" class="oculto">
+    <div class="contenedor-tablero">
+      <div id="tablero">
+        <h2 id="deuda-fmi">Deuda FMI: $500,000</h2>
+        <div id="fichas-container"></div>
+      </div>
+    </div>
+
+    <div class="panel-control">
+      <h3 id="info-turno">Turno de: -</h3>
+      <button id="btn-dado">Tirar Dado 🎲</button>
+      
+      <!-- Operaciones Financieras FMI -->
+      <div style="display: flex; gap: 5px; margin-top: 10px;">
+        <button id="btn-pedir-prestamo" style="background-color: #27ae60; font-size: 12px; padding: 8px;">Pedir Préstamo 🏦</button>
+        <button id="btn-pagar-deuda" style="background-color: #c0392b; font-size: 12px; padding: 8px;">Pagar Deuda 💳</button>
+      </div>
+
+      <button id="btn-levantar-barrera" class="oculto" style="margin-top: 10px; background-color: #d35400;">Pagar Peaje Barrera ($2,000) 🚧</button>
+      <button id="btn-propiedades" style="margin-top: 10px; background-color: #e67e22;">Mis Propiedades 📜</button>
+      <button id="btn-reglamento" style="margin-top: 10px; background-color: #8e44ad;">Reglamento 📖</button>
+      
+      <h4>Jugadores:</h4>
+      <ul id="lista-jugadores"></ul>
+
+      <h4>Registro de Jugadas:</h4>
+      <div id="log-juego"></div>
+    </div>
+  </div>
+
+  <!-- Modal Visor de Cartas, Construcción y Subasta -->
+  <div id="modal-carta" class="modal oculto">
+    <div class="modal-contenido" style="text-align: center;">
+      <span id="cerrar-carta" class="cerrar">&times;</span>
+      <h2 id="modal-carta-titulo">Tarjeta</h2>
+      <div id="modal-carta-cuerpo">
+        <p id="modal-carta-texto"></p>
+      </div>
+      
+      <!-- Botones de compra directa al caer -->
+      <div id="contenedor-botones-oferta" class="oculto" style="display: flex; gap: 10px; margin-top: 15px;">
+        <button id="btn-oferta-comprar" style="background-color: #27ae60;">Comprar Empresa 🏢</button>
+        <button id="btn-oferta-pasar" style="background-color: #e74c3c;">Pasar ❌</button>
+      </div>
+
+      <!-- Botones de desarrollo industrial -->
+      <div id="contenedor-botones-construir" class="oculto" style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+        <button id="btn-construir-nac" style="background-color: #2980b9;">Construir Industria Nacional 🏗️</button>
+        <button id="btn-construir-exp" style="background-color: #8e44ad;">Expandir a Multinacional 🌍</button>
+        <button id="btn-expropiar" style="background-color: #d35400;">Expropiar / Monopolio 🏴‍☠️</button>
+        <button id="btn-subastar" style="background-color: #c0392b;">Subastar al 50% (Embargo) 🔨</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Lista de Mis Propiedades -->
+  <div id="modal-mis-propiedades" class="modal oculto">
+    <div class="modal-contenido">
+      <span id="cerrar-mis-propiedades" class="cerrar">&times;</span>
+      <h2>Mis Propiedades</h2>
+      <div id="lista-mis-propiedades-container"></div>
+    </div>
+  </div>
+
+  <!-- Modal Votación Alianza -->
+  <div id="modal-alianza" class="modal oculto">
+    <div class="modal-contenido" style="text-align: center;">
+      <h2>¡PROPUESTA DE UNIÓN LATINOAMERICANA! ✊</h2>
+      <p id="texto-alianza">¿Deseas unirte a la alianza económica para resistir al FMI?</p>
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button id="btn-unirse-alianza" style="background-color: #27ae60;">¡UNIRME! 🤝</button>
+        <button id="btn-rechazar-alianza" style="background-color: #e74c3c;">No Unirme ❌</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Método de Pago (Efectivo / Oro) -->
+  <div id="modal-pago-oro" class="modal oculto">
+    <div class="modal-contenido" style="text-align: center;">
+      <h2>Selecciona tu Método de Pago</h2>
+      <p id="texto-pago-oro">Debes realizar un pago.</p>
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button id="btn-pagar-efectivo" style="background-color: #27ae60;">Pagar con Efectivo 💵</button>
+        <button id="btn-pagar-oro" style="background-color: #f1c40f; color: #000;">Usar 1 Lingote de Oro 🪙</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Reglamento -->
+  <div id="modal-reglamento" class="modal oculto">
+    <div class="modal-contenido">
+      <span id="cerrar-reglamento" class="cerrar">&times;</span>
+      <h2>Reglamento Oficial: La Deuda Eterna</h2>
+      <div class="texto-reglamento">
+        <h3>1. Objetivo del Juego</h3>
+        <p>Aprovechar las materias primas de Latinoamérica, industrializarlas e introducir los productos elaborados en el Norte. Superar los condicionamientos del FMI y lograr la independencia económica.</p>
+
+        <h3>2. Embargo y Quiebra ($30,000 de Deuda)</h3>
+        <p>Si alcanzás los $30,000 de deuda, entras en Embargo. No puedes pedir préstamos. Para saldar deudas debes subastar tus bienes al 50% de su valor acumulado.</p>
+
+        <h3>3. Ayuda Solidaria (Casilla 10)</h3>
+        <p>Durante el turno en que caigas en Ayuda Solidaria, todas las construcciones de industrias se cobran a mitad de precio.</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
