@@ -11,13 +11,22 @@
 <body>
   <h1 style="color: #f39c12; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px;">La Deuda Eterna</h1>
 
-  <!-- Pantalla de Login / Reconexión Rediseñada -->
+  <!-- Pantalla de Login / Selección de Sala -->
   <div id="pantalla-login">
     <div class="card-login">
       <h2>🌐 Área de Registro</h2>
-      <p>Ingresa tu nombre o país para incorporarte al tablero financiero.</p>
+      <p>Ingresa tu nombre para comenzar.</p>
       <input type="text" id="nombre-input" placeholder="Nombre de Jugador / Nación">
-      <button id="btn-unirse">Entrar a la Partida 🚀</button>
+      
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button id="btn-crear-sala" style="background-color: #27ae60;">Crear Nueva Sala ➕</button>
+      </div>
+
+      <hr style="border: 1px solid #444; margin: 20px 0;">
+
+      <p>O ingresa el código de una sala existente:</p>
+      <input type="text" id="sala-input" placeholder="Código de Sala (ej. LOBBY1)" style="text-transform: uppercase;">
+      <button id="btn-unirse-sala" style="background-color: #2980b9;">Unirse a Sala 🚀</button>
     </div>
   </div>
 
@@ -31,9 +40,15 @@
     </div>
 
     <div class="panel-control">
-      <h3 id="info-turno">Turno de: -</h3>
+      <h3 id="info-sala" style="color: #f39c12; margin: 0;">Sala: -</h3>
+      <button id="btn-abandonar-sala" style="background-color: #7f8c8d; margin-top: 5px; margin-bottom: 10px; font-size: 12px; padding: 6px;">🚪 Abandonar Sala</button>
+      <h3 id="info-turno">Esperando inicio de partida...</h3>
+
+      <!-- Botón de Inicio reservado para el Anfitrión -->
+      <button id="btn-iniciar-partida" class="oculto" style="background-color: #27ae60; margin-bottom: 10px;">▶️ INICIAR PARTIDA</button>
+
       <button id="btn-dado">Tirar Dado 🎲</button>
-      
+
       <!-- Operaciones Financieras FMI -->
       <div style="display: flex; gap: 5px; margin-top: 10px;">
         <button id="btn-pedir-prestamo" style="background-color: #27ae60; font-size: 12px; padding: 8px;">Pedir Préstamo 🏦</button>
@@ -43,7 +58,7 @@
       <button id="btn-levantar-barrera" class="oculto" style="margin-top: 10px; background-color: #d35400;">Pagar Peaje Barrera ($2,000) 🚧</button>
       <button id="btn-propiedades" style="margin-top: 10px; background-color: #e67e22;">Mis Propiedades 📜</button>
       <button id="btn-reglamento" style="margin-top: 10px; background-color: #8e44ad;">Reglamento 📖</button>
-      
+
       <h4>Jugadores:</h4>
       <ul id="lista-jugadores"></ul>
 
@@ -60,14 +75,12 @@
       <div id="modal-carta-cuerpo">
         <p id="modal-carta-texto"></p>
       </div>
-      
-      <!-- Botones de compra directa al caer -->
+
       <div id="contenedor-botones-oferta" class="oculto" style="display: flex; gap: 10px; margin-top: 15px;">
         <button id="btn-oferta-comprar" style="background-color: #27ae60;">Comprar Empresa 🏢</button>
         <button id="btn-oferta-pasar" style="background-color: #e74c3c;">Pasar ❌</button>
       </div>
 
-      <!-- Botones de desarrollo industrial -->
       <div id="contenedor-botones-construir" class="oculto" style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
         <button id="btn-construir-nac" style="background-color: #2980b9;">Construir Industria Nacional 🏗️</button>
         <button id="btn-construir-exp" style="background-color: #8e44ad;">Expandir a Multinacional 🌍</button>

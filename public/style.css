@@ -252,3 +252,26 @@ button:disabled {
 .cerrar:hover {
   color: #fff;
 }
+
+/* Estilos adicionales para el sistema multisala */
+#sala-input {
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#btn-iniciar-partida {
+  font-size: 16px;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 10px rgba(39, 174, 96, 0.4);
+  transition: transform 0.2s;
+}
+
+#btn-iniciar-partida:hover {
+  transform: scale(1.02);
+}
+
+#info-sala {
+  font-size: 18px;
+  border-bottom: 1px solid #333;
+  padding-bottom: 5px;
+}

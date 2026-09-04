@@ -4,7 +4,6 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
 
-// Importación directa desde el módulo cartas.js
 const { CARTAS_CONDICIONES, CARTAS_SOLIDARIDAD, CARTAS_PROPIEDADES } = require('./cartas');
 
 const app = express();
@@ -12,9 +11,7 @@ app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] }
-});
+const io = new Server(server, { cors: { origin: "*", methods: ["GET", "POST"] } });
 
 const GRUPOS_CADENAS = {
   cafe_agricola: [1, 2, 3],
@@ -67,18 +64,24 @@ const TABLERO = [
   { id: 39, nombre: "Sede FMI", tipo: "fmi_cobro", monto: 2000 }
 ];
 
-let gameState = {
-  deudaFMIGlobal: 500000,
-  turnoActual: 0,
-  votosPendientes: 0,
-  jugadores: [],
-  tablero: JSON.parse(JSON.stringify(TABLERO))
-};
-
 const COLORES = ['#E74C3C', '#2ECC71', '#3498DB', '#F1C40F'];
+let salas = {};
 
-function pasarSiguienteTurno() {
-  if (gameState.jugadores.length > 0) {
+function crearNuevaSala(codigoSala) {
+  salas[codigoSala] = {
+    codigo: codigoSala,
+    enJuego: false,
+    deudaFMIGlobal: 500000,
+    turnoActual: 0,
+    votosPendientes: 0,
+    jugadores: [],
+    tablero: JSON.parse(JSON.stringify(TABLERO))
+  };
+}
+
+function pasarSiguienteTurno(room) {
+  const gameState = salas[room];
+  if (gameState && gameState.jugadores.length > 0) {
     let intentos = 0;
     do {
       gameState.turnoActual = (gameState.turnoActual + 1) % gameState.jugadores.length;
@@ -87,7 +90,7 @@ function pasarSiguienteTurno() {
   }
 }
 
-function calcularRentaCasilla(casilla) {
+function calcularRentaCasilla(gameState, casilla) {
   let rentaTotal = casilla.renta;
   const infoCarta = CARTAS_PROPIEDADES.find(p => p.nombre.toLowerCase() === casilla.nombre.toLowerCase() || (casilla.baseSur && p.nombre.toLowerCase() === casilla.baseSur.toLowerCase()));
 
@@ -117,11 +120,14 @@ function calcularRentaCasilla(casilla) {
   return rentaTotal;
 }
 
-function verificarCondicionVictoria() {
+function verificarCondicionVictoria(room) {
+  const gameState = salas[room];
+  if (!gameState) return;
+
   const activos = gameState.jugadores.filter(j => !j.enQuiebra);
 
   if (activos.length === 1 && gameState.jugadores.length > 1) {
-    io.emit('mensajeLog', `¡¡¡TRIUNFO POR K.O.!!! ${activos[0].nombre} es el único sobreviviente financiero.`);
+    io.to(room).emit('mensajeLog', `¡¡¡TRIUNFO POR K.O.!!! ${activos[0].nombre} es el único sobreviviente financiero.`);
     return;
   }
 
@@ -130,18 +136,24 @@ function verificarCondicionVictoria() {
     const propsNorte = gameState.tablero.filter(c => c.region === 'norte' && c.dueño === j.id && c.industriasExp >= 3);
 
     if (propsSur.length === 12 && propsNorte.length === 12) {
-      io.emit('mensajeLog', `¡¡¡GRAN TRIUNFO EMPRESARIO / K.O.!!! ${j.nombre} domina por completo las industrias del Sur y del Norte.`);
+      io.to(room).emit('mensajeLog', `¡¡¡GRAN TRIUNFO EMPRESARIO / K.O.!!! ${j.nombre} domina por completo las industrias del Sur y del Norte.`);
     }
   });
 }
 
-function iniciarVotacionAlianza(mensaje) {
+function iniciarVotacionAlianza(room, mensaje) {
+  const gameState = salas[room];
+  if (!gameState) return;
+
   gameState.votosPendientes = gameState.jugadores.filter(j => !j.enQuiebra).length;
   gameState.jugadores.forEach(j => j.votoAlianza = null);
-  io.emit('solicitarVotacionAlianza', { mensaje });
+  io.to(room).emit('solicitarVotacionAlianza', { mensaje });
 }
 
-function procesarFusionAlianza() {
+function procesarFusionAlianza(room) {
+  const gameState = salas[room];
+  if (!gameState) return;
+
   const miembros = gameState.jugadores.filter(j => j.votoAlianza === true && !j.enQuiebra);
 
   if (miembros.length >= 2) {
@@ -168,14 +180,16 @@ function procesarFusionAlianza() {
       }
     });
 
-    io.emit('mensajeLog', `¡ALIANZA CONSTITUIDA! Efectivo ($${totalEfectivo.toLocaleString()}), deudas y propiedades unificados.`);
+    io.to(room).emit('mensajeLog', `¡ALIANZA CONSTITUIDA! Efectivo ($${totalEfectivo.toLocaleString()}), deudas y propiedades unificados.`);
   } else {
-    io.emit('mensajeLog', `La propuesta de Alianza no prosperó.`);
+    io.to(room).emit('mensajeLog', `La propuesta de Alianza no prosperó.`);
   }
 }
 
-function aplicarEfectoSolidaridad(jugador, carta) {
-  if (!carta) return;
+function aplicarEfectoSolidaridad(room, jugador, carta) {
+  const gameState = salas[room];
+  if (!carta || !gameState) return;
+
   switch (carta.id) {
     case 1: jugador.posicion = 24; break;
     case 2: jugador.dinero += 2600; break;
@@ -198,15 +212,15 @@ function aplicarEfectoSolidaridad(jugador, carta) {
     case 17: jugador.dinero += 3800; break;
     case 18:
       gameState.jugadores.forEach(j => j.posicion = 0);
-      iniciarVotacionAlianza(`${jugador.nombre} sacó la tarjeta de Cuba. ¡Invita a consolidar la Alianza!`);
+      iniciarVotacionAlianza(room, `${jugador.nombre} sacó la tarjeta de Cuba. ¡Invita a consolidar la Alianza!`);
       break;
-    case 19: // Venezuela: Regala 1 industria al dueño del Petróleo[cite: 5]
+    case 19:
       const casillaPetroleo = gameState.tablero.find(c => c.nombre.toLowerCase() === 'petróleo');
       if (casillaPetroleo && casillaPetroleo.dueño !== null) {
         const dueñoPetroleo = gameState.jugadores.find(j => j.id === casillaPetroleo.dueño);
         if (dueñoPetroleo && casillaPetroleo.industriasNac < 3) {
           casillaPetroleo.industriasNac++;
-          io.emit('mensajeLog', `🇻🇪 Venezuela regala 1 Industria Nacional al dueño del Petróleo (${dueñoPetroleo.nombre}).`);
+          io.to(room).emit('mensajeLog', `🇻🇪 Venezuela regala 1 Industria Nacional al dueño del Petróleo (${dueñoPetroleo.nombre}).`);
         }
       }
       break;
@@ -214,15 +228,17 @@ function aplicarEfectoSolidaridad(jugador, carta) {
   }
 }
 
-function aplicarEfectoCondiciones(jugador, carta) {
-  if (!carta) return;
+function aplicarEfectoCondiciones(room, jugador, carta) {
+  const gameState = salas[room];
+  if (!carta || !gameState) return;
+
   if (jugador.sombreroSandino) {
-    io.emit('mensajeLog', `${jugador.nombre} utilizó la protección del Sombrero de Sandino 🤠 y neutralizó la sanción del FMI.`);
+    io.to(room).emit('mensajeLog', `${jugador.nombre} utilizó la protección del Sombrero de Sandino 🤠 y neutralizó la sanción del FMI.`);
     return;
   }
 
   switch (carta.id) {
-    case 1: // Suben las Manufacturas: Mueve a la casilla del Norte más cercana[cite: 5]
+    case 1:
       let posAux = (jugador.posicion + 1) % 40;
       while (gameState.tablero[posAux].region !== 'norte') {
         posAux = (posAux + 1) % 40;
@@ -244,7 +260,7 @@ function aplicarEfectoCondiciones(jugador, carta) {
     case 8: jugador.dinero -= 100; gameState.deudaFMIGlobal += 100; break;
     case 9: jugador.dinero -= 1000; gameState.deudaFMIGlobal += 1000; break;
     case 10: jugador.posicion = 39; break;
-    case 13: // Patentes: Paga $200 por industria nac y $400 por exportación[cite: 5]
+    case 13:
       let cobroPatentes = 0;
       gameState.tablero.forEach(c => {
         if (c.dueño === jugador.id) {
@@ -254,7 +270,7 @@ function aplicarEfectoCondiciones(jugador, carta) {
       });
       jugador.dinero -= cobroPatentes;
       gameState.deudaFMIGlobal += cobroPatentes;
-      io.emit('mensajeLog', `${jugador.nombre} pagó $${cobroPatentes} al FMI por concepto de Patentes.`);
+      io.to(room).emit('mensajeLog', `${jugador.nombre} pagó $${cobroPatentes} al FMI por concepto de Patentes.`);
       break;
     case 14: jugador.dinero -= 1500; gameState.deudaFMIGlobal += 1500; break;
     case 17:
@@ -266,7 +282,7 @@ function aplicarEfectoCondiciones(jugador, carta) {
   }
 }
 
-function sincronizarRecursosAlianza(jugador) {
+function sincronizarRecursosAlianza(gameState, jugador) {
   if (jugador && jugador.enAlianza) {
     const aliados = gameState.jugadores.filter(j => j.enAlianza);
     aliados.forEach(a => {
@@ -278,30 +294,47 @@ function sincronizarRecursosAlianza(jugador) {
 }
 
 io.on('connection', (socket) => {
-  socket.emit('actualizarEstado', gameState);
+  let miRoom = null;
 
-  socket.on('unirse', (data) => {
-    const nombre = typeof data === 'object' ? data.nombre : data;
-    const userId = typeof data === 'object' ? data.userId : socket.id;
+  socket.on('unirseSala', ({ nombre, userId, sala }) => {
+    const codigo = (sala || 'GLOBAL').toUpperCase().trim();
+    if (!salas[codigo]) crearNuevaSala(codigo);
 
-    let jugador = gameState.jugadores.find(j => j.userId === userId || j.socketId === socket.id);
+    const gameState = salas[codigo];
+
+    if (gameState.enJuego) {
+      const jExistente = gameState.jugadores.find(j => j.userId === userId);
+      if (!jExistente) {
+        socket.emit('errorAcceso', 'La partida ya comenzó. No puedes unirte como nuevo jugador.');
+        return;
+      }
+    }
+
+    if (!gameState.enJuego && gameState.jugadores.length >= 4) {
+      const jExistente = gameState.jugadores.find(j => j.userId === userId);
+      if (!jExistente) {
+        socket.emit('errorAcceso', 'La sala está llena (máximo 4 jugadores).');
+        return;
+      }
+    }
+
+    miRoom = codigo;
+    socket.join(codigo);
+
+    let jugador = gameState.jugadores.find(j => j.userId === userId);
 
     if (jugador) {
       jugador.socketId = socket.id;
-      jugador.userId = userId;
       if (nombre) jugador.nombre = nombre;
-      io.emit('mensajeLog', `🔄 ${jugador.nombre} se ha reconectado a la partida.`);
-    } else if (gameState.jugadores.length < 4) {
-      const tiradaInicial = Math.floor(Math.random() * 6) + 1;
-      const capitalInicial = 5000 + (tiradaInicial * 1000);
-
+      io.to(codigo).emit('mensajeLog', `🔄 ${jugador.nombre} se reconectó a la sala [${codigo}].`);
+    } else {
       jugador = {
         id: gameState.jugadores.length,
         userId: userId,
         socketId: socket.id,
         nombre: nombre || `Jugador ${gameState.jugadores.length + 1}`,
         posicion: 0,
-        dinero: capitalInicial,
+        dinero: 0,
         deudaPersonal: 0,
         oro: 3,
         color: COLORES[gameState.jugadores.length],
@@ -314,27 +347,53 @@ io.on('connection', (socket) => {
         noPagarVuelta: false,
         barreraProteccionista: false,
         turnosPerdidos: 0,
-        enQuiebra: false
+        enQuiebra: false,
+        esLider: gameState.jugadores.length === 0
       };
       gameState.jugadores.push(jugador);
-      io.emit('mensajeLog', `${jugador.nombre} se unió tirando un dado (${tiradaInicial}) y recibió $${capitalInicial.toLocaleString()} de capital inicial.`);
+      io.to(codigo).emit('mensajeLog', `👋 ${jugador.nombre} se unió a la sala [${codigo}].`);
     }
-    io.emit('actualizarEstado', gameState);
+
+    io.to(codigo).emit('actualizarEstado', gameState);
+  });
+
+  socket.on('iniciarPartida', () => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
+    const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
+    if (jugador && jugador.esLider && !gameState.enJuego) {
+      gameState.enJuego = true;
+
+      gameState.jugadores.forEach(j => {
+        const tiradaInicial = Math.floor(Math.random() * 6) + 1;
+        j.dinero = 5000 + (tiradaInicial * 1000);
+      });
+
+      io.to(miRoom).emit('mensajeLog', `🚀 ¡EL ANFITRIÓN HA INICIADO LA PARTIDA EN LA SALA [${miRoom}]!`);
+      io.to(miRoom).emit('actualizarEstado', gameState);
+    }
   });
 
   socket.on('levantarBarrera', () => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
     if (jugador && jugador.barreraProteccionista && jugador.dinero >= 2000) {
       jugador.dinero -= 2000;
       gameState.deudaFMIGlobal += 2000;
       jugador.barreraProteccionista = false;
-      sincronizarRecursosAlianza(jugador);
-      io.emit('mensajeLog', `${jugador.nombre} pagó $2,000 de peaje al FMI y retiró su Barrera Proteccionista.`);
-      io.emit('actualizarEstado', gameState);
+      sincronizarRecursosAlianza(gameState, jugador);
+      io.to(miRoom).emit('mensajeLog', `${jugador.nombre} pagó $2,000 de peaje al FMI y retiró su Barrera Proteccionista.`);
+      io.to(miRoom).emit('actualizarEstado', gameState);
     }
   });
 
   socket.on('subastarPropiedad', ({ nombrePropiedad }) => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
     const casilla = gameState.tablero.find(c => c.nombre.toLowerCase() === nombrePropiedad.toLowerCase());
     const infoCarta = CARTAS_PROPIEDADES.find(p => p.nombre.toLowerCase() === nombrePropiedad.toLowerCase());
@@ -347,81 +406,93 @@ io.on('connection', (socket) => {
       jugador.dinero += remate50;
       casilla.dueño = null;
       casilla.industriasNac = 0;
-      
+
       jugador.propiedades = jugador.propiedades.filter(p => p !== casilla.nombre);
 
-      sincronizarRecursosAlianza(jugador);
-      io.emit('mensajeLog', `[EMBARGO] ${jugador.nombre} subastó ${casilla.nombre} al FMI al 50% recibiendo $${remate50}.`);
-      io.emit('actualizarEstado', gameState);
+      sincronizarRecursosAlianza(gameState, jugador);
+      io.to(miRoom).emit('mensajeLog', `[EMBARGO] ${jugador.nombre} subastó ${casilla.nombre} al FMI al 50% recibiendo $${remate50}.`);
+      io.to(miRoom).emit('actualizarEstado', gameState);
     }
   });
 
   socket.on('responderVotoAlianza', (acepta) => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
     if (jugador && jugador.votoAlianza === null) {
       jugador.votoAlianza = acepta;
       gameState.votosPendientes--;
 
       const res = acepta ? 'votó A FAVOR 🤝' : 'votó EN CONTRA ❌';
-      io.emit('mensajeLog', `${jugador.nombre} ${res} de la Alianza.`);
+      io.to(miRoom).emit('mensajeLog', `${jugador.nombre} ${res} de la Alianza.`);
 
       if (gameState.votosPendientes <= 0) {
-        procesarFusionAlianza();
+        procesarFusionAlianza(miRoom);
       }
-      io.emit('actualizarEstado', gameState);
+      io.to(miRoom).emit('actualizarEstado', gameState);
     }
   });
 
   socket.on('pedirPrestamo', () => {
+    const gameState = salas[miRoom];
+    if (!gameState || !gameState.enJuego) return;
+
     const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
     if (jugador && jugador.deudaPersonal < 30000) {
       jugador.dinero += 5000;
       jugador.deudaPersonal += 5000;
-      sincronizarRecursosAlianza(jugador);
-      io.emit('mensajeLog', `${jugador.nombre} solicitó un préstamo de $5,000 al FMI (Deuda acumulada: $${jugador.deudaPersonal}).`);
-      
+      sincronizarRecursosAlianza(gameState, jugador);
+      io.to(miRoom).emit('mensajeLog', `${jugador.nombre} solicitó un préstamo de $5,000 al FMI (Deuda acumulada: $${jugador.deudaPersonal}).`);
+
       if (jugador.deudaPersonal >= 30000) {
-        io.emit('mensajeLog', `⚠️ ATENCIÓN: ${jugador.nombre} ha alcanzado el límite de $30,000 y ha entrado en EMBARGO FMI.`);
+        io.to(miRoom).emit('mensajeLog', `⚠️ ATENCIÓN: ${jugador.nombre} ha alcanzado el límite de $30,000 y ha entrado en EMBARGO FMI.`);
       }
 
-      io.emit('actualizarEstado', gameState);
+      io.to(miRoom).emit('actualizarEstado', gameState);
     }
   });
 
   socket.on('pagarDeuda', () => {
+    const gameState = salas[miRoom];
+    if (!gameState || !gameState.enJuego) return;
+
     const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
     if (jugador && jugador.deudaPersonal > 0 && jugador.dinero >= 5000) {
       jugador.dinero -= 5000;
       jugador.deudaPersonal -= 5000;
       gameState.deudaFMIGlobal -= 5000;
-      sincronizarRecursosAlianza(jugador);
-      io.emit('mensajeLog', `${jugador.nombre} pagó $5,000 de su deuda al FMI.`);
-      
+      sincronizarRecursosAlianza(gameState, jugador);
+      io.to(miRoom).emit('mensajeLog', `${jugador.nombre} pagó $5,000 de su deuda al FMI.`);
+
       if (gameState.deudaFMIGlobal <= 0) {
-        io.emit('mensajeLog', `¡¡¡VICTORIA!!! ${jugador.nombre} ha liquidado la Deuda Eterna y ha ganado el juego.`);
+        io.to(miRoom).emit('mensajeLog', `¡¡¡VICTORIA!!! ${jugador.nombre} ha liquidado la Deuda Eterna y ha ganado el juego.`);
       }
 
-      io.emit('actualizarEstado', gameState);
+      io.to(miRoom).emit('actualizarEstado', gameState);
     }
   });
 
   socket.on('tirarDado', () => {
+    const gameState = salas[miRoom];
+    if (!gameState || !gameState.enJuego) return;
+
     const jugadorIndex = gameState.jugadores.findIndex(j => j.socketId === socket.id);
-    
+
     if (jugadorIndex !== -1 && jugadorIndex === gameState.turnoActual) {
       const jugador = gameState.jugadores[jugadorIndex];
 
       if (jugador.enQuiebra) {
-        pasarSiguienteTurno();
-        io.emit('actualizarEstado', gameState);
+        pasarSiguienteTurno(miRoom);
+        io.to(miRoom).emit('actualizarEstado', gameState);
         return;
       }
 
       if (jugador.turnosPerdidos > 0) {
         jugador.turnosPerdidos--;
-        io.emit('mensajeLog', `${jugador.nombre} está desempleado y pierde este turno.`);
-        pasarSiguienteTurno();
-        io.emit('actualizarEstado', gameState);
+        io.to(miRoom).emit('mensajeLog', `${jugador.nombre} está desempleado y pierde este turno.`);
+        pasarSiguienteTurno(miRoom);
+        io.to(miRoom).emit('actualizarEstado', gameState);
         return;
       }
 
@@ -435,7 +506,7 @@ io.on('connection', (socket) => {
       }
 
       const prevPos = jugador.posicion || 0;
-      const nuevaPos = (prevPos + sumaDado) % 40; 
+      const nuevaPos = (prevPos + sumaDado) % 40;
       jugador.posicion = nuevaPos;
 
       let logMsg = `${jugador.nombre} tiró ${numDados} dado(s), sacó ${sumaDado} y cayó en ${gameState.tablero[nuevaPos].nombre}.`;
@@ -462,7 +533,7 @@ io.on('connection', (socket) => {
       let requiereDecision = false;
 
       if (nuevaPos === 0) {
-        iniciarVotacionAlianza(`${jugador.nombre} cayó en América Latina. Se propone la Alianza Latinoamericana.`);
+        iniciarVotacionAlianza(miRoom, `${jugador.nombre} cayó en América Latina. Se propone la Alianza Latinoamericana.`);
       }
 
       if (casilla.nombre === 'Golpe Militar') {
@@ -514,7 +585,7 @@ io.on('connection', (socket) => {
           }
         } else if (casilla.dueño !== null) {
           const dueño = gameState.jugadores[casilla.dueño];
-          const rentaCalculada = calcularRentaCasilla(casilla);
+          const rentaCalculada = calcularRentaCasilla(gameState, casilla);
 
           const esMiembroAlianza = jugador.enAlianza && dueño && dueño.enAlianza;
           const poseeBaseEnSur = gameState.tablero.some(c => c.region === 'sur' && c.nombre.toLowerCase() === (casilla.baseSur || '').toLowerCase() && (c.dueño === jugador.id || (jugador.enAlianza && gameState.jugadores[c.dueño]?.enAlianza)));
@@ -552,14 +623,14 @@ io.on('connection', (socket) => {
         if (casilla.nombre === 'Solidaridad' && CARTAS_SOLIDARIDAD.length > 0) {
           const carta = CARTAS_SOLIDARIDAD[Math.floor(Math.random() * CARTAS_SOLIDARIDAD.length)];
           logMsg += ` Robó tarjeta de Solidaridad: [${carta.pais}] ${carta.desc}`;
-          aplicarEfectoSolidaridad(jugador, carta);
-          io.emit('mostrarCartaModal', { tipo: 'solidaridad', titulo: carta.pais, texto: carta.desc });
+          aplicarEfectoSolidaridad(miRoom, jugador, carta);
+          io.to(miRoom).emit('mostrarCartaModal', { tipo: 'solidaridad', titulo: carta.pais, texto: carta.desc });
         } else if (casilla.nombre === 'Condiciones FMI' && CARTAS_CONDICIONES.length > 0) {
           if (jugador.deudaPersonal > 0) {
             const carta = CARTAS_CONDICIONES[Math.floor(Math.random() * CARTAS_CONDICIONES.length)];
             logMsg += ` Robó tarjeta Condiciones FMI: [${carta.titulo}] ${carta.desc}`;
-            aplicarEfectoCondiciones(jugador, carta);
-            io.emit('mostrarCartaModal', { tipo: 'condiciones', titulo: carta.titulo, texto: carta.desc });
+            aplicarEfectoCondiciones(miRoom, jugador, carta);
+            io.to(miRoom).emit('mostrarCartaModal', { tipo: 'condiciones', titulo: carta.titulo, texto: carta.desc });
           } else {
             logMsg += ` No debe dinero al FMI. Eximido de robar tarjeta de Condiciones FMI.`;
           }
@@ -571,19 +642,22 @@ io.on('connection', (socket) => {
         logMsg += ` 🚨 ¡${jugador.nombre} SE DECLARÓ EN QUIEBRA ANTE EL FMI! Queda eliminado.`;
       }
 
-      sincronizarRecursosAlianza(jugador);
-      verificarCondicionVictoria();
-      io.emit('mensajeLog', logMsg);
+      sincronizarRecursosAlianza(gameState, jugador);
+      verificarCondicionVictoria(miRoom);
+      io.to(miRoom).emit('mensajeLog', logMsg);
 
       if (!requiereDecision) {
-        pasarSiguienteTurno();
+        pasarSiguienteTurno(miRoom);
       }
 
-      io.emit('actualizarEstado', gameState);
+      io.to(miRoom).emit('actualizarEstado', gameState);
     }
   });
 
   socket.on('decidirCompraPropiedad', (comprar) => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugadorIndex = gameState.jugadores.findIndex(j => j.socketId === socket.id);
     if (jugadorIndex === -1 || jugadorIndex !== gameState.turnoActual) return;
 
@@ -594,7 +668,7 @@ io.on('connection', (socket) => {
       if (comprar && jugador.dinero >= casilla.precio) {
         jugador.dinero -= casilla.precio;
         casilla.dueño = jugador.id;
-        
+
         if (jugador.enAlianza) {
           const aliados = gameState.jugadores.filter(j => j.enAlianza);
           aliados.forEach(a => {
@@ -604,18 +678,21 @@ io.on('connection', (socket) => {
           jugador.propiedades.push(casilla.nombre);
         }
 
-        sincronizarRecursosAlianza(jugador);
-        io.emit('mensajeLog', `${jugador.nombre} compró ${casilla.nombre} por $${casilla.precio}.`);
+        sincronizarRecursosAlianza(gameState, jugador);
+        io.to(miRoom).emit('mensajeLog', `${jugador.nombre} compró ${casilla.nombre} por $${casilla.precio}.`);
       } else if (!comprar) {
-        io.emit('mensajeLog', `${jugador.nombre} decidió no comprar ${casilla.nombre}.`);
+        io.to(miRoom).emit('mensajeLog', `${jugador.nombre} decidió no comprar ${casilla.nombre}.`);
       }
     }
 
-    pasarSiguienteTurno();
-    io.emit('actualizarEstado', gameState);
+    pasarSiguienteTurno(miRoom);
+    io.to(miRoom).emit('actualizarEstado', gameState);
   });
 
   socket.on('construirIndustria', ({ nombrePropiedad, tipo }) => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugadorIndex = gameState.jugadores.findIndex(j => j.socketId === socket.id);
     if (jugadorIndex === -1) return;
 
@@ -634,9 +711,9 @@ io.on('connection', (socket) => {
         if (jugador.dinero >= costo) {
           jugador.dinero -= costo;
           casilla.industriasNac++;
-          sincronizarRecursosAlianza(jugador);
-          io.emit('mensajeLog', `${jugador.nombre} construyó la Industria Nacional #${casilla.industriasNac} en ${casilla.nombre} por $${costo}${descuentoAyudaSolidaria < 1 ? ' (50% desc. Ayuda Solidaria)' : ''}.`);
-          io.emit('actualizarEstado', gameState);
+          sincronizarRecursosAlianza(gameState, jugador);
+          io.to(miRoom).emit('mensajeLog', `${jugador.nombre} construyó la Industria Nacional #${casilla.industriasNac} en ${casilla.nombre} por $${costo}${descuentoAyudaSolidaria < 1 ? ' (50% desc. Ayuda Solidaria)' : ''}.`);
+          io.to(miRoom).emit('actualizarEstado', gameState);
         }
       }
     } else if (tipo === 'exportacion' && casilla.region === 'sur' && esPropietarioOAliado) {
@@ -649,7 +726,7 @@ io.on('connection', (socket) => {
               jugador.dinero -= costo;
               casillaNorte.industriasExp++;
               casillaNorte.dueño = jugador.id;
-              
+
               if (jugador.enAlianza) {
                 const aliados = gameState.jugadores.filter(j => j.enAlianza);
                 aliados.forEach(a => {
@@ -659,9 +736,9 @@ io.on('connection', (socket) => {
                 if (!jugador.propiedades.includes(casillaNorte.nombre)) jugador.propiedades.push(casillaNorte.nombre);
               }
 
-              sincronizarRecursosAlianza(jugador);
-              io.emit('mensajeLog', `${jugador.nombre} expandió la Multinacional #${casillaNorte.industriasExp} (${casillaNorte.nombre}) por $${costo}${descuentoAyudaSolidaria < 1 ? ' (50% desc. Ayuda Solidaria)' : ''}.`);
-              io.emit('actualizarEstado', gameState);
+              sincronizarRecursosAlianza(gameState, jugador);
+              io.to(miRoom).emit('mensajeLog', `${jugador.nombre} expandió la Multinacional #${casillaNorte.industriasExp} (${casillaNorte.nombre}) por $${costo}${descuentoAyudaSolidaria < 1 ? ' (50% desc. Ayuda Solidaria)' : ''}.`);
+              io.to(miRoom).emit('actualizarEstado', gameState);
             }
           }
         }
@@ -670,6 +747,9 @@ io.on('connection', (socket) => {
   });
 
   socket.on('expropiarPropiedad', ({ nombrePropiedad }) => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugador = gameState.jugadores.find(j => j.socketId === socket.id);
     const casilla = gameState.tablero.find(c => c.nombre.toLowerCase() === nombrePropiedad.toLowerCase());
     const infoCarta = CARTAS_PROPIEDADES.find(p => p.nombre.toLowerCase() === nombrePropiedad.toLowerCase());
@@ -689,7 +769,7 @@ io.on('connection', (socket) => {
 
         casilla.dueño = jugador.id;
         if (dueñoAnterior) dueñoAnterior.propiedades = dueñoAnterior.propiedades.filter(p => p !== casilla.nombre);
-        
+
         if (jugador.enAlianza) {
           const aliados = gameState.jugadores.filter(j => j.enAlianza);
           aliados.forEach(a => {
@@ -699,16 +779,19 @@ io.on('connection', (socket) => {
           jugador.propiedades.push(casilla.nombre);
         }
 
-        sincronizarRecursosAlianza(jugador);
-        if (dueñoAnterior) sincronizarRecursosAlianza(dueñoAnterior);
-        
-        io.emit('mensajeLog', `${jugador.nombre} expropió ${casilla.nombre} a ${dueñoAnterior ? dueñoAnterior.nombre : 'dueño'}.`);
-        io.emit('actualizarEstado', gameState);
+        sincronizarRecursosAlianza(gameState, jugador);
+        if (dueñoAnterior) sincronizarRecursosAlianza(gameState, dueñoAnterior);
+
+        io.to(miRoom).emit('mensajeLog', `${jugador.nombre} expropió ${casilla.nombre} a ${dueñoAnterior ? dueñoAnterior.nombre : 'dueño'}.`);
+        io.to(miRoom).emit('actualizarEstado', gameState);
       }
     }
   });
 
   socket.on('responderDecisionPago', (data) => {
+    const gameState = salas[miRoom];
+    if (!gameState) return;
+
     const jugadorIndex = gameState.jugadores.findIndex(j => j.socketId === socket.id);
     if (jugadorIndex === -1 || jugadorIndex !== gameState.turnoActual) return;
 
@@ -716,7 +799,7 @@ io.on('connection', (socket) => {
 
     if (data.usarOro && jugador.oro > 0) {
       jugador.oro--;
-      io.emit('mensajeLog', `${jugador.nombre} utilizó 1 Lingote de Oro 🪙 para cubrir el pago.`);
+      io.to(miRoom).emit('mensajeLog', `${jugador.nombre} utilizó 1 Lingote de Oro 🪙 para cubrir el pago.`);
     } else {
       jugador.dinero -= data.monto;
       if (data.tipo === 'fmi') {
@@ -725,23 +808,62 @@ io.on('connection', (socket) => {
         const dueño = gameState.jugadores.find(j => j.id === data.dueñoId);
         if (dueño) {
           dueño.dinero += data.monto;
-          sincronizarRecursosAlianza(dueño);
+          sincronizarRecursosAlianza(gameState, dueño);
         }
       }
-      io.emit('mensajeLog', `${jugador.nombre} pagó $${data.monto} en efectivo.`);
+      io.to(miRoom).emit('mensajeLog', `${jugador.nombre} pagó $${data.monto} en efectivo.`);
     }
 
-    sincronizarRecursosAlianza(jugador);
-    pasarSiguienteTurno();
-    io.emit('actualizarEstado', gameState);
+    sincronizarRecursosAlianza(gameState, jugador);
+    pasarSiguienteTurno(miRoom);
+    io.to(miRoom).emit('actualizarEstado', gameState);
+  });
+  socket.on('abandonarSala', () => {
+    if (miRoom && salas[miRoom]) {
+      const gameState = salas[miRoom];
+      const index = gameState.jugadores.findIndex(j => j.socketId === socket.id);
+      
+      if (index !== -1) {
+        const jugadorSalió = gameState.jugadores[index];
+
+        // 1. Liberar todas las propiedades e industrias del jugador en el tablero
+        gameState.tablero.forEach(casilla => {
+          if (casilla.dueño === jugadorSalió.id) {
+            casilla.dueño = null;
+            casilla.industriasNac = 0;
+            casilla.industriasExp = 0;
+          }
+        });
+
+        // 2. Remover al jugador del listado de la sala
+        gameState.jugadores.splice(index, 1);
+        
+        // 3. Reasignar el rol de Anfitrión/Líder si quien salió era el líder
+        if (jugadorSalió.esLider && gameState.jugadores.length > 0) {
+          gameState.jugadores[0].esLider = true;
+        }
+
+        // 4. Corregir el turno actual si el turno era del jugador saliente
+        if (gameState.turnoActual >= gameState.jugadores.length) {
+          gameState.turnoActual = 0;
+        }
+
+        socket.leave(miRoom);
+        io.to(miRoom).emit('mensajeLog', `🚪 ${jugadorSalió.nombre} abandonó la sala. Sus propiedades han sido devueltas al mercado.`);
+        io.to(miRoom).emit('actualizarEstado', gameState);
+      }
+      miRoom = null;
+    }
   });
 
   socket.on('disconnect', () => {
-    io.emit('actualizarEstado', gameState);
+    if (miRoom && salas[miRoom]) {
+      io.to(miRoom).emit('actualizarEstado', salas[miRoom]);
+    }
   });
 });
 
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
-  console.log(`Servidor de La Deuda Eterna activo en http://localhost:${PORT}`);
+  console.log(`Servidor de La Deuda Eterna activo en el puerto ${PORT}`);
 });

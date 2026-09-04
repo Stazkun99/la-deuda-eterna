@@ -1,6 +1,5 @@
 const socket = io();
 
-// Generar o recuperar identificador único persistente para reconexión
 let userId = localStorage.getItem('deuda_eterna_userid');
 if (!userId) {
   userId = 'usr_' + Math.random().toString(36).substr(2, 9);
@@ -25,12 +24,15 @@ const DATOS_PROPIEDADES = [
 const pantallaLogin = document.getElementById('pantalla-login');
 const pantallaJuego = document.getElementById('pantalla-juego');
 const nombreInput = document.getElementById('nombre-input');
+const salaInput = document.getElementById('sala-input');
 const btnUnirse = document.getElementById('btn-unirse');
+const btnIniciarPartida = document.getElementById('btn-iniciar-partida');
 const btnDado = document.getElementById('btn-dado');
 const btnPedirPrestamo = document.getElementById('btn-pedir-prestamo');
 const btnPagarDeuda = document.getElementById('btn-pagar-deuda');
 const btnLevantarBarrera = document.getElementById('btn-levantar-barrera');
 
+const infoSala = document.getElementById('info-sala');
 const infoTurno = document.getElementById('info-turno');
 const listaJugadores = document.getElementById('lista-jugadores');
 const logJuego = document.getElementById('log-juego');
@@ -76,20 +78,60 @@ let propiedadSeleccionadaActual = null;
 socket.on('connect', () => {
   miSocketId = socket.id;
   const nombreGuardado = localStorage.getItem('deuda_eterna_nombre') || nombreInput.value.trim();
+  const salaGuardada = localStorage.getItem('deuda_eterna_sala') || 'LOBBY1';
   if (nombreGuardado) {
-    socket.emit('unirse', { nombre: nombreGuardado, userId: userId });
+    socket.emit('unirseSala', { nombre: nombreGuardado, userId: userId, sala: salaGuardada });
   }
 });
 
-btnUnirse.onclick = () => {
-  const nombre = nombreInput.value.trim();
-  if (nombre) {
-    localStorage.setItem('deuda_eterna_nombre', nombre);
-    socket.emit('unirse', { nombre: nombre, userId: userId });
-    pantallaLogin.classList.add('oculto');
-    pantallaJuego.classList.remove('oculto');
+const btnCrearSala = document.getElementById('btn-crear-sala');
+const btnUnirseSala = document.getElementById('btn-unirse-sala');
+
+// Función para generar un código de sala aleatorio de 5 letras
+function generarCodigoSala() {
+  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let codigo = '';
+  for (let i = 0; i < 5; i++) {
+    codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
   }
+  return codigo;
+}
+
+// Acción: Crear una sala nueva con código generado automáticamente
+btnCrearSala.onclick = () => {
+  const nombre = nombreInput.value.trim();
+  if (!nombre) {
+    alert("Por favor, ingresa tu nombre primero.");
+    return;
+  }
+  const codigoNuevaSala = generarCodigoSala();
+  localStorage.setItem('deuda_eterna_nombre', nombre);
+  localStorage.setItem('deuda_eterna_sala', codigoNuevaSala);
+  socket.emit('unirseSala', { nombre, userId, sala: codigoNuevaSala });
 };
+
+// Acción: Unirse a una sala existente mediante código
+btnUnirseSala.onclick = () => {
+  const nombre = nombreInput.value.trim();
+  const sala = salaInput.value.trim().toUpperCase();
+
+  if (!nombre) {
+    alert("Por favor, ingresa tu nombre.");
+    return;
+  }
+  if (!sala) {
+    alert("Por favor, ingresa el código de la sala a la que deseas unirte.");
+    return;
+  }
+
+  localStorage.setItem('deuda_eterna_nombre', nombre);
+  localStorage.setItem('deuda_eterna_sala', sala);
+  socket.emit('unirseSala', { nombre, userId, sala });
+};
+
+if (btnIniciarPartida) {
+  btnIniciarPartida.onclick = () => socket.emit('iniciarPartida');
+}
 
 btnDado.onclick = () => socket.emit('tirarDado');
 btnPedirPrestamo.onclick = () => socket.emit('pedirPrestamo');
@@ -144,7 +186,7 @@ function verCartaPropiedad(nombre, esOferta = false, esMiPropiedad = false) {
   propiedadSeleccionadaActual = nombre;
 
   document.getElementById('modal-carta-titulo').innerText = `Propiedad: ${nombre}`;
-  
+
   if (info) {
     const casillaSur = stateGlobal?.tablero.find(c => c.nombre.toLowerCase() === nombre.toLowerCase());
     const nacActuales = casillaSur ? (casillaSur.industriasNac || 0) : 0;
@@ -269,7 +311,7 @@ socket.on('mostrarCartaModal', (data) => {
 socket.on('solicitarDecisionPago', (data) => {
   datosPagoPendiente = data;
   textoPagoOro.innerText = `${data.motivo} - Monto: $${data.monto.toLocaleString()}`;
-  
+
   const miJugador = stateGlobal?.jugadores.find(j => j.userId === userId || j.socketId === miSocketId);
   btnPagarOro.disabled = !miJugador || miJugador.oro <= 0;
 
@@ -290,13 +332,28 @@ btnPagarOro.onclick = () => {
   }
 };
 
+socket.on('errorAcceso', (msg) => {
+  alert(msg);
+});
+
 socket.on('actualizarEstado', (state) => {
   stateGlobal = state;
 
   const miJugadorActivo = state.jugadores ? state.jugadores.find(j => j.userId === userId || j.socketId === miSocketId) : null;
+
   if (miJugadorActivo) {
     pantallaLogin.classList.add('oculto');
     pantallaJuego.classList.remove('oculto');
+
+    if (infoSala) infoSala.innerText = `Sala: ${state.codigo}`;
+
+    if (btnIniciarPartida) {
+      if (miJugadorActivo.esLider && !state.enJuego) {
+        btnIniciarPartida.classList.remove('oculto');
+      } else {
+        btnIniciarPartida.classList.add('oculto');
+      }
+    }
 
     if (btnLevantarBarrera) {
       if (miJugadorActivo.barreraProteccionista) btnLevantarBarrera.classList.remove('oculto');
@@ -310,6 +367,7 @@ socket.on('actualizarEstado', (state) => {
   if (state.jugadores) {
     state.jugadores.forEach(j => {
       let statusText = '';
+      if (j.esLider) statusText += ' 👑[ANFITRIÓN]';
       if (j.enQuiebra) statusText += ' 🚨[QUIEBRA]';
       if (j.resguardoGolpe) statusText += ' 🛡️Paraguay';
       if (j.resguardoFuga) statusText += ' 🇵🇦Panamá';
@@ -327,11 +385,16 @@ socket.on('actualizarEstado', (state) => {
   }
 
   if (state.jugadores && state.jugadores.length > 0) {
-    const jugadorActual = state.jugadores[state.turnoActual || 0];
-    if (jugadorActual) {
-      const esMiTurno = (jugadorActual.userId === userId || jugadorActual.socketId === miSocketId) && !jugadorActual.enQuiebra;
-      infoTurno.innerText = `Turno de: ${jugadorActual.nombre}`;
-      btnDado.disabled = !esMiTurno;
+    if (!state.enJuego) {
+      infoTurno.innerText = "Esperando que el anfitrión inicie la partida...";
+      btnDado.disabled = true;
+    } else {
+      const jugadorActual = state.jugadores[state.turnoActual || 0];
+      if (jugadorActual) {
+        const esMiTurno = (jugadorActual.userId === userId || jugadorActual.socketId === miSocketId) && !jugadorActual.enQuiebra;
+        infoTurno.innerText = `Turno de: ${jugadorActual.nombre}`;
+        btnDado.disabled = !esMiTurno;
+      }
     }
   }
 
@@ -342,7 +405,7 @@ socket.on('actualizarEstado', (state) => {
         const ficha = document.createElement('div');
         ficha.className = 'ficha';
         ficha.style.backgroundColor = j.color;
-        
+
         const pos = calcularPosicionEnTablero(j.posicion || 0);
         ficha.style.left = `${pos.x}px`;
         ficha.style.top = `${pos.y}px`;
@@ -353,7 +416,7 @@ socket.on('actualizarEstado', (state) => {
   }
 
   document.querySelectorAll('.indicador-construccion').forEach(el => el.remove());
-  
+
   if (state.tablero) {
     state.tablero.forEach(casilla => {
       if (casilla.tipo === 'propiedad') {
@@ -420,7 +483,7 @@ document.querySelectorAll('.modal-contenido').forEach(modalContenido => {
 
   document.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
-    
+
     const x = e.clientX - offsetX;
     const y = e.clientY - offsetY;
 
@@ -433,3 +496,17 @@ document.querySelectorAll('.modal-contenido').forEach(modalContenido => {
     isDragging = false;
   });
 });
+
+const btnAbandonarSala = document.getElementById('btn-abandonar-sala');
+
+if (btnAbandonarSala) {
+  btnAbandonarSala.onclick = () => {
+    if (confirm("¿Estás seguro de que deseas abandonar la sala?")) {
+      socket.emit('abandonarSala');
+      localStorage.removeItem('deuda_eterna_sala');
+      
+      pantallaJuego.classList.add('oculto');
+      pantallaLogin.classList.remove('oculto');
+    }
+  };
+}
