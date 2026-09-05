@@ -9,7 +9,7 @@
 </head>
 
 <body>
-  <h1 style="color: #f39c12; text-shadow: 0 2px 4px rgba(0,0,0,0.8); margin-bottom: 5px;">La Deuda Eterna</h1>
+  <h1 class="titulo-juego">La Deuda Eterna</h1>
 
   <!-- Pantalla de Login / Selección de Sala -->
   <div id="pantalla-login">
@@ -19,14 +19,14 @@
       <input type="text" id="nombre-input" placeholder="Nombre de Jugador / Nación">
       
       <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-crear-sala" style="background-color: #27ae60;">Crear Nueva Sala ➕</button>
+        <button id="btn-crear-sala" style="background-color: #27ae60; flex: 1;">Crear Nueva Sala ➕</button>
       </div>
 
-      <hr style="border: 1px solid #444; margin: 20px 0;">
+      <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
 
       <p>O ingresa el código de una sala existente:</p>
       <input type="text" id="sala-input" placeholder="Código de Sala (ej. LOBBY1)" style="text-transform: uppercase;">
-      <button id="btn-unirse-sala" style="background-color: #2980b9;">Unirse a Sala 🚀</button>
+      <button id="btn-unirse-sala" style="background-color: #2980b9; width: 100%;">Unirse a Sala 🚀</button>
     </div>
   </div>
 
@@ -36,34 +36,60 @@
       <div id="tablero">
         <h2 id="deuda-fmi">Deuda FMI: $500,000</h2>
         <div id="fichas-container"></div>
+        <div id="casilla-resaltada" class="casilla-resaltada oculto"></div>
       </div>
     </div>
 
-    <div class="panel-control">
-      <h3 id="info-sala" style="color: #f39c12; margin: 0;">Sala: -</h3>
-      <button id="btn-abandonar-sala" style="background-color: #7f8c8d; margin-top: 5px; margin-bottom: 10px; font-size: 12px; padding: 6px;">🚪 Abandonar Sala</button>
-      <h3 id="info-turno">Esperando inicio de partida...</h3>
-
-      <!-- Botón de Inicio reservado para el Anfitrión -->
-      <button id="btn-iniciar-partida" class="oculto" style="background-color: #27ae60; margin-bottom: 10px;">▶️ INICIAR PARTIDA</button>
-
-      <button id="btn-dado">Tirar Dado 🎲</button>
-
-      <!-- Operaciones Financieras FMI -->
-      <div style="display: flex; gap: 5px; margin-top: 10px;">
-        <button id="btn-pedir-prestamo" style="background-color: #27ae60; font-size: 12px; padding: 8px;">Pedir Préstamo 🏦</button>
-        <button id="btn-pagar-deuda" style="background-color: #c0392b; font-size: 12px; padding: 8px;">Pagar Deuda 💳</button>
+    <div class="panel-control" id="panel-control">
+      <div class="cabecera-sala">
+        <h3 id="info-sala" style="color: #f39c12; margin: 0;">Sala: -</h3>
+        <button id="btn-abandonar-sala" class="btn-abandonar">🚪 Abandonar</button>
+      </div>
+      
+      <div id="banner-turno" class="banner-turno">
+        <h3 id="info-turno">Esperando inicio...</h3>
       </div>
 
-      <button id="btn-levantar-barrera" class="oculto" style="margin-top: 10px; background-color: #d35400;">Pagar Peaje Barrera ($2,000) 🚧</button>
-      <button id="btn-propiedades" style="margin-top: 10px; background-color: #e67e22;">Mis Propiedades 📜</button>
-      <button id="btn-reglamento" style="margin-top: 10px; background-color: #8e44ad;">Reglamento 📖</button>
+      <!-- Botón de Inicio reservado para el Anfitrión -->
+      <button id="btn-iniciar-partida" class="oculto btn-iniciar">▶️ INICIAR PARTIDA</button>
 
-      <h4>Jugadores:</h4>
-      <ul id="lista-jugadores"></ul>
+      <button id="btn-dado" class="btn-dado">Tirar Dado 🎲</button>
 
-      <h4>Registro de Jugadas:</h4>
-      <div id="log-juego"></div>
+      <!-- Operaciones Financieras FMI -->
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button id="btn-pedir-prestamo" style="background-color: #27ae60; font-size: 13px; padding: 10px; flex: 1;">Pedir Préstamo 🏦</button>
+        <button id="btn-pagar-deuda" style="background-color: #c0392b; font-size: 13px; padding: 10px; flex: 1;">Pagar Deuda 💳</button>
+      </div>
+
+      <button id="btn-levantar-barrera" class="oculto" style="margin-top: 10px; background-color: #d35400; width: 100%;">Pagar Peaje Barrera ($2,000) 🚧</button>
+      
+      <div style="display: flex; gap: 8px; margin-top: 10px;">
+        <button id="btn-propiedades" style="background-color: #e67e22; font-size: 13px; padding: 10px; flex: 1;">Mis Propiedades 📜</button>
+        <button id="btn-reglamento" style="background-color: #8e44ad; font-size: 13px; padding: 10px; flex: 1;">Reglamento 📖</button>
+      </div>
+
+      <h4>Jugadores en Sala:</h4>
+      <div id="lista-jugadores" class="contenedor-tarjetas-jugadores"></div>
+
+      <!-- Sistema de Pestañas para Chat y Registro de Jugadas -->
+      <div class="contenedor-comunicacion">
+        <div class="pestanas-comunicacion">
+          <button id="tab-log" class="tab-btn activa">Registro 📜</button>
+          <button id="tab-chat" class="tab-btn">Chat 💬</button>
+        </div>
+
+        <div id="sec-log" class="sec-comunicacion">
+          <div id="log-juego" class="caja-mensajes"></div>
+        </div>
+
+        <div id="sec-chat" class="sec-comunicacion oculto">
+          <div id="chat-mensajes" class="caja-mensajes"></div>
+          <div class="caja-envio-chat">
+            <input type="text" id="input-chat" placeholder="Escribe un mensaje..." maxlength="120">
+            <button id="btn-enviar-chat">Enviar</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -77,8 +103,8 @@
       </div>
 
       <div id="contenedor-botones-oferta" class="oculto" style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-oferta-comprar" style="background-color: #27ae60;">Comprar Empresa 🏢</button>
-        <button id="btn-oferta-pasar" style="background-color: #e74c3c;">Pasar ❌</button>
+        <button id="btn-oferta-comprar" style="background-color: #27ae60; flex: 1;">Comprar Empresa 🏢</button>
+        <button id="btn-oferta-pasar" style="background-color: #e74c3c; flex: 1;">Pasar ❌</button>
       </div>
 
       <div id="contenedor-botones-construir" class="oculto" style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
@@ -105,8 +131,8 @@
       <h2>¡PROPUESTA DE UNIÓN LATINOAMERICANA! ✊</h2>
       <p id="texto-alianza">¿Deseas unirte a la alianza económica para resistir al FMI?</p>
       <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-unirse-alianza" style="background-color: #27ae60;">¡UNIRME! 🤝</button>
-        <button id="btn-rechazar-alianza" style="background-color: #e74c3c;">No Unirme ❌</button>
+        <button id="btn-unirse-alianza" style="background-color: #27ae60; flex: 1;">¡UNIRME! 🤝</button>
+        <button id="btn-rechazar-alianza" style="background-color: #e74c3c; flex: 1;">No Unirme ❌</button>
       </div>
     </div>
   </div>
@@ -117,8 +143,8 @@
       <h2>Selecciona tu Método de Pago</h2>
       <p id="texto-pago-oro">Debes realizar un pago.</p>
       <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-pagar-efectivo" style="background-color: #27ae60;">Pagar con Efectivo 💵</button>
-        <button id="btn-pagar-oro" style="background-color: #f1c40f; color: #000;">Usar 1 Lingote de Oro 🪙</button>
+        <button id="btn-pagar-efectivo" style="background-color: #27ae60; flex: 1;">Pagar con Efectivo 💵</button>
+        <button id="btn-pagar-oro" style="background-color: #f1c40f; color: #000; flex: 1;">Usar 1 Lingote de Oro 🪙</button>
       </div>
     </div>
   </div>
@@ -138,6 +164,16 @@
         <h3>3. Ayuda Solidaria (Casilla 10)</h3>
         <p>Durante el turno en que caigas en Ayuda Solidaria, todas las construcciones de industrias se cobran a mitad de precio.</p>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal Fin de Juego / Victoria -->
+  <div id="modal-victoria" class="modal oculto">
+    <div class="modal-contenido" style="text-align: center; border: 2px solid #f1c40f; box-shadow: 0 0 25px rgba(241, 196, 15, 0.5);">
+      <h1 style="color: #f1c40f; margin-bottom: 10px;">🏆 ¡¡¡VICTORIA!!! 🏆</h1>
+      <h2 id="texto-ganador" style="color: #fff; font-size: 22px;"></h2>
+      <p id="texto-motivo-victoria" style="color: #ddd; font-size: 15px; margin: 15px 0; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;"></p>
+      <button id="btn-cerrar-victoria" style="background-color: #27ae60; font-size: 16px; width: 100%; padding: 12px;">Aceptar 🎉</button>
     </div>
   </div>
 

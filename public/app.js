@@ -7,37 +7,53 @@ if (!userId) {
 }
 
 const DATOS_PROPIEDADES = [
-  { nombre: "Azúcar", terreno: 100, nac: [150, 200, 300], exp: [300, 400, 600], total: 2050 },
-  { nombre: "Banano", terreno: 150, nac: [250, 300, 450], exp: [500, 600, 900], total: 3150 },
-  { nombre: "Cacao", terreno: 200, nac: [300, 400, 600], exp: [600, 800, 1200], total: 4100 },
-  { nombre: "Algodón", terreno: 250, nac: [350, 500, 750], exp: [750, 1000, 1500], total: 5100 },
-  { nombre: "Tabaco", terreno: 300, nac: [450, 600, 900], exp: [900, 1200, 1800], total: 6150 },
-  { nombre: "Café", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7050 },
-  { nombre: "Pesca", terreno: 400, nac: [600, 800, 1200], exp: [1200, 1600, 2400], total: 8200 },
-  { nombre: "Ganado", terreno: 500, nac: [750, 1000, 1500], exp: [1500, 2000, 3000], total: 10250 },
-  { nombre: "Cobre", terreno: 600, nac: [900, 1200, 1800], exp: [1800, 2400, 3600], total: 12300 },
-  { nombre: "Estaño", terreno: 700, nac: [1050, 1400, 2100], exp: [2100, 2800, 4200], total: 14350 },
-  { nombre: "Hierro", terreno: 800, nac: [1200, 1600, 2400], exp: [2400, 3200, 4800], total: 16400 },
-  { nombre: "Petróleo", terreno: 1200, nac: [1800, 2400, 3600], exp: [3600, 4800, 7200], total: 24600 }
+  { nombre: "Azúcar", icono: "🌾", terreno: 100, nac: [150, 200, 300], exp: [300, 400, 600], total: 2050 },
+  { nombre: "Banano", icono: "🍌", terreno: 150, nac: [250, 300, 450], exp: [500, 600, 900], total: 3150 },
+  { nombre: "Cacao", icono: "🍫", terreno: 200, nac: [300, 400, 600], exp: [600, 800, 1200], total: 4100 },
+  { nombre: "Algodón", icono: "☁️", terreno: 250, nac: [350, 500, 750], exp: [750, 1000, 1500], total: 5100 },
+  { nombre: "Tabaco", icono: "🍂", terreno: 300, nac: [450, 600, 900], exp: [900, 1200, 1800], total: 6150 },
+  { nombre: "Cigarrillos", icono: "🚬", terreno: 300, nac: [450, 600, 900], exp: [900, 1200, 1800], total: 6150 },
+  { nombre: "Café", icono: "☕", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7050 },
+  { nombre: "Café Elaborado", icono: "☕", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7050 },
+  { nombre: "Pesca", icono: "🐟", terreno: 400, nac: [600, 800, 1200], exp: [1200, 1600, 2400], total: 8200 },
+  { nombre: "Ganado", icono: "🐄", terreno: 500, nac: [750, 1000, 1500], exp: [1500, 2000, 3000], total: 10250 },
+  { nombre: "Cobre", icono: "⛏️", terreno: 600, nac: [900, 1200, 1800], exp: [1800, 2400, 3600], total: 12300 },
+  { nombre: "Estaño", icono: "⚙️", terreno: 700, nac: [1050, 1400, 2100], exp: [2100, 2800, 4200], total: 14350 },
+  { nombre: "Hierro", icono: "🏗️", terreno: 800, nac: [1200, 1600, 2400], exp: [2400, 3200, 4800], total: 16400 },
+  { nombre: "Petróleo", icono: "🛢️", terreno: 1200, nac: [1800, 2400, 3600], exp: [3600, 4800, 7200], total: 24600 }
 ];
 
 const pantallaLogin = document.getElementById('pantalla-login');
 const pantallaJuego = document.getElementById('pantalla-juego');
 const nombreInput = document.getElementById('nombre-input');
 const salaInput = document.getElementById('sala-input');
-const btnUnirse = document.getElementById('btn-unirse');
+const btnCrearSala = document.getElementById('btn-crear-sala');
+const btnUnirseSala = document.getElementById('btn-unirse-sala');
 const btnIniciarPartida = document.getElementById('btn-iniciar-partida');
+const btnAbandonarSala = document.getElementById('btn-abandonar-sala');
+
 const btnDado = document.getElementById('btn-dado');
 const btnPedirPrestamo = document.getElementById('btn-pedir-prestamo');
 const btnPagarDeuda = document.getElementById('btn-pagar-deuda');
 const btnLevantarBarrera = document.getElementById('btn-levantar-barrera');
 
+const panelControl = document.getElementById('panel-control');
+const bannerTurno = document.getElementById('banner-turno');
 const infoSala = document.getElementById('info-sala');
 const infoTurno = document.getElementById('info-turno');
 const listaJugadores = document.getElementById('lista-jugadores');
 const logJuego = document.getElementById('log-juego');
 const fichasContainer = document.getElementById('fichas-container');
 const tableroContainer = document.getElementById('tablero');
+const casillaResaltada = document.getElementById('casilla-resaltada');
+
+const tabLog = document.getElementById('tab-log');
+const tabChat = document.getElementById('tab-chat');
+const secLog = document.getElementById('sec-log');
+const secChat = document.getElementById('sec-chat');
+const chatMensajes = document.getElementById('chat-mensajes');
+const inputChat = document.getElementById('input-chat');
+const btnEnviarChat = document.getElementById('btn-enviar-chat');
 
 const btnReglamento = document.getElementById('btn-reglamento');
 const modalReglamento = document.getElementById('modal-reglamento');
@@ -70,24 +86,20 @@ const textoPagoOro = document.getElementById('texto-pago-oro');
 const btnPagarEfectivo = document.getElementById('btn-pagar-efectivo');
 const btnPagarOro = document.getElementById('btn-pagar-oro');
 
+const modalVictoria = document.getElementById('modal-victoria');
+const textoGanador = document.getElementById('texto-ganador');
+const textoMotivoVictoria = document.getElementById('texto-motivo-victoria');
+const btnCerrarVictoria = document.getElementById('btn-cerrar-victoria');
+
+if (btnCerrarVictoria) {
+  btnCerrarVictoria.onclick = () => modalVictoria.classList.add('oculto');
+}
+
 let miSocketId = null;
 let stateGlobal = null;
 let datosPagoPendiente = null;
 let propiedadSeleccionadaActual = null;
 
-socket.on('connect', () => {
-  miSocketId = socket.id;
-  const nombreGuardado = localStorage.getItem('deuda_eterna_nombre') || nombreInput.value.trim();
-  const salaGuardada = localStorage.getItem('deuda_eterna_sala') || 'LOBBY1';
-  if (nombreGuardado) {
-    socket.emit('unirseSala', { nombre: nombreGuardado, userId: userId, sala: salaGuardada });
-  }
-});
-
-const btnCrearSala = document.getElementById('btn-crear-sala');
-const btnUnirseSala = document.getElementById('btn-unirse-sala');
-
-// Función para generar un código de sala aleatorio de 5 letras
 function generarCodigoSala() {
   const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let codigo = '';
@@ -97,37 +109,44 @@ function generarCodigoSala() {
   return codigo;
 }
 
-// Acción: Crear una sala nueva con código generado automáticamente
+socket.on('connect', () => {
+  miSocketId = socket.id;
+  const nombreGuardado = localStorage.getItem('deuda_eterna_nombre') || nombreInput.value.trim();
+  const salaGuardada = localStorage.getItem('deuda_eterna_sala');
+  if (nombreGuardado && salaGuardada) {
+    socket.emit('unirseSala', { nombre: nombreGuardado, userId, sala: salaGuardada });
+  }
+});
+
 btnCrearSala.onclick = () => {
   const nombre = nombreInput.value.trim();
-  if (!nombre) {
-    alert("Por favor, ingresa tu nombre primero.");
-    return;
-  }
+  if (!nombre) return alert("Por favor, ingresa tu nombre.");
   const codigoNuevaSala = generarCodigoSala();
   localStorage.setItem('deuda_eterna_nombre', nombre);
   localStorage.setItem('deuda_eterna_sala', codigoNuevaSala);
   socket.emit('unirseSala', { nombre, userId, sala: codigoNuevaSala });
 };
 
-// Acción: Unirse a una sala existente mediante código
 btnUnirseSala.onclick = () => {
   const nombre = nombreInput.value.trim();
   const sala = salaInput.value.trim().toUpperCase();
-
-  if (!nombre) {
-    alert("Por favor, ingresa tu nombre.");
-    return;
-  }
-  if (!sala) {
-    alert("Por favor, ingresa el código de la sala a la que deseas unirte.");
-    return;
-  }
-
+  if (!nombre) return alert("Por favor, ingresa tu nombre.");
+  if (!sala) return alert("Por favor, ingresa el código de la sala.");
   localStorage.setItem('deuda_eterna_nombre', nombre);
   localStorage.setItem('deuda_eterna_sala', sala);
   socket.emit('unirseSala', { nombre, userId, sala });
 };
+
+if (btnAbandonarSala) {
+  btnAbandonarSala.onclick = () => {
+    if (confirm("¿Estás seguro de que deseas abandonar la sala?")) {
+      socket.emit('abandonarSala');
+      localStorage.removeItem('deuda_eterna_sala');
+      pantallaJuego.classList.add('oculto');
+      pantallaLogin.classList.remove('oculto');
+    }
+  };
+}
 
 if (btnIniciarPartida) {
   btnIniciarPartida.onclick = () => socket.emit('iniciarPartida');
@@ -137,6 +156,38 @@ btnDado.onclick = () => socket.emit('tirarDado');
 btnPedirPrestamo.onclick = () => socket.emit('pedirPrestamo');
 btnPagarDeuda.onclick = () => socket.emit('pagarDeuda');
 if (btnLevantarBarrera) btnLevantarBarrera.onclick = () => socket.emit('levantarBarrera');
+
+tabLog.onclick = () => {
+  tabLog.classList.add('activa');
+  tabChat.classList.remove('activa');
+  secLog.classList.remove('oculto');
+  secChat.classList.add('oculto');
+};
+
+tabChat.onclick = () => {
+  tabChat.classList.add('activa');
+  tabLog.classList.remove('activa');
+  secChat.classList.remove('oculto');
+  secLog.classList.add('oculto');
+};
+
+function enviarChat() {
+  const texto = inputChat.value;
+  if (texto) {
+    socket.emit('enviarMensajeChat', texto);
+    inputChat.value = '';
+  }
+}
+
+btnEnviarChat.onclick = enviarChat;
+inputChat.onkeypress = (e) => { if (e.key === 'Enter') enviarChat(); };
+
+socket.on('nuevoMensajeChat', (data) => {
+  const p = document.createElement('p');
+  p.innerHTML = `<strong style="color:${data.color}">${data.nombre}:</strong> ${data.texto}`;
+  chatMensajes.appendChild(p);
+  chatMensajes.scrollTop = chatMensajes.scrollHeight;
+});
 
 btnReglamento.onclick = () => modalReglamento.classList.remove('oculto');
 cerrarReglamento.onclick = () => modalReglamento.classList.add('oculto');
@@ -150,10 +201,14 @@ if (btnPropiedades) {
       listaMisPropiedades.innerHTML = '<p style="color: #bbb;">No posees propiedades actualmente.</p>';
     } else {
       miJugador.propiedades.forEach(propName => {
+        const infoProp = DATOS_PROPIEDADES.find(p => p.nombre.toLowerCase() === propName.toLowerCase());
+        const icono = infoProp ? infoProp.icono : '📜';
+  
         const btnProp = document.createElement('button');
-        btnProp.innerText = propName;
+        btnProp.innerText = `${icono} ${propName}`;
         btnProp.style.margin = '5px 0';
         btnProp.style.backgroundColor = '#2c3e50';
+        btnProp.style.width = '100%';
         btnProp.onclick = () => verCartaPropiedad(propName, false, true);
         listaMisPropiedades.appendChild(btnProp);
       });
@@ -179,13 +234,15 @@ window.addEventListener('click', (e) => {
     contenedorBotonesConstruir.classList.add('oculto');
   }
   if (e.target === modalMisPropiedades) modalMisPropiedades.classList.add('oculto');
+  if (e.target === modalVictoria) modalVictoria.classList.add('oculto');
 });
 
 function verCartaPropiedad(nombre, esOferta = false, esMiPropiedad = false) {
   const info = DATOS_PROPIEDADES.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
   propiedadSeleccionadaActual = nombre;
 
-  document.getElementById('modal-carta-titulo').innerText = `Propiedad: ${nombre}`;
+  const iconoMateria = info ? info.icono : '📜';
+  document.getElementById('modal-carta-titulo').innerText = `${iconoMateria} Propiedad: ${nombre}`;
 
   if (info) {
     const casillaSur = stateGlobal?.tablero.find(c => c.nombre.toLowerCase() === nombre.toLowerCase());
@@ -196,21 +253,21 @@ function verCartaPropiedad(nombre, esOferta = false, esMiPropiedad = false) {
     document.getElementById('modal-carta-cuerpo').innerHTML = `
       <div style="text-align: left; font-size: 14px; line-height: 1.6;">
         <p><strong>Precio del Terreno:</strong> $${info.terreno}</p>
-        <hr style="border: 1px solid #444;">
+        <hr style="border: 1px solid rgba(255,255,255,0.1);">
         <p><strong>Industrias Nacionales (Sur) - [Construidas: ${nacActuales}/3]:</strong></p>
         <ul>
           <li>1ª Industria: $${info.nac[0]}</li>
           <li>2ª Industria: $${info.nac[1]}</li>
           <li>3ª Industria: $${info.nac[2]}</li>
         </ul>
-        <hr style="border: 1px solid #444;">
+        <hr style="border: 1px solid rgba(255,255,255,0.1);">
         <p><strong>Industrias de Exportación (Norte) - [Construidas: ${expActuales}/3]:</strong></p>
         <ul>
           <li>1ª Exportación: $${info.exp[0]}</li>
           <li>2ª Exportación: $${info.exp[1]}</li>
           <li>3ª Exportación: $${info.exp[2]}</li>
         </ul>
-        <hr style="border: 1px solid #444;">
+        <hr style="border: 1px solid rgba(255,255,255,0.1);">
         <p style="color: #f1c40f;"><strong>Total Invertido Máximo:</strong> $${info.total.toLocaleString()}</p>
       </div>
     `;
@@ -301,7 +358,7 @@ socket.on('mostrarCartaModal', (data) => {
   contenedorBotonesConstruir.classList.add('oculto');
   document.getElementById('modal-carta-titulo').innerText = data.titulo;
   document.getElementById('modal-carta-cuerpo').innerHTML = `
-    <p style="font-size: 16px; line-height: 1.5; padding: 10px; background: #333; border-radius: 6px; border-left: 4px solid #f39c12;">
+    <p style="font-size: 15px; line-height: 1.5; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 6px; border-left: 4px solid #f39c12;">
       ${data.texto}
     </p>
   `;
@@ -336,6 +393,12 @@ socket.on('errorAcceso', (msg) => {
   alert(msg);
 });
 
+socket.on('finDeJuegoModal', (data) => {
+  if (textoGanador) textoGanador.innerText = `¡${data.ganador} ha ganado la partida!`;
+  if (textoMotivoVictoria) textoMotivoVictoria.innerText = data.motivo;
+  if (modalVictoria) modalVictoria.classList.remove('oculto');
+});
+
 socket.on('actualizarEstado', (state) => {
   stateGlobal = state;
 
@@ -361,43 +424,78 @@ socket.on('actualizarEstado', (state) => {
     }
   }
 
-  document.getElementById('deuda-fmi').innerText = `Deuda FMI: $${(state.deudaFMIGlobal || 500000).toLocaleString()}`;
+  document.getElementById('deuda-fmi').innerText = `Deuda FMI: $${(state.deudaFMIGlobal || 0).toLocaleString()}`;
 
+  // Renderizado de Tarjetas de Jugadores estilizadas
   listaJugadores.innerHTML = '';
   if (state.jugadores) {
-    state.jugadores.forEach(j => {
-      let statusText = '';
-      if (j.esLider) statusText += ' 👑[ANFITRIÓN]';
-      if (j.enQuiebra) statusText += ' 🚨[QUIEBRA]';
-      if (j.resguardoGolpe) statusText += ' 🛡️Paraguay';
-      if (j.resguardoFuga) statusText += ' 🇵🇦Panamá';
-      if (j.sombreroSandino) statusText += ' 🤠Sandino';
-      if (j.enAlianza) statusText += ' 🤝Alianza';
-      if (j.deudaPersonal >= 30000) statusText += ' 🔨EMBARGO';
+    state.jugadores.forEach((j, index) => {
+      const esSuTurno = state.enJuego && state.turnoActual === index;
 
-      const li = document.createElement('li');
-      li.innerText = `${j.nombre} - Pos: ${j.posicion || 0} - $: $${(j.dinero || 0).toLocaleString()} - Deuda: $${(j.deudaPersonal || 0).toLocaleString()} - Oro: ${'🪙'.repeat(j.oro || 0)}${statusText}`;
-      li.style.color = j.enQuiebra ? '#7f8c8d' : j.color;
-      li.style.fontWeight = 'bold';
-      if (j.enQuiebra) li.style.textDecoration = 'line-through';
-      listaJugadores.appendChild(li);
+      let badges = '';
+      if (j.esLider) badges += ' 👑';
+      if (j.enQuiebra) badges += ' 🚨';
+      if (j.enAlianza) badges += ' 🤝';
+      if (j.resguardoGolpe) badges += ' 🛡️';
+      if (j.resguardoFuga) badges += ' 🇵🇦';
+      if (j.sombreroSandino) badges += ' 🤠';
+      if (j.deudaPersonal >= 30000) badges += ' 🔨';
+
+      const card = document.createElement('div');
+      card.className = `player-card ${esSuTurno ? 'turno-actual' : ''}`;
+      card.style.borderLeftColor = j.color;
+
+      card.innerHTML = `
+        <div class="player-card-header">
+          <span class="player-name" style="color: ${j.color}">${j.nombre}</span>
+          <span class="player-badges">${badges}</span>
+        </div>
+        <div class="player-card-stats">
+          <span class="stat-item">💵 $${(j.dinero || 0).toLocaleString()}</span>
+          <span class="stat-item" style="color: ${j.deudaPersonal >= 30000 ? '#e74c3c' : '#ddd'}">💳 $${(j.deudaPersonal || 0).toLocaleString()}</span>
+          <span class="stat-item">🪙 ${j.oro || 0}</span>
+        </div>
+      `;
+      listaJugadores.appendChild(card);
     });
   }
 
+  // Turno y Controles Contextuales
   if (state.jugadores && state.jugadores.length > 0) {
     if (!state.enJuego) {
-      infoTurno.innerText = "Esperando que el anfitrión inicie la partida...";
+      infoTurno.innerText = "Partida finalizada o esperando inicio...";
+      bannerTurno.classList.remove('turno-activo');
       btnDado.disabled = true;
+      btnPedirPrestamo.disabled = true;
+      btnPagarDeuda.disabled = true;
     } else {
       const jugadorActual = state.jugadores[state.turnoActual || 0];
       if (jugadorActual) {
         const esMiTurno = (jugadorActual.userId === userId || jugadorActual.socketId === miSocketId) && !jugadorActual.enQuiebra;
-        infoTurno.innerText = `Turno de: ${jugadorActual.nombre}`;
+        
+        infoTurno.innerText = esMiTurno ? "¡ES TU TURNO!" : `Turno de: ${jugadorActual.nombre}`;
+        
+        if (esMiTurno) bannerTurno.classList.add('turno-activo');
+        else bannerTurno.classList.remove('turno-activo');
+
         btnDado.disabled = !esMiTurno;
+
+        const miJugador = state.jugadores.find(j => j.userId === userId || j.socketId === miSocketId);
+        if (miJugador) {
+          btnPedirPrestamo.disabled = !esMiTurno || miJugador.deudaPersonal >= 30000;
+          btnPagarDeuda.disabled = !esMiTurno || miJugador.deudaPersonal <= 0 || miJugador.dinero < 5500;
+        }
+
+        // Resaltar la casilla del jugador actual en el tablero
+        const posCoord = calcularPosicionEnTablero(jugadorActual.posicion || 0);
+        casillaResaltada.style.left = `${posCoord.x - 7}px`;
+        casillaResaltada.style.top = `${posCoord.y - 7}px`;
+        casillaResaltada.classList.remove('oculto');
       }
     }
   }
 
+  // Render de Fichas
   fichasContainer.innerHTML = '';
   if (state.jugadores) {
     state.jugadores.forEach(j => {
@@ -447,7 +545,6 @@ socket.on('actualizarEstado', (state) => {
 socket.on('mensajeLog', (msg) => {
   const p = document.createElement('p');
   p.innerText = msg;
-  p.style.margin = "3px 0";
   logJuego.appendChild(p);
   logJuego.scrollTop = logJuego.scrollHeight;
 });
@@ -478,7 +575,7 @@ document.querySelectorAll('.modal-contenido').forEach(modalContenido => {
 
     isDragging = true;
     offsetX = e.clientX - modalContenido.offsetLeft;
-    offsetY = e.clientY - modalContoffsetTop;
+    offsetY = e.clientY - modalContenido.offsetTop;
   });
 
   document.addEventListener('mousemove', (e) => {
@@ -496,17 +593,3 @@ document.querySelectorAll('.modal-contenido').forEach(modalContenido => {
     isDragging = false;
   });
 });
-
-const btnAbandonarSala = document.getElementById('btn-abandonar-sala');
-
-if (btnAbandonarSala) {
-  btnAbandonarSala.onclick = () => {
-    if (confirm("¿Estás seguro de que deseas abandonar la sala?")) {
-      socket.emit('abandonarSala');
-      localStorage.removeItem('deuda_eterna_sala');
-      
-      pantallaJuego.classList.add('oculto');
-      pantallaLogin.classList.remove('oculto');
-    }
-  };
-}
