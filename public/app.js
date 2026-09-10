@@ -1,595 +1,258 @@
-const socket = io();
-
-let userId = localStorage.getItem('deuda_eterna_userid');
-if (!userId) {
-  userId = 'usr_' + Math.random().toString(36).substr(2, 9);
-  localStorage.setItem('deuda_eterna_userid', userId);
+'use strict';
+const $ = id => document.getElementById(id);
+const element = (tag, text, className) => { const node = document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node; };
+const amount = n => '$' + Number(n).toLocaleString('es-ES');
+const secureId = () => Array.from(crypto.getRandomValues(new Uint8Array(32)), n => n.toString(16).padStart(2, '0')).join('');
+let userId, sessionToken, storageAvailable = true;
+try {
+  userId = localStorage.getItem('deuda_eterna_userid') || 'usr_' + secureId().slice(0, 24);
+  sessionToken = localStorage.getItem('deuda_eterna_session') || secureId();
+  localStorage.setItem('deuda_eterna_userid', userId); localStorage.setItem('deuda_eterna_session', sessionToken);
+  $('nombre').value = localStorage.getItem('deuda_eterna_nombre') || '';
+  $('codigo').value = localStorage.getItem('deuda_eterna_sala') || '';
+} catch { storageAvailable = false; userId = 'usr_' + secureId().slice(0, 24); sessionToken = secureId(); }
+const socket = io({ autoConnect: false });
+let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
+let lastDecisionKey = null, lastResult = null;
+const cells = new Map();
+const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
+const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
+const me = () => state?.jugadores.find(p => p.userId === userId);
+const myTurn = () => !!state?.enJuego && state.jugadores[state.turnoActual]?.id === me()?.id && !me()?.enQuiebra;
+const myProperty = c => !!me() && (c.dueño === me().id || !!me().alianzaId && state.jugadores.some(p => p.id === c.dueño && p.alianzaId === me().alianzaId));
+function notice(text) { clearTimeout(noticeTimer); $('aviso').textContent = text; $('aviso').hidden = false; noticeTimer = setTimeout(() => $('aviso').hidden = true, 7000); }
+function remember(key, value) { if (storageAvailable) { try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { storageAvailable = false; } } }
+function action(event, data = {}) {
+  if (!socket.connected || busy) return;
+  busy = true; updateControls();
+  socket.timeout(8000).emit(event, { ...data, turnoId: state?.turnoId, actionId: secureId().slice(0, 32) }, (error, result) => {
+    busy = false; updateControls();
+    if (error) notice('No llegó la confirmación. Comprueba el estado antes de repetir.');
+    else if (!result?.ok && result?.error) notice(result.error);
+    if (result?.ok && $('detalle').open && selectedProperty) $('detalle').close();
+    renderDecision(true);
+  });
 }
-
-const DATOS_PROPIEDADES = [
-  { nombre: "Azúcar", icono: "🌾", terreno: 100, nac: [150, 200, 300], exp: [300, 400, 600], total: 2050 },
-  { nombre: "Banano", icono: "🍌", terreno: 150, nac: [250, 300, 450], exp: [500, 600, 900], total: 3150 },
-  { nombre: "Cacao", icono: "🍫", terreno: 200, nac: [300, 400, 600], exp: [600, 800, 1200], total: 4100 },
-  { nombre: "Algodón", icono: "☁️", terreno: 250, nac: [350, 500, 750], exp: [750, 1000, 1500], total: 5100 },
-  { nombre: "Tabaco", icono: "🍂", terreno: 300, nac: [450, 600, 900], exp: [900, 1200, 1800], total: 6150 },
-  { nombre: "Cigarrillos", icono: "🚬", terreno: 300, nac: [450, 600, 900], exp: [900, 1200, 1800], total: 6150 },
-  { nombre: "Café", icono: "☕", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7050 },
-  { nombre: "Café Elaborado", icono: "☕", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7050 },
-  { nombre: "Pesca", icono: "🐟", terreno: 400, nac: [600, 800, 1200], exp: [1200, 1600, 2400], total: 8200 },
-  { nombre: "Ganado", icono: "🐄", terreno: 500, nac: [750, 1000, 1500], exp: [1500, 2000, 3000], total: 10250 },
-  { nombre: "Cobre", icono: "⛏️", terreno: 600, nac: [900, 1200, 1800], exp: [1800, 2400, 3600], total: 12300 },
-  { nombre: "Estaño", icono: "⚙️", terreno: 700, nac: [1050, 1400, 2100], exp: [2100, 2800, 4200], total: 14350 },
-  { nombre: "Hierro", icono: "🏗️", terreno: 800, nac: [1200, 1600, 2400], exp: [2400, 3200, 4800], total: 16400 },
-  { nombre: "Petróleo", icono: "🛢️", terreno: 1200, nac: [1800, 2400, 3600], exp: [3600, 4800, 7200], total: 24600 }
-];
-
-const pantallaLogin = document.getElementById('pantalla-login');
-const pantallaJuego = document.getElementById('pantalla-juego');
-const nombreInput = document.getElementById('nombre-input');
-const salaInput = document.getElementById('sala-input');
-const btnCrearSala = document.getElementById('btn-crear-sala');
-const btnUnirseSala = document.getElementById('btn-unirse-sala');
-const btnIniciarPartida = document.getElementById('btn-iniciar-partida');
-const btnAbandonarSala = document.getElementById('btn-abandonar-sala');
-
-const btnDado = document.getElementById('btn-dado');
-const btnPedirPrestamo = document.getElementById('btn-pedir-prestamo');
-const btnPagarDeuda = document.getElementById('btn-pagar-deuda');
-const btnLevantarBarrera = document.getElementById('btn-levantar-barrera');
-
-const panelControl = document.getElementById('panel-control');
-const bannerTurno = document.getElementById('banner-turno');
-const infoSala = document.getElementById('info-sala');
-const infoTurno = document.getElementById('info-turno');
-const listaJugadores = document.getElementById('lista-jugadores');
-const logJuego = document.getElementById('log-juego');
-const fichasContainer = document.getElementById('fichas-container');
-const tableroContainer = document.getElementById('tablero');
-const casillaResaltada = document.getElementById('casilla-resaltada');
-
-const tabLog = document.getElementById('tab-log');
-const tabChat = document.getElementById('tab-chat');
-const secLog = document.getElementById('sec-log');
-const secChat = document.getElementById('sec-chat');
-const chatMensajes = document.getElementById('chat-mensajes');
-const inputChat = document.getElementById('input-chat');
-const btnEnviarChat = document.getElementById('btn-enviar-chat');
-
-const btnReglamento = document.getElementById('btn-reglamento');
-const modalReglamento = document.getElementById('modal-reglamento');
-const cerrarReglamento = document.getElementById('cerrar-reglamento');
-
-const btnPropiedades = document.getElementById('btn-propiedades');
-const modalCarta = document.getElementById('modal-carta');
-const cerrarCarta = document.getElementById('cerrar-carta');
-const modalMisPropiedades = document.getElementById('modal-mis-propiedades');
-const cerrarMisPropiedades = document.getElementById('cerrar-mis-propiedades');
-const listaMisPropiedades = document.getElementById('lista-mis-propiedades-container');
-
-const modalAlianza = document.getElementById('modal-alianza');
-const textoAlianza = document.getElementById('texto-alianza');
-const btnUnirseAlianza = document.getElementById('btn-unirse-alianza');
-const btnRechazarAlianza = document.getElementById('btn-rechazar-alianza');
-
-const contenedorBotonesOferta = document.getElementById('contenedor-botones-oferta');
-const btnOfertaComprar = document.getElementById('btn-oferta-comprar');
-const btnOfertaPasar = document.getElementById('btn-oferta-pasar');
-
-const contenedorBotonesConstruir = document.getElementById('contenedor-botones-construir');
-const btnConstruirNac = document.getElementById('btn-construir-nac');
-const btnConstruirExp = document.getElementById('btn-construir-exp');
-const btnExpropiar = document.getElementById('btn-expropiar');
-const btnSubastar = document.getElementById('btn-subastar');
-
-const modalPagoOro = document.getElementById('modal-pago-oro');
-const textoPagoOro = document.getElementById('texto-pago-oro');
-const btnPagarEfectivo = document.getElementById('btn-pagar-efectivo');
-const btnPagarOro = document.getElementById('btn-pagar-oro');
-
-const modalVictoria = document.getElementById('modal-victoria');
-const textoGanador = document.getElementById('texto-ganador');
-const textoMotivoVictoria = document.getElementById('texto-motivo-victoria');
-const btnCerrarVictoria = document.getElementById('btn-cerrar-victoria');
-
-if (btnCerrarVictoria) {
-  btnCerrarVictoria.onclick = () => modalVictoria.classList.add('oculto');
+function button(text, handler, className = 'ghost') { const b = element('button', text, className); b.type = 'button'; b.addEventListener('click', handler); return b; }
+function log(container, text, prefix, color) {
+  const p = element('p');
+  if (prefix) { const strong = element('strong', prefix + ': '); strong.style.color = color; p.append(strong); }
+  p.append(document.createTextNode(text)); container.append(p);
+  while (container.children.length > 150) container.firstElementChild.remove();
+  container.scrollTop = container.scrollHeight;
 }
-
-let miSocketId = null;
-let stateGlobal = null;
-let datosPagoPendiente = null;
-let propiedadSeleccionadaActual = null;
-
-function generarCodigoSala() {
-  const caracteres = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let codigo = '';
-  for (let i = 0; i < 5; i++) {
-    codigo += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
-  }
-  return codigo;
+function join(crear) {
+  const nombre = $('nombre').value.trim(), sala = crear ? secureId().slice(0, 6).toUpperCase() : $('codigo').value.trim().toUpperCase();
+  if (!nombre || nombre.length > 40) return notice('Introduce un nombre de entre 1 y 40 caracteres.');
+  if (!/^[A-Z0-9_-]{3,12}$/.test(sala)) return notice('Introduce un código de sala válido.');
+  if (!socket.connected) return notice('Estamos conectando. Espera un momento.');
+  socket.timeout(8000).emit('unirseSala', { nombre, sala, crear, userId, sessionToken }, (error, result) => {
+    if (error) return notice('El servidor tarda en responder. Espera a que conecte.');
+    if (result?.ok) { joinedRoom = sala; remember('deuda_eterna_nombre', nombre); remember('deuda_eterna_sala', sala); }
+  });
 }
-
+$('crear').onclick = () => join(true);
+$('acceso').onsubmit = e => { e.preventDefault(); join(false); };
+$('salir').onclick = () => {
+  if (confirm('¿Abandonar la sala? Tu plaza se eliminará y tus propiedades se liberarán o pasarán a tu alianza.')) socket.emit('abandonarSala', {}, result => { if (!result?.ok) notice('No se pudo abandonar la sala.'); });
+};
+$('copiar').onclick = async () => { try { await navigator.clipboard.writeText(state.codigo); notice('Código copiado: ' + state.codigo); } catch { notice('Código de sala: ' + state.codigo); } };
+$('iniciar').onclick = () => action('iniciarPartida', { monopolio: $('monopolio').checked });
+$('tirar').onclick = () => action('tirarDado');
+$('terminar').onclick = () => action('terminarTurno');
+$('prestamo').onclick = () => action('pedirPrestamo');
+$('amortizar').onclick = () => action('pagarDeuda');
+$('levantar').onclick = () => action('levantarBarrera');
+$('propiedades').onclick = showProperties;
+$('cerrar-detalle').onclick = () => $('detalle').close();
+$('detalle').addEventListener('click', e => { if (e.target === $('detalle')) $('detalle').close(); });
+$('tab-registro').onclick = () => switchTab(false);
+$('tab-chat').onclick = () => switchTab(true);
+function switchTab(chat) { $('registro').hidden = chat; $('chat-panel').hidden = !chat; $('tab-chat').setAttribute('aria-selected', String(chat)); $('tab-registro').setAttribute('aria-selected', String(!chat)); }
+$('chat-form').onsubmit = e => {
+  e.preventDefault(); const text = $('mensaje').value.trim();
+  if (!text || !socket.connected) return;
+  socket.emit('enviarMensajeChat', text, result => { if (result?.ok) $('mensaje').value = ''; });
+};
 socket.on('connect', () => {
-  miSocketId = socket.id;
-  const nombreGuardado = localStorage.getItem('deuda_eterna_nombre') || nombreInput.value.trim();
-  const salaGuardada = localStorage.getItem('deuda_eterna_sala');
-  if (nombreGuardado && salaGuardada) {
-    socket.emit('unirseSala', { nombre: nombreGuardado, userId, sala: salaGuardada });
-  }
+  $('conexion').textContent = 'Conectado';
+  const saved = joinedRoom || $('codigo').value.trim();
+  if (saved && $('nombre').value.trim()) socket.emit('unirseSala', { nombre: $('nombre').value.trim(), sala: saved, userId, sessionToken }, result => { if (result?.ok) joinedRoom = saved; });
+  updateControls();
 });
-
-btnCrearSala.onclick = () => {
-  const nombre = nombreInput.value.trim();
-  if (!nombre) return alert("Por favor, ingresa tu nombre.");
-  const codigoNuevaSala = generarCodigoSala();
-  localStorage.setItem('deuda_eterna_nombre', nombre);
-  localStorage.setItem('deuda_eterna_sala', codigoNuevaSala);
-  socket.emit('unirseSala', { nombre, userId, sala: codigoNuevaSala });
-};
-
-btnUnirseSala.onclick = () => {
-  const nombre = nombreInput.value.trim();
-  const sala = salaInput.value.trim().toUpperCase();
-  if (!nombre) return alert("Por favor, ingresa tu nombre.");
-  if (!sala) return alert("Por favor, ingresa el código de la sala.");
-  localStorage.setItem('deuda_eterna_nombre', nombre);
-  localStorage.setItem('deuda_eterna_sala', sala);
-  socket.emit('unirseSala', { nombre, userId, sala });
-};
-
-if (btnAbandonarSala) {
-  btnAbandonarSala.onclick = () => {
-    if (confirm("¿Estás seguro de que deseas abandonar la sala?")) {
-      socket.emit('abandonarSala');
-      localStorage.removeItem('deuda_eterna_sala');
-      pantallaJuego.classList.add('oculto');
-      pantallaLogin.classList.remove('oculto');
+socket.on('disconnect', () => { busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
+socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión · reintentando'; updateControls(); });
+socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
+socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
+socket.on('errorAccion', notice);
+socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; });
+socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
+socket.on('mensajeLog', text => log($('registro'), text));
+socket.on('mostrarCartaModal', data => { $('ultima-carta').replaceChildren(element('span', data.titulo, 'eyebrow'), element('p', data.texto)); });
+socket.on('finDeJuegoModal', showResult);
+socket.on('actualizarEstado', next => {
+  state = next;
+  if (!me()) return;
+  joinedRoom = state.codigo;
+  $('login').hidden = true; $('mesa').hidden = false;
+  $('sala-codigo').textContent = state.codigo;
+  $('deuda').textContent = amount(state.deudaFMIGlobal);
+  $('barrera').textContent = state.barreraProteccionista ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
+  $('registro').replaceChildren();
+  for (const message of state.registro || []) log($('registro'), message);
+  if (state.ultimaCarta) $('ultima-carta').replaceChildren(element('span', state.ultimaCarta.titulo, 'eyebrow'), element('p', state.ultimaCarta.texto));
+  renderBoard(); renderPlayers(); updateControls(); renderDecision(); updateClock();
+  if (state.resultado) showResult(state.resultado);
+  else if (!state.finalizada) lastResult = null;
+});
+function position(id) {
+  // A perimeter of 40 cells in an 11×11 grid. Pieces belong to cells, never pixels.
+  if (id <= 10) return [11, 11 - id];
+  if (id <= 20) return [21 - id, 1];
+  if (id <= 30) return [1, id - 19];
+  return [id - 29, 11];
+}
+function renderBoard() {
+  for (const c of state.tablero) {
+    let tile = cells.get(c.id);
+    if (!tile) {
+      tile = button('', () => showProperty(c.id), 'tile');
+      const [row, column] = position(c.id); tile.style.gridRow = row; tile.style.gridColumn = column;
+      tile.dataset.casilla = c.id;
+      tile.append(element('span', String(c.id).padStart(2, '0'), 'tile-number'), element('span', icons[c.baseSur || c.nombre] || (c.nombre.includes('Solidaridad') ? '✦' : c.nombre.includes('FMI') ? '▥' : '↗'), 'tile-icon'), element('span', c.nombre.replace('América Latina (SALIDA)', 'Latinoamérica').replace('Barrera Proteccionista', 'Barrera').replace('12 Octubre 1492', '12 de Octubre'), 'tile-name'), element('span', c.precio ? amount(c.precio) : '', 'tile-price'), element('span', '', 'tile-industries'), element('span', '', 'tile-tokens'), element('span', '', 'tile-owner'));
+      cells.set(c.id, tile); $('tablero').append(tile);
     }
-  };
-}
-
-if (btnIniciarPartida) {
-  btnIniciarPartida.onclick = () => socket.emit('iniciarPartida');
-}
-
-btnDado.onclick = () => socket.emit('tirarDado');
-btnPedirPrestamo.onclick = () => socket.emit('pedirPrestamo');
-btnPagarDeuda.onclick = () => socket.emit('pagarDeuda');
-if (btnLevantarBarrera) btnLevantarBarrera.onclick = () => socket.emit('levantarBarrera');
-
-tabLog.onclick = () => {
-  tabLog.classList.add('activa');
-  tabChat.classList.remove('activa');
-  secLog.classList.remove('oculto');
-  secChat.classList.add('oculto');
-};
-
-tabChat.onclick = () => {
-  tabChat.classList.add('activa');
-  tabLog.classList.remove('activa');
-  secChat.classList.remove('oculto');
-  secLog.classList.add('oculto');
-};
-
-function enviarChat() {
-  const texto = inputChat.value;
-  if (texto) {
-    socket.emit('enviarMensajeChat', texto);
-    inputChat.value = '';
-  }
-}
-
-btnEnviarChat.onclick = enviarChat;
-inputChat.onkeypress = (e) => { if (e.key === 'Enter') enviarChat(); };
-
-socket.on('nuevoMensajeChat', (data) => {
-  const p = document.createElement('p');
-  p.innerHTML = `<strong style="color:${data.color}">${data.nombre}:</strong> ${data.texto}`;
-  chatMensajes.appendChild(p);
-  chatMensajes.scrollTop = chatMensajes.scrollHeight;
-});
-
-btnReglamento.onclick = () => modalReglamento.classList.remove('oculto');
-cerrarReglamento.onclick = () => modalReglamento.classList.add('oculto');
-
-if (btnPropiedades) {
-  btnPropiedades.onclick = () => {
-    listaMisPropiedades.innerHTML = '';
-    const miJugador = stateGlobal?.jugadores.find(j => j.userId === userId || j.socketId === miSocketId);
-
-    if (!miJugador || miJugador.propiedades.length === 0) {
-      listaMisPropiedades.innerHTML = '<p style="color: #bbb;">No posees propiedades actualmente.</p>';
-    } else {
-      miJugador.propiedades.forEach(propName => {
-        const infoProp = DATOS_PROPIEDADES.find(p => p.nombre.toLowerCase() === propName.toLowerCase());
-        const icono = infoProp ? infoProp.icono : '📜';
-  
-        const btnProp = document.createElement('button');
-        btnProp.innerText = `${icono} ${propName}`;
-        btnProp.style.margin = '5px 0';
-        btnProp.style.backgroundColor = '#2c3e50';
-        btnProp.style.width = '100%';
-        btnProp.onclick = () => verCartaPropiedad(propName, false, true);
-        listaMisPropiedades.appendChild(btnProp);
-      });
+    const active = state.enJuego && state.jugadores[state.turnoActual]?.posicion === c.id;
+    tile.className = 'tile ' + (c.region === 'norte' ? 'norte' : c.region === 'sur' ? 'sur' : 'special') + (active ? ' active' : '');
+    const base = c.baseSur ? state.tablero.find(s => s.nombre === c.baseSur) : c;
+    tile.style.setProperty('--group', groups[base.grupo] || '#a6b49a');
+    const owner = state.jugadores.find(p => p.id === c.dueño);
+    tile.style.setProperty('--owner', owner?.color || 'transparent');
+    const n = c.region === 'sur' ? c.industriasNac : c.industriasExp;
+    tile.querySelector('.tile-industries').textContent = n ? '▰'.repeat(n) : '';
+    const tokens = tile.querySelector('.tile-tokens'); tokens.replaceChildren();
+    for (const p of state.jugadores.filter(p => p.posicion === c.id && !p.enQuiebra)) {
+      const token = element('span', p.nombre.slice(0, 1).toUpperCase(), 'token'); token.style.setProperty('--player', p.color); token.title = p.nombre; tokens.append(token);
     }
-    modalMisPropiedades.classList.remove('oculto');
-  };
+    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias: ' + n : ''}`);
+  }
 }
-
-if (cerrarMisPropiedades) cerrarMisPropiedades.onclick = () => modalMisPropiedades.classList.add('oculto');
-if (cerrarCarta) {
-  cerrarCarta.onclick = () => {
-    modalCarta.classList.add('oculto');
-    contenedorBotonesOferta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  };
+function renderPlayers() {
+  $('jugadores').replaceChildren(); $('cantidad').textContent = state.jugadores.length + ' / 4';
+  for (const p of state.jugadores) {
+    const row = element('div', undefined, 'player' + (state.enJuego && state.jugadores[state.turnoActual]?.id === p.id ? ' current' : ''));
+    const avatar = element('span', p.nombre.slice(0, 1).toUpperCase(), 'avatar'); avatar.style.setProperty('--player', p.color);
+    const content = element('div'); content.append(element('div', p.nombre + (p.userId === userId ? ' · tú' : '') + (p.esLider ? ' ♛' : ''), 'player-name'));
+    const stats = element('div', undefined, 'player-stats'); stats.append(element('span', amount(p.dinero)), element('span', 'Deuda ' + amount(p.deudaPersonal)), element('span', '◆ ' + p.oro)); content.append(stats);
+    content.append(element('div', [!p.conectado && 'Desconectado', p.enQuiebra && 'En quiebra', p.enAlianza && 'Alianza · caja común', p.industriasCerradas && 'Industrias cerradas', p.turnosPerdidos > 0 && 'Desempleo: ' + p.turnosPerdidos, p.deudaPersonal >= 30000 && 'Límite de deuda'].filter(Boolean).join(' · '), 'player-status'));
+    row.append(avatar, content); $('jugadores').append(row);
+  }
 }
-
-window.addEventListener('click', (e) => {
-  if (e.target === modalReglamento) modalReglamento.classList.add('oculto');
-  if (e.target === modalCarta) {
-    modalCarta.classList.add('oculto');
-    contenedorBotonesOferta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  }
-  if (e.target === modalMisPropiedades) modalMisPropiedades.classList.add('oculto');
-  if (e.target === modalVictoria) modalVictoria.classList.add('oculto');
-});
-
-function verCartaPropiedad(nombre, esOferta = false, esMiPropiedad = false) {
-  const info = DATOS_PROPIEDADES.find(p => p.nombre.toLowerCase() === nombre.toLowerCase());
-  propiedadSeleccionadaActual = nombre;
-
-  const iconoMateria = info ? info.icono : '📜';
-  document.getElementById('modal-carta-titulo').innerText = `${iconoMateria} Propiedad: ${nombre}`;
-
-  if (info) {
-    const casillaSur = stateGlobal?.tablero.find(c => c.nombre.toLowerCase() === nombre.toLowerCase());
-    const nacActuales = casillaSur ? (casillaSur.industriasNac || 0) : 0;
-    const casillaNorte = stateGlobal?.tablero.find(c => c.baseSur && c.baseSur.toLowerCase() === nombre.toLowerCase());
-    const expActuales = casillaNorte ? (casillaNorte.industriasExp || 0) : 0;
-
-    document.getElementById('modal-carta-cuerpo').innerHTML = `
-      <div style="text-align: left; font-size: 14px; line-height: 1.6;">
-        <p><strong>Precio del Terreno:</strong> $${info.terreno}</p>
-        <hr style="border: 1px solid rgba(255,255,255,0.1);">
-        <p><strong>Industrias Nacionales (Sur) - [Construidas: ${nacActuales}/3]:</strong></p>
-        <ul>
-          <li>1ª Industria: $${info.nac[0]}</li>
-          <li>2ª Industria: $${info.nac[1]}</li>
-          <li>3ª Industria: $${info.nac[2]}</li>
-        </ul>
-        <hr style="border: 1px solid rgba(255,255,255,0.1);">
-        <p><strong>Industrias de Exportación (Norte) - [Construidas: ${expActuales}/3]:</strong></p>
-        <ul>
-          <li>1ª Exportación: $${info.exp[0]}</li>
-          <li>2ª Exportación: $${info.exp[1]}</li>
-          <li>3ª Exportación: $${info.exp[2]}</li>
-        </ul>
-        <hr style="border: 1px solid rgba(255,255,255,0.1);">
-        <p style="color: #f1c40f;"><strong>Total Invertido Máximo:</strong> $${info.total.toLocaleString()}</p>
-      </div>
-    `;
-  } else {
-    document.getElementById('modal-carta-cuerpo').innerHTML = `<p>Detalles no disponibles para ${nombre}.</p>`;
-  }
-
-  if (esOferta) {
-    contenedorBotonesOferta.classList.remove('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  } else if (esMiPropiedad && info) {
-    contenedorBotonesOferta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.remove('oculto');
-  } else {
-    contenedorBotonesOferta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  }
-
-  modalMisPropiedades.classList.add('oculto');
-  modalCarta.classList.remove('oculto');
+function updateControls() {
+  $('crear').disabled = $('unirse').disabled = !socket.connected;
+  if (!state) return;
+  const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !socket.connected;
+  $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
+  $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';
+  const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: 30 segundos para pujar.', eleccion:'Hay una elección pendiente.' };
+  $('fase').textContent = state.enJuego ? phases[state.fase] || '' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
+  $('inicio').hidden = state.enJuego || !p?.esLider;
+  $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2;
+  $('acciones').hidden = !state.enJuego;
+  $('tirar').hidden = state.fase !== 'tirada'; $('tirar').disabled = locked || !mine;
+  $('terminar').hidden = state.fase !== 'gestion'; $('terminar').disabled = locked || !mine;
+  const collective = ['subasta','votacion'].includes(state.fase);
+  $('prestamo').disabled = locked || !mine || collective || !state.jugadores.some(q => (q.id === p.id || p.alianzaId && q.alianzaId === p.alianzaId) && q.deudaPersonal < 30000);
+  $('amortizar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.deudaPersonal <= 0 || p.dinero < Math.min(5000,p.deudaPersonal);
+  $('levantar').hidden = !state.barreraProteccionista;
+  $('levantar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.dinero < 2000;
 }
-
-btnOfertaComprar.onclick = () => {
-  socket.emit('decidirCompraPropiedad', true);
-  modalCarta.classList.add('oculto');
-  contenedorBotonesOferta.classList.add('oculto');
-};
-
-btnOfertaPasar.onclick = () => {
-  socket.emit('decidirCompraPropiedad', false);
-  modalCarta.classList.add('oculto');
-  contenedorBotonesOferta.classList.add('oculto');
-};
-
-btnConstruirNac.onclick = () => {
-  if (propiedadSeleccionadaActual) {
-    socket.emit('construirIndustria', { nombrePropiedad: propiedadSeleccionadaActual, tipo: 'nacional' });
-    modalCarta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  }
-};
-
-btnConstruirExp.onclick = () => {
-  if (propiedadSeleccionadaActual) {
-    socket.emit('construirIndustria', { nombrePropiedad: propiedadSeleccionadaActual, tipo: 'exportacion' });
-    modalCarta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  }
-};
-
-btnExpropiar.onclick = () => {
-  if (propiedadSeleccionadaActual) {
-    socket.emit('expropiarPropiedad', { nombrePropiedad: propiedadSeleccionadaActual });
-    modalCarta.classList.add('oculto');
-    contenedorBotonesConstruir.classList.add('oculto');
-  }
-};
-
-if (btnSubastar) {
-  btnSubastar.onclick = () => {
-    if (propiedadSeleccionadaActual) {
-      socket.emit('subastarPropiedad', { nombrePropiedad: propiedadSeleccionadaActual });
-      modalCarta.classList.add('oculto');
-      contenedorBotonesConstruir.classList.add('oculto');
+function updateClock() {
+  const node = $('reloj');
+  node.hidden = !state?.enJuego;
+  if (!state?.enJuego) return;
+  const deadline = state.pendiente?.vence || state.limiteTurno;
+  const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+  node.textContent = (state.pendiente?.vence ? 'Decisión' : 'Turno') + ': ' + Math.floor(seconds / 60) + ':' + String(seconds % 60).padStart(2, '0') + ' restantes';
+}
+setInterval(updateClock, 1000);
+function renderDecision(force = false) {
+  if (!state) return;
+  const d = state.pendiente, p = me(), container = $('decision');
+  const key = JSON.stringify([d, state.turnoId, p?.dinero, p?.oro, socket.connected, busy]);
+  if (!force && key === lastDecisionKey) return;
+  lastDecisionKey = key; container.replaceChildren();
+  if (!d || !p) return;
+  const mine = d.jugadorId === p.id;
+  const add = (text, event, data, disabled = false, primary = false) => { const b = button(text, () => action(event, { ...data, decisionId: d.id }), primary ? 'primary choice' : 'ghost choice'); b.disabled = disabled || busy || !socket.connected; container.append(b); };
+  if (d.tipo === 'votacion') {
+    container.append(element('h3','Propuesta de alianza'),element('p','Caja, oro y propiedades comunes; cada jugador conserva su deuda. Los votos sin respuesta cuentan como rechazo.'));
+    if (d.elegibles.includes(p.id) && !Object.hasOwn(d.votos,p.id)) { add('Unirme a la alianza','responderVotoAlianza',{voto:true},false,true); add('Seguir por mi cuenta','responderVotoAlianza',{voto:false}); }
+    else container.append(element('p','Esperando a los demás jugadores…'));
+  } else if (d.tipo === 'subasta') {
+    container.append(element('h3','Subasta: '+d.nombrePropiedad),element('p','Base '+amount(d.base)+'. Mejor oferta: '+(d.oferta?amount(d.oferta.monto):'ninguna')));
+    const owner = state.jugadores.find(j=>j.id===d.jugadorId);
+    if (!mine && !p.enQuiebra && !(p.alianzaId && p.alianzaId===owner?.alianzaId)) {
+      const input=element('input');input.type='number';input.min=d.oferta?d.oferta.monto+1:d.base;input.step='1';input.max=p.dinero;input.value=input.min;input.setAttribute('aria-label','Importe de la puja');container.append(input);
+      const b=button('Pujar',()=>action('pujarSubasta',{decisionId:d.id,monto:Number(input.value)}),'primary');b.disabled=busy||!socket.connected;container.append(b);
     }
-  };
+  } else if (mine && myTurn()) {
+    if (d.tipo === 'compra') {
+      const c=state.tablero.find(c=>c.nombre===d.nombrePropiedad);
+      container.append(element('h3',d.nombrePropiedad),element('p','Compra el terreno por '+amount(c.precio)+' o cobra la materia prima.'));
+      add('Comprar · '+amount(c.precio),'decidirCompraPropiedad',{comprar:true},p.dinero<c.precio,true);add('Cobrar materia prima · '+amount(c.precio),'decidirCompraPropiedad',{comprar:false});
+    } else if (d.tipo === 'pago') {
+      container.append(element('h3','Pago pendiente · '+amount(d.monto)),element('p',d.motivo));
+      add('Pagar con efectivo','responderDecisionPago',{usarOro:false},false,true);
+      if(d.oroPermitido)add('Usar un lingote de oro','responderDecisionPago',{usarOro:true},p.oro<1);
+      if(state.monopolio){const c=state.tablero[p.posicion];if(c.region==='sur'&&c.dueño===d.dueñoId)add('Ver opción de monopolio','expropiarPropiedad',{nombrePropiedad:c.nombre});}
+    } else if (d.tipo === 'eleccion') {
+      container.append(element('h3','Elige tu siguiente movimiento'));
+      for(const option of d.opciones)add(option.label,'resolverEleccion',{opcion:option.id});
+    }
+  } else container.append(element('p','Esperando la decisión de '+(state.jugadores.find(j=>j.id===d.jugadorId)?.nombre||'otro jugador')+'.'));
 }
-
-socket.on('solicitarVotacionAlianza', (data) => {
-  textoAlianza.innerText = data.mensaje;
-  modalAlianza.classList.remove('oculto');
-});
-
-btnUnirseAlianza.onclick = () => {
-  socket.emit('responderVotoAlianza', true);
-  modalAlianza.classList.add('oculto');
-};
-
-btnRechazarAlianza.onclick = () => {
-  socket.emit('responderVotoAlianza', false);
-  modalAlianza.classList.add('oculto');
-};
-
-socket.on('mostrarOfertaPropiedad', (nombrePropiedad) => verCartaPropiedad(nombrePropiedad, true, false));
-
-socket.on('mostrarCartaModal', (data) => {
-  contenedorBotonesOferta.classList.add('oculto');
-  contenedorBotonesConstruir.classList.add('oculto');
-  document.getElementById('modal-carta-titulo').innerText = data.titulo;
-  document.getElementById('modal-carta-cuerpo').innerHTML = `
-    <p style="font-size: 15px; line-height: 1.5; padding: 10px; background: rgba(0,0,0,0.4); border-radius: 6px; border-left: 4px solid #f39c12;">
-      ${data.texto}
-    </p>
-  `;
-  modalCarta.classList.remove('oculto');
-});
-
-socket.on('solicitarDecisionPago', (data) => {
-  datosPagoPendiente = data;
-  textoPagoOro.innerText = `${data.motivo} - Monto: $${data.monto.toLocaleString()}`;
-
-  const miJugador = stateGlobal?.jugadores.find(j => j.userId === userId || j.socketId === miSocketId);
-  btnPagarOro.disabled = !miJugador || miJugador.oro <= 0;
-
-  modalPagoOro.classList.remove('oculto');
-});
-
-btnPagarEfectivo.onclick = () => {
-  if (datosPagoPendiente) {
-    socket.emit('responderDecisionPago', { usarOro: false, ...datosPagoPendiente });
-    modalPagoOro.classList.add('oculto');
+function openDialog() { if (!$('detalle').open) $('detalle').showModal(); }
+function showProperty(id) {
+  const original=state.tablero[id],c=original.region==='norte'?state.tablero.find(s=>s.nombre===original.baseSur):original;
+  selectedProperty=c.nombre;
+  const box=$('detalle-contenido');box.replaceChildren(element('p',(original.region||'CASILLA ESPECIAL').toUpperCase(),'eyebrow'),element('h2',original.nombre));
+  if(c.tipo!=='propiedad'){box.append(element('p',specialText(c.id)));openDialog();return;}
+  const owner=state.jugadores.find(j=>j.id===c.dueño),n=state.tablero.find(s=>s.baseSur===c.nombre),info=catalog.find(i=>i.nombre===c.nombre);
+  box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')+' · '+amount(c.precio)),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
+  if(info){const table=element('table'),header=element('tr');['Nivel','Nacional','Multinacional'].forEach(x=>header.append(element('th',x)));table.append(header);for(let i=0;i<3;i++){const row=element('tr');[i+1,amount(info.nac[i]),amount(info.exp[i])].forEach(x=>row.append(element('td',x)));table.append(row);}box.append(table);}
+  const actions=element('div',undefined,'detail-actions');
+  if(myProperty(c)&&myTurn()){
+    for(const [label,type]of [['Construir industria nacional','nacional'],['Construir multinacional','exportacion']]){const b=button(label,()=>action('construirIndustria',{nombrePropiedad:c.nombre,tipo:type}),'secondary');b.disabled=!socket.connected||busy||!(state.fase==='tirada'||state.fase==='gestion'&&state.descuento);actions.append(b);}
+    if(me().dinero<0||state.pendiente?.tipo==='pago'&&me().dinero<state.pendiente.monto)actions.append(button('Subastar terreno e industrias',()=>action('subastarPropiedad',{nombrePropiedad:c.nombre})));
   }
-};
-
-btnPagarOro.onclick = () => {
-  if (datosPagoPendiente) {
-    socket.emit('responderDecisionPago', { usarOro: true, ...datosPagoPendiente });
-    modalPagoOro.classList.add('oculto');
-  }
-};
-
-socket.on('errorAcceso', (msg) => {
-  alert(msg);
-});
-
-socket.on('finDeJuegoModal', (data) => {
-  if (textoGanador) textoGanador.innerText = `¡${data.ganador} ha ganado la partida!`;
-  if (textoMotivoVictoria) textoMotivoVictoria.innerText = data.motivo;
-  if (modalVictoria) modalVictoria.classList.remove('oculto');
-});
-
-socket.on('actualizarEstado', (state) => {
-  stateGlobal = state;
-
-  const miJugadorActivo = state.jugadores ? state.jugadores.find(j => j.userId === userId || j.socketId === miSocketId) : null;
-
-  if (miJugadorActivo) {
-    pantallaLogin.classList.add('oculto');
-    pantallaJuego.classList.remove('oculto');
-
-    if (infoSala) infoSala.innerText = `Sala: ${state.codigo}`;
-
-    if (btnIniciarPartida) {
-      if (miJugadorActivo.esLider && !state.enJuego) {
-        btnIniciarPartida.classList.remove('oculto');
-      } else {
-        btnIniciarPartida.classList.add('oculto');
-      }
-    }
-
-    if (btnLevantarBarrera) {
-      if (miJugadorActivo.barreraProteccionista) btnLevantarBarrera.classList.remove('oculto');
-      else btnLevantarBarrera.classList.add('oculto');
-    }
-  }
-
-  document.getElementById('deuda-fmi').innerText = `Deuda FMI: $${(state.deudaFMIGlobal || 0).toLocaleString()}`;
-
-  // Renderizado de Tarjetas de Jugadores estilizadas
-  listaJugadores.innerHTML = '';
-  if (state.jugadores) {
-    state.jugadores.forEach((j, index) => {
-      const esSuTurno = state.enJuego && state.turnoActual === index;
-
-      let badges = '';
-      if (j.esLider) badges += ' 👑';
-      if (j.enQuiebra) badges += ' 🚨';
-      if (j.enAlianza) badges += ' 🤝';
-      if (j.resguardoGolpe) badges += ' 🛡️';
-      if (j.resguardoFuga) badges += ' 🇵🇦';
-      if (j.sombreroSandino) badges += ' 🤠';
-      if (j.deudaPersonal >= 30000) badges += ' 🔨';
-
-      const card = document.createElement('div');
-      card.className = `player-card ${esSuTurno ? 'turno-actual' : ''}`;
-      card.style.borderLeftColor = j.color;
-
-      card.innerHTML = `
-        <div class="player-card-header">
-          <span class="player-name" style="color: ${j.color}">${j.nombre}</span>
-          <span class="player-badges">${badges}</span>
-        </div>
-        <div class="player-card-stats">
-          <span class="stat-item">💵 $${(j.dinero || 0).toLocaleString()}</span>
-          <span class="stat-item" style="color: ${j.deudaPersonal >= 30000 ? '#e74c3c' : '#ddd'}">💳 $${(j.deudaPersonal || 0).toLocaleString()}</span>
-          <span class="stat-item">🪙 ${j.oro || 0}</span>
-        </div>
-      `;
-      listaJugadores.appendChild(card);
-    });
-  }
-
-  // Turno y Controles Contextuales
-  if (state.jugadores && state.jugadores.length > 0) {
-    if (!state.enJuego) {
-      infoTurno.innerText = "Partida finalizada o esperando inicio...";
-      bannerTurno.classList.remove('turno-activo');
-      btnDado.disabled = true;
-      btnPedirPrestamo.disabled = true;
-      btnPagarDeuda.disabled = true;
-    } else {
-      const jugadorActual = state.jugadores[state.turnoActual || 0];
-      if (jugadorActual) {
-        const esMiTurno = (jugadorActual.userId === userId || jugadorActual.socketId === miSocketId) && !jugadorActual.enQuiebra;
-        
-        infoTurno.innerText = esMiTurno ? "¡ES TU TURNO!" : `Turno de: ${jugadorActual.nombre}`;
-        
-        if (esMiTurno) bannerTurno.classList.add('turno-activo');
-        else bannerTurno.classList.remove('turno-activo');
-
-        btnDado.disabled = !esMiTurno;
-
-        const miJugador = state.jugadores.find(j => j.userId === userId || j.socketId === miSocketId);
-        if (miJugador) {
-          btnPedirPrestamo.disabled = !esMiTurno || miJugador.deudaPersonal >= 30000;
-          btnPagarDeuda.disabled = !esMiTurno || miJugador.deudaPersonal <= 0 || miJugador.dinero < 5500;
-        }
-
-        // Resaltar la casilla del jugador actual en el tablero
-        const posCoord = calcularPosicionEnTablero(jugadorActual.posicion || 0);
-        casillaResaltada.style.left = `${posCoord.x - 7}px`;
-        casillaResaltada.style.top = `${posCoord.y - 7}px`;
-        casillaResaltada.classList.remove('oculto');
-      }
-    }
-  }
-
-  // Render de Fichas
-  fichasContainer.innerHTML = '';
-  if (state.jugadores) {
-    state.jugadores.forEach(j => {
-      if (!j.enQuiebra) {
-        const ficha = document.createElement('div');
-        ficha.className = 'ficha';
-        ficha.style.backgroundColor = j.color;
-
-        const pos = calcularPosicionEnTablero(j.posicion || 0);
-        ficha.style.left = `${pos.x}px`;
-        ficha.style.top = `${pos.y}px`;
-
-        fichasContainer.appendChild(ficha);
-      }
-    });
-  }
-
-  document.querySelectorAll('.indicador-construccion').forEach(el => el.remove());
-
-  if (state.tablero) {
-    state.tablero.forEach(casilla => {
-      if (casilla.tipo === 'propiedad') {
-        const pos = calcularPosicionEnTablero(casilla.id);
-
-        if (casilla.region === 'sur' && casilla.industriasNac > 0) {
-          const ind = document.createElement('div');
-          ind.className = 'indicador-construccion indicador-nac';
-          ind.innerText = `N:${casilla.industriasNac}`;
-          ind.style.left = `${pos.x - 12}px`;
-          ind.style.top = `${pos.y - 18}px`;
-          tableroContainer.appendChild(ind);
-        }
-
-        if (casilla.region === 'norte' && casilla.industriasExp > 0) {
-          const ind = document.createElement('div');
-          ind.className = 'indicador-construccion indicador-exp';
-          ind.innerText = `E:${casilla.industriasExp}`;
-          ind.style.left = `${pos.x - 12}px`;
-          ind.style.top = `${pos.y - 18}px`;
-          tableroContainer.appendChild(ind);
-        }
-      }
-    });
-  }
-});
-
-socket.on('mensajeLog', (msg) => {
-  const p = document.createElement('p');
-  p.innerText = msg;
-  logJuego.appendChild(p);
-  logJuego.scrollTop = logJuego.scrollHeight;
-});
-
-function calcularPosicionEnTablero(casilla) {
-  const COORDENADAS = [
-    { x: 725, y: 240 }, { x: 725, y: 270 }, { x: 700, y: 300 }, { x: 725, y: 330 }, { x: 700, y: 360 },
-    { x: 725, y: 395 }, { x: 660, y: 445 }, { x: 595, y: 450 }, { x: 530, y: 450 }, { x: 465, y: 450 },
-    { x: 400, y: 450 }, { x: 335, y: 450 }, { x: 270, y: 450 }, { x: 205, y: 450 }, { x: 120, y: 440 },
-    { x: 75,  y: 395 }, { x: 100, y: 365 }, { x: 75,  y: 330 }, { x: 75,  y: 300 }, { x: 75,  y: 270 },
-    { x: 75,  y: 240 }, { x: 75,  y: 205 }, { x: 75,  y: 175 }, { x: 75,  y: 140 }, { x: 75,  y: 110 },
-    { x: 90,  y: 80 },  { x: 110, y: 45 },  { x: 210, y: 45 },  { x: 270, y: 45 },  { x: 330, y: 45 },
-    { x: 390, y: 45 },  { x: 450, y: 45 },  { x: 510, y: 45 },  { x: 570, y: 45 },  { x: 660, y: 40 },
-    { x: 725, y: 70 },  { x: 725, y: 110 }, { x: 725, y: 140 }, { x: 725, y: 175 }, { x: 725, y: 205 }
-  ];
-
-  const pos = parseInt(casilla, 10);
-  return COORDENADAS[isNaN(pos) ? 0 : pos] || { x: 725, y: 240 };
+  if(myTurn()&&state.monopolio&&c.id===me().posicion&&owner&&!myProperty(c))actions.append(button('Monopolizar terreno e industrias',()=>action('expropiarPropiedad',{nombrePropiedad:c.nombre})));
+  box.append(actions);openDialog();
 }
-
-document.querySelectorAll('.modal-contenido').forEach(modalContenido => {
-  let isDragging = false;
-  let offsetX = 0;
-  let offsetY = 0;
-
-  modalContenido.addEventListener('mousedown', (e) => {
-    if (e.target.classList.contains('cerrar') || e.target.tagName === 'BUTTON') return;
-
-    isDragging = true;
-    offsetX = e.clientX - modalContenido.offsetLeft;
-    offsetY = e.clientY - modalContenido.offsetTop;
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-
-    const x = e.clientX - offsetX;
-    const y = e.clientY - offsetY;
-
-    modalContenido.style.left = `${x}px`;
-    modalContenido.style.top = `${y}px`;
-    modalContenido.style.margin = '0';
-  });
-
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-  });
-});
+function showProperties(){
+  selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','PATRIMONIO','eyebrow'),element('h2','Mis propiedades'));
+  const list=element('div',undefined,'detail-list'),properties=state.tablero.filter(c=>c.region==='sur'&&myProperty(c));
+  if(!properties.length)list.append(element('p','Todavía no tienes propiedades.'));
+  for(const c of properties)list.append(button(c.nombre+' ↗',()=>showProperty(c.id),'secondary'));
+  box.append(list);openDialog();
+}
+function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $50 de ayuda del BID.',32:'Cada jugador entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
+function showResult(result){
+  const key=JSON.stringify(result);if(key===lastResult)return;lastResult=key;selectedProperty=null;
+  $('detalle-contenido').replaceChildren(element('p','FIN DE PARTIDA','eyebrow'),element('h2',result.ganador),element('p',result.motivo));openDialog();
+}
+$('reglas').onclick=()=>{
+  selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','EDICIÓN WEB','eyebrow'),element('h2','Cómo jugar'));
+  for(const [title,text]of [
+    ['Tu turno','Gestiona tus industrias antes de tirar. Después resuelve la casilla y pulsa Terminar turno. Tienes tres minutos; una desconexión conserva tu turno durante un minuto.'],
+    ['Construcción','Compra materias primas en el Sur. Puedes construir hasta tres industrias nacionales y tres multinacionales; cada nivel de exportación necesita el mismo nivel nacional. Ayuda Solidaria permite construir después de tirar al 50%.'],
+    ['Dinero y oro','Las rentas son el precio de casilla por las industrias. Las cadenas suman sus rentas. El oro paga manufacturas e intereses, pero no cartas, industrias, fuga de capitales ni monopolios.'],
+    ['Deudas','Préstamos en cuotas de $5.000 hasta $30.000 por jugador. Puedes amortizar hasta $5.000 en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
+    ['Alianzas y subastas','La alianza comparte efectivo, oro y propiedades, conservando las deudas individuales. En embargo y sin efectivo, subasta una propiedad durante 30 segundos; sin ofertas, el FMI paga el 50% y libera el terreno.'],
+    ['Final','Gana el último jugador activo o el grupo que alcance las doce propiedades con tres industrias nacionales y tres multinacionales en cada una. Unirse en alianza no da una victoria automática.'],
+    ['Adaptación web','Esta edición admite 2–4 jugadores, alianzas de hasta cuatro, amortización sin visitar el FMI y no obliga a desplazarse al FMI al alcanzar una devaluación. El monopolio opcional compra una propiedad y su exportación, no una cadena completa. No incluye venta privada ni negociación de regalos.']
+  ])box.append(element('h3',title),element('p',text));openDialog();
+};
+fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>catalog=data).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
+if(!storageAvailable)notice('Este navegador no permite guardar la sesión. No podrás recuperar tu plaza al cerrarlo.');
+socket.connect();

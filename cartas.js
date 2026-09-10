@@ -47,7 +47,7 @@ const CARTAS_PROPIEDADES = [
   { nombre: "Cacao", terreno: 200, nac: [300, 400, 600], exp: [600, 800, 1200], total: 4100 },
   { nombre: "Algodón", terreno: 250, nac: [350, 500, 750], exp: [750, 1000, 1500], total: 5100 },
   { nombre: "Tabaco", terreno: 300, nac: [450, 600, 900], exp: [900, 1200, 1800], total: 6150 },
-  { nombre: "Café", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7050 },
+  { nombre: "Café", terreno: 350, nac: [500, 700, 1050], exp: [1000, 1400, 2100], total: 7100 },
   { nombre: "Pesca", terreno: 400, nac: [600, 800, 1200], exp: [1200, 1600, 2400], total: 8200 },
   { nombre: "Ganado", terreno: 500, nac: [750, 1000, 1500], exp: [1500, 2000, 3000], total: 10250 },
   { nombre: "Cobre", terreno: 600, nac: [900, 1200, 1800], exp: [1800, 2400, 3600], total: 12300 },

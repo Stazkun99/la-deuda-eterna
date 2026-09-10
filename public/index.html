@@ -2,181 +2,36 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>La Deuda Eterna</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <meta name="theme-color" content="#122b29">
+  <title>La Deuda Eterna · Mesa de juego</title>
   <link rel="stylesheet" href="style.css">
-  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="/socket.io/socket.io.js"></script>
+  <script defer src="app.js"></script>
 </head>
-
 <body>
-  <h1 class="titulo-juego">La Deuda Eterna</h1>
-
-  <!-- Pantalla de Login / Selección de Sala -->
-  <div id="pantalla-login">
-    <div class="card-login">
-      <h2>🌐 Área de Registro</h2>
-      <p>Ingresa tu nombre para comenzar.</p>
-      <input type="text" id="nombre-input" placeholder="Nombre de Jugador / Nación">
-      
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-crear-sala" style="background-color: #27ae60; flex: 1;">Crear Nueva Sala ➕</button>
+  <header class="topbar"><a class="brand" href="/">DE<span>•</span> <span class="brand-name">LA DEUDA ETERNA</span></a><span id="conexion" role="status">Conectando…</span><button id="reglas" class="ghost">Cómo jugar ↗</button></header>
+  <main>
+    <section id="login" class="login-layout">
+      <div class="intro"><p class="eyebrow">ECONOMÍA · ESTRATEGIA · SOLIDARIDAD</p><h1>El futuro<br>está en <em>juego.</em></h1><p>Industrializa el Sur. Llega a los mercados del Norte.<br>Negocia, construye alianzas y desafía al FMI.</p><div class="intro-tags"><span>2–4 jugadores</span><span>En tiempo real</span><span>Una mesa compartida</span></div></div>
+      <form id="acceso" class="login-card"><p class="eyebrow">TU LUGAR EN LA MESA</p><h2>Entra a la partida</h2><label for="nombre">Tu nombre o nación</label><input id="nombre" required maxlength="40" autocomplete="nickname" placeholder="¿Cómo te llamas?"><button id="crear" type="button" class="primary">Crear una nueva sala <span>＋</span></button><div class="separator">o únete a tus amigos</div><label for="codigo">Código de sala</label><input id="codigo" minlength="3" maxlength="12" pattern="[A-Za-z0-9_\-]{3,12}" placeholder="Ej. ANDES" autocapitalize="characters" autocomplete="off"><button id="unirse" type="submit" class="secondary">Unirme a la sala →</button><p class="muted">Tu plaza se guarda en este navegador para que puedas volver.</p></form>
+    </section>
+    <section id="mesa" hidden>
+      <div class="mesa-heading"><div><p class="eyebrow">MESA MULTIJUGADOR</p><h1>La Deuda Eterna<span id="sala-codigo"></span></h1></div><div class="heading-actions"><button id="copiar" class="ghost">Copiar código</button><button id="salir" class="ghost danger">Abandonar ↗</button></div></div>
+      <div class="game-layout">
+        <div class="board-column"><p class="scroll-hint">Toca una casilla para ver su nombre, precio e industrias.</p><div class="board-scroll" tabindex="0" aria-label="Tablero desplazable"><div id="tablero" aria-label="Tablero de 40 casillas">
+          <div class="board-center"><div class="center-top"><span>NORTE / MERCADOS</span><span id="barrera">COMERCIO ABIERTO</span></div><div class="center-title"><p class="eyebrow">UN JUEGO DE PODER Y RESISTENCIA</p><h2>DEUDA<br><em>ETERNA</em><span>↗</span></h2><p>Construir. Negociar. Resistir.</p></div><div id="ultima-carta" class="last-card"><span class="eyebrow">LA MESA ESTÁ LISTA</span><p>Una decisión puede cambiar toda la partida.</p></div><div class="center-stats"><div><span>DEUDA TOTAL AL FMI</span><strong id="deuda">$0</strong></div><div><span>RONDA DE ACCIÓN</span><strong id="turno-centro">En espera</strong></div></div><div class="center-bottom"><span>SUR / MATERIAS PRIMAS</span><span>● Fichas &nbsp; ▰ Industrias</span></div></div>
+        </div></div><div class="board-caption"><span><i class="dot south"></i> Materias primas del Sur</span><span><i class="dot north"></i> Manufacturas del Norte</span><span>Pulsa una casilla para ver sus detalles ↗</span></div></div>
+        <aside class="sidebar"><section class="panel turn-panel"><p class="eyebrow">EL SIGUIENTE MOVIMIENTO</p><h2 id="turno">Esperando jugadores</h2><p id="fase" class="muted"></p><p id="reloj" class="muted" hidden></p><div id="inicio"><label class="check"><input type="checkbox" id="monopolio"> Permitir monopolios en esta partida</label><button id="iniciar" class="primary">Iniciar partida →</button></div><div id="acciones" hidden><button id="tirar" class="primary">Tirar los dados ⚄</button><button id="terminar" class="secondary">Terminar turno →</button><div class="button-pair"><button id="prestamo" class="ghost">Préstamo +$5.000</button><button id="amortizar" class="ghost">Amortizar deuda</button></div><button id="levantar" class="ghost" hidden>Levantar barrera · $2.000</button><button id="propiedades" class="ghost">Mis propiedades ↗</button></div><div id="decision" aria-live="polite"></div></section>
+          <section class="panel"><div class="section-head"><h2>En la mesa</h2><span id="cantidad"></span></div><div id="jugadores"></div></section>
+          <section class="panel activity"><div class="tabs"><button id="tab-registro" aria-selected="true">Registro</button><button id="tab-chat" aria-selected="false">Chat</button></div><div id="registro" class="messages" role="log" aria-label="Registro de partida"></div><div id="chat-panel" hidden><div id="chat" class="messages" role="log" aria-label="Mensajes de chat"></div><form id="chat-form"><input id="mensaje" maxlength="300" aria-label="Mensaje" placeholder="Habla con la mesa…"><button class="primary" aria-label="Enviar mensaje">↑</button></form></div></section>
+        </aside>
       </div>
-
-      <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 20px 0;">
-
-      <p>O ingresa el código de una sala existente:</p>
-      <input type="text" id="sala-input" placeholder="Código de Sala (ej. LOBBY1)" style="text-transform: uppercase;">
-      <button id="btn-unirse-sala" style="background-color: #2980b9; width: 100%;">Unirse a Sala 🚀</button>
-    </div>
-  </div>
-
-  <!-- Pantalla Principal del Juego -->
-  <div id="pantalla-juego" class="oculto">
-    <div class="contenedor-tablero">
-      <div id="tablero">
-        <h2 id="deuda-fmi">Deuda FMI: $500,000</h2>
-        <div id="fichas-container"></div>
-        <div id="casilla-resaltada" class="casilla-resaltada oculto"></div>
-      </div>
-    </div>
-
-    <div class="panel-control" id="panel-control">
-      <div class="cabecera-sala">
-        <h3 id="info-sala" style="color: #f39c12; margin: 0;">Sala: -</h3>
-        <button id="btn-abandonar-sala" class="btn-abandonar">🚪 Abandonar</button>
-      </div>
-      
-      <div id="banner-turno" class="banner-turno">
-        <h3 id="info-turno">Esperando inicio...</h3>
-      </div>
-
-      <!-- Botón de Inicio reservado para el Anfitrión -->
-      <button id="btn-iniciar-partida" class="oculto btn-iniciar">▶️ INICIAR PARTIDA</button>
-
-      <button id="btn-dado" class="btn-dado">Tirar Dado 🎲</button>
-
-      <!-- Operaciones Financieras FMI -->
-      <div style="display: flex; gap: 8px; margin-top: 10px;">
-        <button id="btn-pedir-prestamo" style="background-color: #27ae60; font-size: 13px; padding: 10px; flex: 1;">Pedir Préstamo 🏦</button>
-        <button id="btn-pagar-deuda" style="background-color: #c0392b; font-size: 13px; padding: 10px; flex: 1;">Pagar Deuda 💳</button>
-      </div>
-
-      <button id="btn-levantar-barrera" class="oculto" style="margin-top: 10px; background-color: #d35400; width: 100%;">Pagar Peaje Barrera ($2,000) 🚧</button>
-      
-      <div style="display: flex; gap: 8px; margin-top: 10px;">
-        <button id="btn-propiedades" style="background-color: #e67e22; font-size: 13px; padding: 10px; flex: 1;">Mis Propiedades 📜</button>
-        <button id="btn-reglamento" style="background-color: #8e44ad; font-size: 13px; padding: 10px; flex: 1;">Reglamento 📖</button>
-      </div>
-
-      <h4>Jugadores en Sala:</h4>
-      <div id="lista-jugadores" class="contenedor-tarjetas-jugadores"></div>
-
-      <!-- Sistema de Pestañas para Chat y Registro de Jugadas -->
-      <div class="contenedor-comunicacion">
-        <div class="pestanas-comunicacion">
-          <button id="tab-log" class="tab-btn activa">Registro 📜</button>
-          <button id="tab-chat" class="tab-btn">Chat 💬</button>
-        </div>
-
-        <div id="sec-log" class="sec-comunicacion">
-          <div id="log-juego" class="caja-mensajes"></div>
-        </div>
-
-        <div id="sec-chat" class="sec-comunicacion oculto">
-          <div id="chat-mensajes" class="caja-mensajes"></div>
-          <div class="caja-envio-chat">
-            <input type="text" id="input-chat" placeholder="Escribe un mensaje..." maxlength="120">
-            <button id="btn-enviar-chat">Enviar</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Visor de Cartas, Construcción y Subasta -->
-  <div id="modal-carta" class="modal oculto">
-    <div class="modal-contenido" style="text-align: center;">
-      <span id="cerrar-carta" class="cerrar">&times;</span>
-      <h2 id="modal-carta-titulo">Tarjeta</h2>
-      <div id="modal-carta-cuerpo">
-        <p id="modal-carta-texto"></p>
-      </div>
-
-      <div id="contenedor-botones-oferta" class="oculto" style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-oferta-comprar" style="background-color: #27ae60; flex: 1;">Comprar Empresa 🏢</button>
-        <button id="btn-oferta-pasar" style="background-color: #e74c3c; flex: 1;">Pasar ❌</button>
-      </div>
-
-      <div id="contenedor-botones-construir" class="oculto" style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
-        <button id="btn-construir-nac" style="background-color: #2980b9;">Construir Industria Nacional 🏗️</button>
-        <button id="btn-construir-exp" style="background-color: #8e44ad;">Expandir a Multinacional 🌍</button>
-        <button id="btn-expropiar" style="background-color: #d35400;">Expropiar / Monopolio 🏴‍☠️</button>
-        <button id="btn-subastar" style="background-color: #c0392b;">Subastar al 50% (Embargo) 🔨</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Lista de Mis Propiedades -->
-  <div id="modal-mis-propiedades" class="modal oculto">
-    <div class="modal-contenido">
-      <span id="cerrar-mis-propiedades" class="cerrar">&times;</span>
-      <h2>Mis Propiedades</h2>
-      <div id="lista-mis-propiedades-container"></div>
-    </div>
-  </div>
-
-  <!-- Modal Votación Alianza -->
-  <div id="modal-alianza" class="modal oculto">
-    <div class="modal-contenido" style="text-align: center;">
-      <h2>¡PROPUESTA DE UNIÓN LATINOAMERICANA! ✊</h2>
-      <p id="texto-alianza">¿Deseas unirte a la alianza económica para resistir al FMI?</p>
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-unirse-alianza" style="background-color: #27ae60; flex: 1;">¡UNIRME! 🤝</button>
-        <button id="btn-rechazar-alianza" style="background-color: #e74c3c; flex: 1;">No Unirme ❌</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Método de Pago (Efectivo / Oro) -->
-  <div id="modal-pago-oro" class="modal oculto">
-    <div class="modal-contenido" style="text-align: center;">
-      <h2>Selecciona tu Método de Pago</h2>
-      <p id="texto-pago-oro">Debes realizar un pago.</p>
-      <div style="display: flex; gap: 10px; margin-top: 15px;">
-        <button id="btn-pagar-efectivo" style="background-color: #27ae60; flex: 1;">Pagar con Efectivo 💵</button>
-        <button id="btn-pagar-oro" style="background-color: #f1c40f; color: #000; flex: 1;">Usar 1 Lingote de Oro 🪙</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Reglamento -->
-  <div id="modal-reglamento" class="modal oculto">
-    <div class="modal-contenido">
-      <span id="cerrar-reglamento" class="cerrar">&times;</span>
-      <h2>Reglamento Oficial: La Deuda Eterna</h2>
-      <div class="texto-reglamento">
-        <h3>1. Objetivo del Juego</h3>
-        <p>Aprovechar las materias primas de Latinoamérica, industrializarlas e introducir los productos elaborados en el Norte. Superar los condicionamientos del FMI y lograr la independencia económica.</p>
-
-        <h3>2. Embargo y Quiebra ($30,000 de Deuda)</h3>
-        <p>Si alcanzás los $30,000 de deuda, entras en Embargo. No puedes pedir préstamos. Para saldar deudas debes subastar tus bienes al 50% de su valor acumulado.</p>
-
-        <h3>3. Ayuda Solidaria (Casilla 10)</h3>
-        <p>Durante el turno en que caigas en Ayuda Solidaria, todas las construcciones de industrias se cobran a mitad de precio.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal Fin de Juego / Victoria -->
-  <div id="modal-victoria" class="modal oculto">
-    <div class="modal-contenido" style="text-align: center; border: 2px solid #f1c40f; box-shadow: 0 0 25px rgba(241, 196, 15, 0.5);">
-      <h1 style="color: #f1c40f; margin-bottom: 10px;">🏆 ¡¡¡VICTORIA!!! 🏆</h1>
-      <h2 id="texto-ganador" style="color: #fff; font-size: 22px;"></h2>
-      <p id="texto-motivo-victoria" style="color: #ddd; font-size: 15px; margin: 15px 0; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;"></p>
-      <button id="btn-cerrar-victoria" style="background-color: #27ae60; font-size: 16px; width: 100%; padding: 12px;">Aceptar 🎉</button>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+    </section>
+    <p id="aviso" role="alert" hidden></p>
+  </main>
+  <dialog id="detalle"><button id="cerrar-detalle" class="dialog-close" aria-label="Cerrar">×</button><div id="detalle-contenido"></div></dialog>
+  <footer>LA DEUDA ETERNA <span>Una mesa. Muchas estrategias.</span></footer>
 </body>
 </html>

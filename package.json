@@ -1,18 +1,22 @@
 {
   "name": "deuda-eterna-backend",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Juego de mesa multijugador con tablero HTML y estado autoritativo",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "node --test",
+    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "cors": "^2.8.6",
     "express": "^5.2.1",
     "socket.io": "^4.8.3"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }
