@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://la-deuda-eterna.onrender.com/sitemap.xml
