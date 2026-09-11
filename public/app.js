@@ -14,6 +14,7 @@ try {
 const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
+let seenRoll = null, diceTimer;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -64,6 +65,7 @@ $('prestamo').onclick = () => action('pedirPrestamo');
 $('amortizar').onclick = () => action('pagarDeuda');
 $('levantar').onclick = () => action('levantarBarrera');
 $('propiedades').onclick = showProperties;
+$('cerrar-industrial').onclick = () => $('industrial-dialog').close();
 $('cerrar-detalle').onclick = () => $('detalle').close();
 $('cerrar-carta').onclick = $('continuar-carta').onclick = () => $('carta-dialog').close();
 $('carta-dialog').addEventListener('click', e => { if (e.target === $('carta-dialog')) $('carta-dialog').close(); });
@@ -87,14 +89,16 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; });
+socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { renderLastCard(data); showCard(data, true); });
 socket.on('finDeJuegoModal', showResult);
 socket.on('actualizarEstado', next => {
+  const previousRoom = state?.codigo;
   state = next;
   if (!me()) return;
+  renderDice(state.ultimaTirada, previousRoom === state.codigo);
   joinedRoom = state.codigo;
   $('login').hidden = true; $('mesa').hidden = false;
   $('sala-codigo').textContent = state.codigo;
@@ -179,6 +183,32 @@ function updateControls() {
   $('levantar').hidden = !state.barreraProteccionista;
   $('levantar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.dinero < 2000;
 }
+function renderDice(roll, animate) {
+  if (!roll) { seenRoll = null; clearTimeout(diceTimer); $('dados-panel').hidden = true; return; }
+  if (roll.id === seenRoll) return;
+  seenRoll = roll.id;
+  clearTimeout(diceTimer);
+  const panel = $('dados-panel'), faces = $('dados-caras'), label = $('dados-resultado');
+  panel.hidden = false;
+  faces.replaceChildren();
+  const dice = roll.dados.map((value, i) => {
+    const die = element('span', '⚀', 'die'); die.style.setProperty('--delay', (i * 60) + 'ms'); faces.append(die); return die;
+  });
+  const finish = () => {
+    panel.classList.remove('rolling');
+    dice.forEach((die, i) => { die.textContent = ['⚀','⚁','⚂','⚃','⚄','⚅'][roll.dados[i] - 1]; });
+    label.textContent = roll.jugador + ': ' + roll.dados.join(' + ') + ' = ' + roll.total;
+  };
+  if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+  panel.classList.add('rolling'); label.textContent = roll.jugador + ' está tirando…';
+  const started = performance.now();
+  const frame = () => {
+    if (performance.now() - started >= 850) { finish(); return; }
+    dice.forEach(die => { die.textContent = ['⚀','⚁','⚂','⚃','⚄','⚅'][Math.floor(Math.random() * 6)]; });
+    diceTimer = setTimeout(frame, 85);
+  };
+  frame();
+}
 function updateClock() {
   const node = $('reloj');
   node.hidden = !state?.enJuego;
@@ -194,6 +224,7 @@ function renderDecision(force = false) {
   const key = JSON.stringify([d, state.turnoId, p?.dinero, p?.oro, socket.connected, busy]);
   if (!force && key === lastDecisionKey) return;
   lastDecisionKey = key; container.replaceChildren();
+  if (d?.efecto !== 'industrializar' || d.jugadorId !== p?.id) $('industrial-dialog').close();
   if (!d || !p) return;
   const mine = d.jugadorId === p.id;
   const add = (text, event, data, disabled = false, primary = false) => { const b = button(text, () => action(event, { ...data, decisionId: d.id }), primary ? 'primary choice' : 'ghost choice'); b.disabled = disabled || busy || !socket.connected; container.append(b); };
@@ -219,8 +250,22 @@ function renderDecision(force = false) {
       if(d.oroPermitido)add('Usar un lingote de oro','responderDecisionPago',{usarOro:true},p.oro<1);
       if(state.monopolio){const c=state.tablero[p.posicion];if(c.region==='sur'&&c.dueño===d.dueñoId)add('Ver opción de monopolio','expropiarPropiedad',{nombrePropiedad:c.nombre});}
     } else if (d.tipo === 'eleccion') {
-      container.append(element('h3','Elige tu siguiente movimiento'));
-      for(const option of d.opciones)add(option.label,'resolverEleccion',{opcion:option.id});
+      container.append(element('h3',d.efecto === 'industrializar' ? 'Industrialización gratuita' : 'Elige tu siguiente movimiento'));
+      if (d.efecto === 'industrializar') {
+        const dialog = $('industrial-dialog'), options = $('industrial-opciones');
+        const freeLand = d.opciones.some(o => !o.id.includes(':'));
+        $('industrial-ayuda').textContent = freeLand ? 'Elige un terreno disponible. Lo recibes con su primera industria, sin pagar.' : 'Todos los terrenos tienen dueño. Elige una industria gratuita para una propiedad tuya o de tu alianza.';
+        options.replaceChildren();
+        for (const option of d.opciones) {
+          const b = button(option.label + ' · Gratis', () => action('resolverEleccion', { decisionId: d.id, opcion: option.id }), 'secondary choice');
+          b.disabled = busy || !socket.connected;
+          const art = catalog.find(c => c.nombre === option.id.split(':')[0]);
+          if (art?.icono) { const img = element('img'); img.src = art.icono; img.alt = ''; b.prepend(img); }
+          options.append(b);
+        }
+        container.append(button('Elegir propiedad o industria →', () => { if (!dialog.open) dialog.showModal(); }, 'primary'));
+        if (!dialog.open) dialog.showModal();
+      } else for(const option of d.opciones)add(option.label,'resolverEleccion',{opcion:option.id});
     }
   } else container.append(element('p','Esperando la decisión de '+(state.jugadores.find(j=>j.id===d.jugadorId)?.nombre||'otro jugador')+'.'));
 }

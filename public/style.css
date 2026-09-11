@@ -55,3 +55,16 @@
  #carta-dialog h2{font-size:19px}
  #carta-imagen{max-height:48vh}
 }
+
+/* Free industrialization choices and server-confirmed dice. */
+#industrial-dialog{width:min(580px,94vw);max-height:90vh;padding:30px;overflow:auto}
+#industrial-opciones{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}
+#industrial-opciones button{display:flex;align-items:center;gap:10px;text-align:left;min-height:66px;white-space:normal}
+#industrial-opciones img{width:42px;height:32px;object-fit:contain}
+#dados-panel{margin:14px 0;padding:12px;border-radius:12px;background:#f0eee1;text-align:center}
+#dados-caras{display:flex;justify-content:center;gap:8px}
+.die{display:inline-block;font:52px/1.15 'Segoe UI Symbol',sans-serif;color:#244c3c}
+#dados-resultado{margin:6px 0 0;font-size:13px}
+.rolling .die{animation:roll-die .28s ease-in-out infinite alternate;animation-delay:var(--delay)}
+@keyframes roll-die{from{transform:translateY(-5px) rotate(-18deg)}to{transform:translateY(4px) rotate(18deg)}}
+@media(prefers-reduced-motion:reduce){.rolling .die{animation:none}}

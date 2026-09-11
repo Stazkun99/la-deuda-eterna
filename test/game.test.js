@@ -161,3 +161,48 @@ test('simulación prolongada mantiene dinero entero, propiedad válida y niveles
   for(const c of r.tablero.filter(c=>c.region==='sur')){assert.ok(c.dueño===null||game.player(r,c.dueño));assert.ok(c.industriasNac>=0&&c.industriasNac<=3);const n=game.north(r,c);assert.ok(n.industriasExp>=0&&n.industriasExp<=c.industriasNac);if(n.industriasExp)assert.equal(n.dueño,c.dueño);}
  }
 });
+
+test('Industrialización al caer permite elegir terreno libre sin cobrar y bloquea elecciones ajenas o repetidas', () => {
+  const {game,r,act}=fixture();const p=r.jugadores[0];p.posicion=22;
+  const money=p.dinero;act(0,'tirarDado');assert.equal(p.posicion,24);
+  const d=r.pendiente;assert.equal(d.efecto,'industrializar');assert.equal(d.opciones.length,12);
+  rejects(()=>act(1,'resolverEleccion',{decisionId:d.id,opcion:'Cobre'}));
+  rejects(()=>act(0,'resolverEleccion',{decisionId:d.id,opcion:'Cobre:nacional'}));
+  act(0,'resolverEleccion',{decisionId:d.id,opcion:'Cobre'});
+  assert.equal(game.sur(r,'Cobre').dueño,p.id);assert.equal(game.sur(r,'Cobre').industriasNac,1);
+  assert.equal(p.dinero,money);assert.equal(r.fase,'gestion');assert.equal(r.pendiente,null);
+  rejects(()=>act(0,'resolverEleccion',{decisionId:d.id,opcion:'Cobre'}));
+});
+
+test('Industrialización sin terrenos libres mejora nacionales o multinacionales propias gratuitamente', () => {
+  for(const type of ['nacional','exportacion']) {
+    const {game,r,act}=fixture();const p=r.jugadores[0];p.posicion=22;
+    for(const c of r.tablero.filter(c=>c.region==='sur'))c.dueño=r.jugadores[1].id;
+    const c=game.sur(r,'Cobre');c.dueño=p.id;c.industriasNac=1;
+    const money=p.dinero;act(0,'tirarDado');
+    assert.deepEqual(r.pendiente.opciones.map(o=>o.id),['Cobre:nacional','Cobre:exportacion']);
+    act(0,'resolverEleccion',{decisionId:r.pendiente.id,opcion:'Cobre:'+type});
+    assert.equal(c.industriasNac,type==='nacional'?2:1);
+    assert.equal(game.north(r,c).industriasExp,type==='exportacion'?1:0);
+    if(type==='exportacion')assert.equal(game.north(r,c).dueño,p.id);
+    assert.equal(p.dinero,money);assert.equal(r.fase,'gestion');
+  }
+});
+
+test('Industrialización sin mejoras disponibles informa y no bloquea el turno',()=>{
+  const {r,act}=fixture();r.jugadores[0].posicion=22;
+  for(const c of r.tablero.filter(c=>c.region==='sur'))c.dueño=r.jugadores[1].id;
+  act(0,'tirarDado');assert.equal(r.pendiente,null);assert.equal(r.fase,'gestion');
+  assert.ok(r.registro.some(s=>s.includes('no quedan terrenos libres')));
+});
+
+test('la tirada pública contiene los dados reales de 2, 3 o 4 dados y se conserva al recuperar la sala',()=>{
+  for(const [debt,count] of [[0,2],[10000,3],[20000,4]]) {
+    const {game,r,act}=fixture();r.jugadores[0].deudaPersonal=debt;
+    act(0,'tirarDado');const roll=game.state(r).ultimaTirada;
+    assert.equal(roll.dados.length,count);assert.equal(roll.total,count);assert.equal(r.jugadores[0].posicion,count);
+    assert.ok(roll.id);assert.equal(roll.jugador,r.jugadores[0].nombre);
+    const restored=new Game({rooms:structuredClone(game.rooms)});
+    assert.deepEqual(restored.state(restored.rooms.PRUEBA).ultimaTirada,roll);
+  }
+});

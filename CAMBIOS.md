@@ -32,3 +32,11 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 - Tarjeta original en los detalles de cada propiedad.
 - Recursos WebP incluidos y extracción reproducible, sin nuevas dependencias para Render.
 - Pruebas de cobertura de recursos, correspondencia de cartas, repetición y recuperación de salas.
+
+## Industrialización y dados
+
+- Industrialización abre una ventana con los terrenos libres y sus iconos para elegir terreno y primera industria gratuitos.
+- Si todos los terrenos están ocupados, muestra las mejoras nacionales o multinacionales disponibles en propiedades propias o de la alianza. Si no hay mejoras posibles, lo explica en el registro sin bloquear el turno.
+- Se puede cerrar la ventana y reabrir la elección desde el panel de acciones.
+- Los dados se animan brevemente y terminan en los valores confirmados por el servidor, con dos, tres o cuatro dados según la deuda. La última tirada queda visible y se recupera al reconectar; se respeta la preferencia de movimiento reducido.
+- Verificación: 42 pruebas automáticas y selección manual en navegador de terreno libre y multinacional gratuita con todos los terrenos ocupados.
