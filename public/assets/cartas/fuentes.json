@@ -1,0 +1,563 @@
+[
+  {
+    "archivo": "propiedades/petroleo.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      22.8,
+      22.8,
+      187.2,
+      269.4
+    ]
+  },
+  {
+    "archivo": "propiedades/tabaco.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      215.2,
+      22.8,
+      379.6,
+      269.4
+    ]
+  },
+  {
+    "archivo": "propiedades/algodon.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      407.6,
+      22.8,
+      572.0,
+      269.4
+    ]
+  },
+  {
+    "archivo": "propiedades/estano.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      22.8,
+      298,
+      187.2,
+      544.6
+    ]
+  },
+  {
+    "archivo": "propiedades/azucar.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      215.2,
+      298,
+      379.6,
+      544.6
+    ]
+  },
+  {
+    "archivo": "propiedades/cobre.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      407.6,
+      298,
+      572.0,
+      544.6
+    ]
+  },
+  {
+    "archivo": "propiedades/pesca.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      22.8,
+      573.1,
+      187.2,
+      819.7
+    ]
+  },
+  {
+    "archivo": "propiedades/cacao.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      215.2,
+      573.1,
+      379.6,
+      819.7
+    ]
+  },
+  {
+    "archivo": "propiedades/banano.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 1,
+    "recorte": [
+      407.6,
+      573.1,
+      572.0,
+      819.7
+    ]
+  },
+  {
+    "archivo": "propiedades/cafe.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 3,
+    "recorte": [
+      215.2,
+      22.8,
+      379.6,
+      269.4
+    ]
+  },
+  {
+    "archivo": "propiedades/ganado.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 3,
+    "recorte": [
+      407.6,
+      22.8,
+      572.0,
+      269.4
+    ]
+  },
+  {
+    "archivo": "propiedades/hierro.webp",
+    "pdf": "PROPIEDADES.pdf",
+    "pagina": 3,
+    "recorte": [
+      215.2,
+      298,
+      379.6,
+      544.6
+    ]
+  },
+  {
+    "archivo": "solidaridad/03.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 1,
+    "recorte": [
+      18.9,
+      19.5,
+      183.3,
+      266.1
+    ]
+  },
+  {
+    "archivo": "solidaridad/16.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 1,
+    "recorte": [
+      224.4,
+      17.9,
+      386,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/14.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 1,
+    "recorte": [
+      398.4,
+      17.9,
+      562.8,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/01.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      18,
+      17.9,
+      182.4,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/08.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      221.1,
+      17.9,
+      385.5,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/04.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      412.8,
+      17.9,
+      577.2,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/02.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      17.9,
+      284.5,
+      182.4,
+      531.1
+    ]
+  },
+  {
+    "archivo": "solidaridad/13.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      412.8,
+      284.5,
+      577.2,
+      531.1
+    ]
+  },
+  {
+    "archivo": "solidaridad/09.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      18.9,
+      542.6,
+      183.3,
+      802.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/12.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      221.1,
+      555.9,
+      385.5,
+      802.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/10.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 2,
+    "recorte": [
+      412.8,
+      555.9,
+      577.2,
+      802.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/05.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      18.8,
+      17.9,
+      183.2,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/17.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      223.9,
+      17.9,
+      388.3,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/07.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      412.8,
+      17.9,
+      577.2,
+      264.5
+    ]
+  },
+  {
+    "archivo": "solidaridad/11.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      18.4,
+      276.6,
+      182.9,
+      523.2
+    ]
+  },
+  {
+    "archivo": "solidaridad/20.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      223.5,
+      276.6,
+      387.9,
+      523.2
+    ]
+  },
+  {
+    "archivo": "solidaridad/06.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      412.8,
+      276.6,
+      577.2,
+      523.2
+    ]
+  },
+  {
+    "archivo": "solidaridad/15.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      18.4,
+      540.7,
+      182.9,
+      787.3
+    ]
+  },
+  {
+    "archivo": "solidaridad/19.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      223.9,
+      540.7,
+      388.3,
+      787.3
+    ]
+  },
+  {
+    "archivo": "solidaridad/18.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 3,
+    "recorte": [
+      412.8,
+      540.7,
+      577.2,
+      787.3
+    ]
+  },
+  {
+    "archivo": "condiciones/01.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      22.6,
+      23.3,
+      187,
+      269.9
+    ]
+  },
+  {
+    "archivo": "condiciones/02.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      209.5,
+      24.5,
+      373.9,
+      271.1
+    ]
+  },
+  {
+    "archivo": "condiciones/03.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      391.4,
+      24.6,
+      555.8,
+      271.2
+    ]
+  },
+  {
+    "archivo": "condiciones/04.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      23.2,
+      300.2,
+      187.6,
+      546.8
+    ]
+  },
+  {
+    "archivo": "condiciones/16.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      212,
+      301,
+      376.4,
+      547.6
+    ]
+  },
+  {
+    "archivo": "condiciones/17.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      391.3,
+      300.2,
+      555.7,
+      546.8
+    ]
+  },
+  {
+    "archivo": "condiciones/05.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      22.8,
+      573.1,
+      187.2,
+      819.7
+    ]
+  },
+  {
+    "archivo": "condiciones/06.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      213.6,
+      573.1,
+      378,
+      819.7
+    ]
+  },
+  {
+    "archivo": "condiciones/07.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 1,
+    "recorte": [
+      395.8,
+      573.1,
+      560.2,
+      819.7
+    ]
+  },
+  {
+    "archivo": "condiciones/08.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      22.4,
+      22.8,
+      186.8,
+      269.4
+    ]
+  },
+  {
+    "archivo": "condiciones/09.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      203.3,
+      22.8,
+      367.7,
+      269.4
+    ]
+  },
+  {
+    "archivo": "condiciones/10.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      407.6,
+      22.8,
+      572,
+      269.4
+    ]
+  },
+  {
+    "archivo": "condiciones/11.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      22.4,
+      285.4,
+      186.8,
+      532
+    ]
+  },
+  {
+    "archivo": "condiciones/12.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      203.3,
+      286.4,
+      367.7,
+      533
+    ]
+  },
+  {
+    "archivo": "condiciones/13.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      407.6,
+      287.6,
+      572,
+      534.2
+    ]
+  },
+  {
+    "archivo": "condiciones/14.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      22.8,
+      573.1,
+      187.2,
+      819.7
+    ]
+  },
+  {
+    "archivo": "condiciones/15.webp",
+    "pdf": "CONDICIONES.pdf",
+    "pagina": 2,
+    "recorte": [
+      206,
+      573.1,
+      370.4,
+      819.7
+    ]
+  },
+  {
+    "archivo": "reversos/solidaridad.webp",
+    "pdf": "SOLIDARIDAD2.pdf",
+    "pagina": 1,
+    "recorte": [
+      25.5,
+      293.3,
+      189.9,
+      539.9
+    ]
+  },
+  {
+    "archivo": "reversos/condiciones.webp",
+    "pdf": "CONDICIONES 2.pdf",
+    "pagina": 1,
+    "recorte": [
+      22,
+      22,
+      187,
+      269
+    ]
+  }
+]

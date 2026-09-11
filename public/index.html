@@ -32,6 +32,16 @@
     <p id="aviso" role="alert" hidden></p>
   </main>
   <dialog id="detalle"><button id="cerrar-detalle" class="dialog-close" aria-label="Cerrar">×</button><div id="detalle-contenido"></div></dialog>
+  <dialog id="carta-dialog" aria-labelledby="carta-titulo">
+    <button id="cerrar-carta" class="dialog-close" aria-label="Cerrar carta">×</button>
+    <p id="carta-tipo" class="eyebrow"></p>
+    <h2 id="carta-titulo"></h2>
+    <p id="carta-jugador" class="muted"></p>
+    <img id="carta-imagen" alt="">
+    <p id="carta-efecto"></p>
+    <p class="card-note">Carta original del PDF. El efecto aplicado en esta edición se indica arriba.</p>
+    <button id="continuar-carta" class="primary">Volver al tablero →</button>
+  </dialog>
   <footer>LA DEUDA ETERNA <span>Una mesa. Muchas estrategias.</span></footer>
 </body>
 </html>

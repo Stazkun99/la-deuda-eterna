@@ -13,7 +13,7 @@ try {
 } catch { storageAvailable = false; userId = 'usr_' + secureId().slice(0, 24); sessionToken = secureId(); }
 const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
-let lastDecisionKey = null, lastResult = null;
+let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -65,6 +65,8 @@ $('amortizar').onclick = () => action('pagarDeuda');
 $('levantar').onclick = () => action('levantarBarrera');
 $('propiedades').onclick = showProperties;
 $('cerrar-detalle').onclick = () => $('detalle').close();
+$('cerrar-carta').onclick = $('continuar-carta').onclick = () => $('carta-dialog').close();
+$('carta-dialog').addEventListener('click', e => { if (e.target === $('carta-dialog')) $('carta-dialog').close(); });
 $('detalle').addEventListener('click', e => { if (e.target === $('detalle')) $('detalle').close(); });
 $('tab-registro').onclick = () => switchTab(false);
 $('tab-chat').onclick = () => switchTab(true);
@@ -85,10 +87,10 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; });
+socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
-socket.on('mostrarCartaModal', data => { $('ultima-carta').replaceChildren(element('span', data.titulo, 'eyebrow'), element('p', data.texto)); });
+socket.on('mostrarCartaModal', data => { renderLastCard(data); showCard(data, true); });
 socket.on('finDeJuegoModal', showResult);
 socket.on('actualizarEstado', next => {
   state = next;
@@ -100,7 +102,7 @@ socket.on('actualizarEstado', next => {
   $('barrera').textContent = state.barreraProteccionista ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
   $('registro').replaceChildren();
   for (const message of state.registro || []) log($('registro'), message);
-  if (state.ultimaCarta) $('ultima-carta').replaceChildren(element('span', state.ultimaCarta.titulo, 'eyebrow'), element('p', state.ultimaCarta.texto));
+  renderLastCard(state.ultimaCarta);
   renderBoard(); renderPlayers(); updateControls(); renderDecision(); updateClock();
   if (state.resultado) showResult(state.resultado);
   else if (!state.finalizada) lastResult = null;
@@ -121,6 +123,16 @@ function renderBoard() {
       tile.dataset.casilla = c.id;
       tile.append(element('span', String(c.id).padStart(2, '0'), 'tile-number'), element('span', icons[c.baseSur || c.nombre] || (c.nombre.includes('Solidaridad') ? '✦' : c.nombre.includes('FMI') ? '▥' : '↗'), 'tile-icon'), element('span', c.nombre.replace('América Latina (SALIDA)', 'Latinoamérica').replace('Barrera Proteccionista', 'Barrera').replace('12 Octubre 1492', '12 de Octubre'), 'tile-name'), element('span', c.precio ? amount(c.precio) : '', 'tile-price'), element('span', '', 'tile-industries'), element('span', '', 'tile-tokens'), element('span', '', 'tile-owner'));
       cells.set(c.id, tile); $('tablero').append(tile);
+    }
+    const art = catalog.find(p => p.nombre === (c.baseSur || c.nombre));
+    const specialArt = [4, 16, 36].includes(c.id) ? '/assets/cartas/reversos/solidaridad.webp' : [8, 19, 28].includes(c.id) ? '/assets/cartas/reversos/condiciones.webp' : null;
+    const iconUrl = art?.icono || specialArt;
+    if (iconUrl) {
+      const host = tile.querySelector('.tile-icon');
+      if (host.dataset.src !== iconUrl) {
+        const img = element('img'); img.src = iconUrl; img.alt = ''; img.width = 42; img.height = 30; img.decoding = 'async';
+        host.replaceChildren(img); host.dataset.src = iconUrl; host.classList.add('original-art');
+      }
     }
     const active = state.enJuego && state.jugadores[state.turnoActual]?.posicion === c.id;
     tile.className = 'tile ' + (c.region === 'norte' ? 'norte' : c.region === 'sur' ? 'sur' : 'special') + (active ? ' active' : '');
@@ -220,6 +232,7 @@ function showProperty(id) {
   if(c.tipo!=='propiedad'){box.append(element('p',specialText(c.id)));openDialog();return;}
   const owner=state.jugadores.find(j=>j.id===c.dueño),n=state.tablero.find(s=>s.baseSur===c.nombre),info=catalog.find(i=>i.nombre===c.nombre);
   box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')+' · '+amount(c.precio)),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
+  if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img,element('p','Carta original de referencia. Los valores de esta edición se muestran en la tabla.','card-note'));}
   if(info){const table=element('table'),header=element('tr');['Nivel','Nacional','Multinacional'].forEach(x=>header.append(element('th',x)));table.append(header);for(let i=0;i<3;i++){const row=element('tr');[i+1,amount(info.nac[i]),amount(info.exp[i])].forEach(x=>row.append(element('td',x)));table.append(row);}box.append(table);}
   const actions=element('div',undefined,'detail-actions');
   if(myProperty(c)&&myTurn()){
@@ -237,6 +250,33 @@ function showProperties(){
   box.append(list);openDialog();
 }
 function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $50 de ayuda del BID.',32:'Cada jugador entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
+function renderLastCard(data) {
+  currentCard = data || null;
+  const box = $('ultima-carta');
+  if (!data) { box.replaceChildren(element('span', 'LA MESA ESTÁ LISTA', 'eyebrow'), element('p', 'Una decisión puede cambiar toda la partida.')); return; }
+  const content = element('div', undefined, 'last-card-copy');
+  content.append(element('span', data.titulo, 'eyebrow'), element('p', data.texto));
+  const open = button('Ver carta original ↗', () => showCard(currentCard), 'card-reopen'); content.append(open);
+  box.replaceChildren();
+  if (data.imagen) { const thumb = element('img'); thumb.src = data.imagen; thumb.alt = ''; thumb.className = 'last-card-thumb'; thumb.width = 42; thumb.height = 63; box.append(thumb); }
+  box.append(content);
+}
+function showCard(data, automatic = false) {
+  if (!data) return;
+  if (automatic && data.roboId && data.roboId === lastCardShown) return;
+  lastCardShown = data.roboId || null;
+  $('carta-tipo').textContent = data.tipo === 'solidaridad' ? 'SOLIDARIDAD' : 'CONDICIONES FMI';
+  $('carta-titulo').textContent = data.titulo;
+  $('carta-jugador').textContent = data.jugador ? data.jugador + ' ha sacado esta carta.' : '';
+  $('carta-efecto').textContent = data.texto;
+  const img = $('carta-imagen');
+  img.hidden = !data.imagen;
+  img.onload = () => { img.hidden = false; };
+  img.onerror = () => { img.hidden = true; };
+  if (data.imagen) { img.alt = 'Carta original: ' + data.titulo; img.src = data.imagen; }
+  else img.removeAttribute('src');
+  if (!$('carta-dialog').open) $('carta-dialog').showModal();
+}
 function showResult(result){
   const key=JSON.stringify(result);if(key===lastResult)return;lastResult=key;selectedProperty=null;
   $('detalle-contenido').replaceChildren(element('p','FIN DE PARTIDA','eyebrow'),element('h2',result.ganador),element('p',result.motivo));openDialog();
@@ -253,6 +293,6 @@ $('reglas').onclick=()=>{
     ['Adaptación web','Esta edición admite 2–4 jugadores, alianzas de hasta cuatro, amortización sin visitar el FMI y no obliga a desplazarse al FMI al alcanzar una devaluación. El monopolio opcional compra una propiedad y su exportación, no una cadena completa. No incluye venta privada ni negociación de regalos.']
   ])box.append(element('h3',title),element('p',text));openDialog();
 };
-fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>catalog=data).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
+fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{catalog=data;if(state)renderBoard();}).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
 if(!storageAvailable)notice('Este navegador no permite guardar la sesión. No podrás recuperar tu plaza al cerrarlo.');
 socket.connect();

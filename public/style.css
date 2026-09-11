@@ -29,3 +29,29 @@
  .last-card .eyebrow{font-size:6px;letter-spacing:.4px}
  .last-card p{font-size:8px;line-height:1.3;margin:2px 0}
 }
+/* Artwork is extracted from the original PDFs, not recreated glyphs. */
+.tile-icon.original-art{display:flex;align-items:center;justify-content:center;line-height:0}
+.tile-icon.original-art img{display:block;width:42px;height:30px;object-fit:contain;border-radius:2px}
+.last-card{display:flex;align-items:center;gap:12px}
+.last-card-copy{min-width:0;flex:1}
+.last-card-thumb{flex:none;width:42px;height:63px;object-fit:contain;background:white;border:1px solid var(--line);border-radius:3px}
+.card-reopen{padding:0;border:0;background:none;color:var(--green);font-size:11px;text-decoration:underline;text-underline-offset:3px}
+#carta-dialog{max-width:540px;text-align:center;padding:24px 30px;max-height:94vh}
+#carta-dialog h2{font-size:23px;margin:4px 0}
+#carta-dialog .eyebrow{margin-bottom:6px}
+#carta-jugador{margin:4px 0 12px}
+#carta-imagen{display:block;max-width:100%;width:auto;max-height:55vh;height:auto;margin:0 auto 14px;object-fit:contain;border:1px solid #d6dacd;box-shadow:0 8px 24px #163b361a;background:white}
+#carta-efecto{margin:8px 0;font-size:13px;line-height:1.45;color:var(--ink)}
+.card-note{font-size:10px!important;color:var(--muted);line-height:1.4}
+#continuar-carta{margin-top:6px;width:100%}
+.property-original{display:block;max-height:350px;max-width:100%;width:auto;margin:18px auto 10px;object-fit:contain;border:1px solid var(--line)}
+@media(max-width:760px){
+ .tile-icon.original-art img{width:21px;height:15px}
+ .tile.active .tile-icon.original-art img{height:12px}
+ .last-card{gap:6px;max-height:76px}
+ .last-card-thumb{width:23px;height:35px}
+ .card-reopen{font-size:8px}
+ #carta-dialog{padding:22px 16px 16px}
+ #carta-dialog h2{font-size:19px}
+ #carta-imagen{max-height:48vh}
+}

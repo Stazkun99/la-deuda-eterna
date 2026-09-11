@@ -41,7 +41,10 @@ function createServer(options = {}) {
     next();
   });
   app.get('/health', (_req, res) => res.status(healthy ? 200 : 503).json({ ok: healthy }));
-  app.get('/api/catalogo', (_req, res) => res.json(require('./cartas').CARTAS_PROPIEDADES));
+  app.get('/api/catalogo', (_req, res) => {
+    const art = require('./public/assets/cartas/manifest.json');
+    res.json(require('./cartas').CARTAS_PROPIEDADES.map(p => ({ ...p, ...art.propiedades[p.nombre] })));
+  });
   app.use(express.static(path.join(__dirname, 'public')));
   const connectionsByAddress = new Map();
   io.use((socket, next) => {

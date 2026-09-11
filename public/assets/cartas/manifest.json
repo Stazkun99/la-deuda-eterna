@@ -1,0 +1,97 @@
+{
+  "propiedades": {
+    "Petróleo": {
+      "imagen": "/assets/cartas/propiedades/petroleo.webp",
+      "icono": "/assets/cartas/iconos/petroleo.webp"
+    },
+    "Tabaco": {
+      "imagen": "/assets/cartas/propiedades/tabaco.webp",
+      "icono": "/assets/cartas/iconos/tabaco.webp"
+    },
+    "Algodón": {
+      "imagen": "/assets/cartas/propiedades/algodon.webp",
+      "icono": "/assets/cartas/iconos/algodon.webp"
+    },
+    "Estaño": {
+      "imagen": "/assets/cartas/propiedades/estano.webp",
+      "icono": "/assets/cartas/iconos/estano.webp"
+    },
+    "Azúcar": {
+      "imagen": "/assets/cartas/propiedades/azucar.webp",
+      "icono": "/assets/cartas/iconos/azucar.webp"
+    },
+    "Cobre": {
+      "imagen": "/assets/cartas/propiedades/cobre.webp",
+      "icono": "/assets/cartas/iconos/cobre.webp"
+    },
+    "Pesca": {
+      "imagen": "/assets/cartas/propiedades/pesca.webp",
+      "icono": "/assets/cartas/iconos/pesca.webp"
+    },
+    "Cacao": {
+      "imagen": "/assets/cartas/propiedades/cacao.webp",
+      "icono": "/assets/cartas/iconos/cacao.webp"
+    },
+    "Banano": {
+      "imagen": "/assets/cartas/propiedades/banano.webp",
+      "icono": "/assets/cartas/iconos/banano.webp"
+    },
+    "Café": {
+      "imagen": "/assets/cartas/propiedades/cafe.webp",
+      "icono": "/assets/cartas/iconos/cafe.webp"
+    },
+    "Ganado": {
+      "imagen": "/assets/cartas/propiedades/ganado.webp",
+      "icono": "/assets/cartas/iconos/ganado.webp"
+    },
+    "Hierro": {
+      "imagen": "/assets/cartas/propiedades/hierro.webp",
+      "icono": "/assets/cartas/iconos/hierro.webp"
+    }
+  },
+  "solidaridad": {
+    "3": "/assets/cartas/solidaridad/03.webp",
+    "16": "/assets/cartas/solidaridad/16.webp",
+    "14": "/assets/cartas/solidaridad/14.webp",
+    "1": "/assets/cartas/solidaridad/01.webp",
+    "8": "/assets/cartas/solidaridad/08.webp",
+    "4": "/assets/cartas/solidaridad/04.webp",
+    "2": "/assets/cartas/solidaridad/02.webp",
+    "13": "/assets/cartas/solidaridad/13.webp",
+    "9": "/assets/cartas/solidaridad/09.webp",
+    "12": "/assets/cartas/solidaridad/12.webp",
+    "10": "/assets/cartas/solidaridad/10.webp",
+    "5": "/assets/cartas/solidaridad/05.webp",
+    "17": "/assets/cartas/solidaridad/17.webp",
+    "7": "/assets/cartas/solidaridad/07.webp",
+    "11": "/assets/cartas/solidaridad/11.webp",
+    "20": "/assets/cartas/solidaridad/20.webp",
+    "6": "/assets/cartas/solidaridad/06.webp",
+    "15": "/assets/cartas/solidaridad/15.webp",
+    "19": "/assets/cartas/solidaridad/19.webp",
+    "18": "/assets/cartas/solidaridad/18.webp"
+  },
+  "condiciones": {
+    "1": "/assets/cartas/condiciones/01.webp",
+    "2": "/assets/cartas/condiciones/02.webp",
+    "3": "/assets/cartas/condiciones/03.webp",
+    "4": "/assets/cartas/condiciones/04.webp",
+    "16": "/assets/cartas/condiciones/16.webp",
+    "17": "/assets/cartas/condiciones/17.webp",
+    "5": "/assets/cartas/condiciones/05.webp",
+    "6": "/assets/cartas/condiciones/06.webp",
+    "7": "/assets/cartas/condiciones/07.webp",
+    "8": "/assets/cartas/condiciones/08.webp",
+    "9": "/assets/cartas/condiciones/09.webp",
+    "10": "/assets/cartas/condiciones/10.webp",
+    "11": "/assets/cartas/condiciones/11.webp",
+    "12": "/assets/cartas/condiciones/12.webp",
+    "13": "/assets/cartas/condiciones/13.webp",
+    "14": "/assets/cartas/condiciones/14.webp",
+    "15": "/assets/cartas/condiciones/15.webp"
+  },
+  "reversos": {
+    "solidaridad": "/assets/cartas/reversos/solidaridad.webp",
+    "condiciones": "/assets/cartas/reversos/condiciones.webp"
+  }
+}

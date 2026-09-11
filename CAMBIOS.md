@@ -23,3 +23,12 @@
 - Publicar durante una pausa de juego y recargar los clientes de la versión anterior.
 
 No se han creado commits ni se ha modificado el despliegue de producción.
+
+## Cartas originales e iconos
+
+- Iconos de las doce materias primas extraídos de las tarjetas PDF, en las casillas del Sur y sus exportaciones del Norte.
+- Reversos originales en las casillas de Solidaridad y condiciones FMI.
+- Imagen completa al sacar cualquiera de las 20 Solidaridad o 17 condiciones FMI; opción de volver a abrir la última carta.
+- Tarjeta original en los detalles de cada propiedad.
+- Recursos WebP incluidos y extracción reproducible, sin nuevas dependencias para Render.
+- Pruebas de cobertura de recursos, correspondencia de cartas, repetición y recuperación de salas.
