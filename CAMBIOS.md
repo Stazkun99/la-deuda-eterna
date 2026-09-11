@@ -40,3 +40,11 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 - Se puede cerrar la ventana y reabrir la elección desde el panel de acciones.
 - Los dados se animan brevemente y terminan en los valores confirmados por el servidor, con dos, tres o cuatro dados según la deuda. La última tirada queda visible y se recupera al reconectar; se respeta la preferencia de movimiento reducido.
 - Verificación: 42 pruebas automáticas y selección manual en navegador de terreno libre y multinacional gratuita con todos los terrenos ocupados.
+
+## Ilustraciones del tablero impreso
+
+- Las doce manufacturas del Norte muestran su propio producto original (caramelos, mermelada, chocolate, ropa, cigarrillos, café elaborado, enlatados, zapatos, cables, electrónica, tractores y gasolina), en lugar de repetir el icono de la materia prima del Sur.
+- Se añaden los originales de Salida, Ayuda Solidaria, Fuga de Capitales, Golpe Militar, Barrera, Industrialización, Ayuda BID, 12 de Octubre, No Pagar y Sede FMI. Solidaridad y condiciones FMI conservan sus reversos originales.
+- Los detalles de cada casilla incluyen la imagen ampliada. Se mantienen los nombres y reglas de la edición web; se explican las diferencias de rótulo de Nacionalización y Ayuda USA en el impreso.
+- Los recursos están en `public/assets/tablero/`, con su origen documentado en `manifest.json`. Se pueden regenerar con `python scripts/extract-board-art.py --source "ruta/al/tablero-original.jpg"` (Pillow, solo en desarrollo).
+- Revisados en escritorio y móvil de 390 px; todos los iconos cargan correctamente.

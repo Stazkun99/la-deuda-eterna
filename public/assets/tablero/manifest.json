@@ -1,0 +1,267 @@
+{
+  "0": {
+    "imagen": "/assets/tablero/salida.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      1107,
+      846,
+      1297,
+      948
+    ],
+    "giro": 0
+  },
+  "10": {
+    "imagen": "/assets/tablero/ayuda-solidaria.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      649,
+      1557,
+      732,
+      1728
+    ],
+    "giro": 0
+  },
+  "12": {
+    "imagen": "/assets/tablero/fuga-capitales.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      421,
+      1555,
+      503,
+      1726
+    ],
+    "giro": 0
+  },
+  "18": {
+    "imagen": "/assets/tablero/golpe-militar.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      72,
+      1072,
+      264,
+      1175
+    ],
+    "giro": 90,
+    "icono": "/assets/tablero/golpe-militar-icono.webp"
+  },
+  "20": {
+    "imagen": "/assets/tablero/barrera.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      70,
+      874,
+      268,
+      923
+    ],
+    "giro": 0
+  },
+  "24": {
+    "imagen": "/assets/tablero/industrializacion.webp",
+    "rotuloOriginal": "Nacionalización",
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      90,
+      398,
+      247,
+      489
+    ],
+    "giro": 90
+  },
+  "30": {
+    "imagen": "/assets/tablero/ayuda-bid.webp",
+    "rotuloOriginal": "Ayuda USA para el desarrollo",
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      647,
+      72,
+      728,
+      237
+    ],
+    "giro": 180
+  },
+  "32": {
+    "imagen": "/assets/tablero/12-octubre.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      872,
+      79,
+      958,
+      238
+    ],
+    "giro": 180
+  },
+  "38": {
+    "imagen": "/assets/tablero/no-pagar.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      1223,
+      630,
+      1288,
+      710
+    ],
+    "giro": -90
+  },
+  "39": {
+    "imagen": "/assets/tablero/sede-fmi.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      1117,
+      739,
+      1294,
+      827
+    ],
+    "giro": 0
+  },
+  "21": {
+    "imagen": "/assets/tablero/caramelos.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      151,
+      741,
+      249,
+      834
+    ],
+    "giro": 90
+  },
+  "22": {
+    "imagen": "/assets/tablero/mermelada.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      155,
+      632,
+      253,
+      717
+    ],
+    "giro": 90
+  },
+  "23": {
+    "imagen": "/assets/tablero/chocolate.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      153,
+      513,
+      251,
+      605
+    ],
+    "giro": 90
+  },
+  "25": {
+    "imagen": "/assets/tablero/ropa.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      153,
+      296,
+      246,
+      375
+    ],
+    "giro": 90
+  },
+  "26": {
+    "imagen": "/assets/tablero/cigarrillos.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      205,
+      218,
+      310,
+      277
+    ],
+    "giro": 180
+  },
+  "27": {
+    "imagen": "/assets/tablero/cafe-elaborado.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      322,
+      147,
+      391,
+      219
+    ],
+    "giro": 180
+  },
+  "29": {
+    "imagen": "/assets/tablero/enlatados.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      525,
+      151,
+      615,
+      241
+    ],
+    "giro": 180
+  },
+  "31": {
+    "imagen": "/assets/tablero/zapatos.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      755,
+      150,
+      849,
+      239
+    ],
+    "giro": 180
+  },
+  "33": {
+    "imagen": "/assets/tablero/cables.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      985,
+      157,
+      1050,
+      249
+    ],
+    "giro": 180
+  },
+  "34": {
+    "imagen": "/assets/tablero/electronica.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      1080,
+      190,
+      1149,
+      286
+    ],
+    "giro": 180
+  },
+  "35": {
+    "imagen": "/assets/tablero/tractores.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      1125,
+      295,
+      1203,
+      375
+    ],
+    "giro": 270
+  },
+  "37": {
+    "imagen": "/assets/tablero/gasolina.webp",
+    "rotuloOriginal": null,
+    "fuente": "Tablero Tamaño 60cmx46cm.jpg",
+    "recorteReferencia": [
+      1123,
+      515,
+      1217,
+      600
+    ],
+    "giro": -90
+  }
+}

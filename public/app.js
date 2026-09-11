@@ -14,7 +14,7 @@ try {
 const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
-let seenRoll = null, diceTimer;
+let seenRoll = null, diceTimer, specialCatalog = {};
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -129,13 +129,14 @@ function renderBoard() {
       cells.set(c.id, tile); $('tablero').append(tile);
     }
     const art = catalog.find(p => p.nombre === (c.baseSur || c.nombre));
-    const specialArt = [4, 16, 36].includes(c.id) ? '/assets/cartas/reversos/solidaridad.webp' : [8, 19, 28].includes(c.id) ? '/assets/cartas/reversos/condiciones.webp' : null;
-    const iconUrl = art?.icono || specialArt;
+    const specialArt = specialCatalog[c.id]?.imagen || ([4, 16, 36].includes(c.id) ? '/assets/cartas/reversos/solidaridad.webp' : [8, 19, 28].includes(c.id) ? '/assets/cartas/reversos/condiciones.webp' : null);
+    const iconUrl = specialCatalog[c.id]?.icono || specialArt || art?.icono;
     if (iconUrl) {
       const host = tile.querySelector('.tile-icon');
       if (host.dataset.src !== iconUrl) {
         const img = element('img'); img.src = iconUrl; img.alt = ''; img.width = 42; img.height = 30; img.decoding = 'async';
         host.replaceChildren(img); host.dataset.src = iconUrl; host.classList.add('original-art');
+          host.classList.toggle('special-original', !!specialCatalog[c.id] && !c.region);
       }
     }
     const active = state.enJuego && state.jugadores[state.turnoActual]?.posicion === c.id;
@@ -274,10 +275,17 @@ function showProperty(id) {
   const original=state.tablero[id],c=original.region==='norte'?state.tablero.find(s=>s.nombre===original.baseSur):original;
   selectedProperty=c.nombre;
   const box=$('detalle-contenido');box.replaceChildren(element('p',(original.region||'CASILLA ESPECIAL').toUpperCase(),'eyebrow'),element('h2',original.nombre));
-  if(c.tipo!=='propiedad'){box.append(element('p',specialText(c.id)));openDialog();return;}
+  if(c.tipo!=='propiedad'){
+      const art=specialCatalog[c.id];
+      if(art){const img=element('img');img.src=art.imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
+      box.append(element('p',specialText(c.id)));
+      if(art?.rotuloOriginal)box.append(element('p','En el tablero impreso figura como «'+art.rotuloOriginal+'». Esta edición conserva el nombre y el efecto indicados arriba.','card-note'));
+      openDialog();return;
+    }
   const owner=state.jugadores.find(j=>j.id===c.dueño),n=state.tablero.find(s=>s.baseSur===c.nombre),info=catalog.find(i=>i.nombre===c.nombre);
   box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')+' · '+amount(c.precio)),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
-  if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img,element('p','Carta original de referencia. Los valores de esta edición se muestran en la tabla.','card-note'));}
+  if(original.region==='norte' && specialCatalog[original.id]){const img=element('img');img.src=specialCatalog[original.id].imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
+    if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img,element('p','Carta original de referencia. Los valores de esta edición se muestran en la tabla.','card-note'));}
   if(info){const table=element('table'),header=element('tr');['Nivel','Nacional','Multinacional'].forEach(x=>header.append(element('th',x)));table.append(header);for(let i=0;i<3;i++){const row=element('tr');[i+1,amount(info.nac[i]),amount(info.exp[i])].forEach(x=>row.append(element('td',x)));table.append(row);}box.append(table);}
   const actions=element('div',undefined,'detail-actions');
   if(myProperty(c)&&myTurn()){
@@ -340,4 +348,5 @@ $('reglas').onclick=()=>{
 };
 fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{catalog=data;if(state)renderBoard();}).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
 if(!storageAvailable)notice('Este navegador no permite guardar la sesión. No podrás recuperar tu plaza al cerrarlo.');
+fetch('/assets/tablero/manifest.json').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{specialCatalog=data;if(state)renderBoard();}).catch(()=>notice('No se pudieron cargar las ilustraciones del tablero. Recarga la página.'));
 socket.connect();

@@ -24,3 +24,14 @@ test('el servidor anuncia la imagen exacta de cada robo y conserva su identidad 
  const before=r.ultimaCarta.roboId;r.mazos.condiciones=[17];game.card(r,p,'condiciones');assert.notEqual(r.ultimaCarta.roboId,before);
  const restored=new Game({rooms:structuredClone(game.rooms)});assert.equal(restored.rooms.ARTE.ultimaCarta.imagen,r.ultimaCarta.imagen);
 });
+
+test('las casillas especiales y las doce industrias del Norte tienen ilustración original local',()=>{
+ const special=require('../public/assets/tablero/manifest.json');
+ assert.deepEqual(Object.keys(special).map(Number),[0,10,12,18,20,21,22,23,24,25,26,27,29,30,31,32,33,34,35,37,38,39]);
+ for(const art of Object.values(special)){
+  assert.match(art.imagen,/^\/assets\/tablero\/[a-z0-9-]+\.webp$/);
+  const bytes=fs.readFileSync(path.join(publicRoot,art.imagen));
+  assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');
+  assert.ok(art.fuente.endsWith('.jpg'));assert.equal(art.recorteReferencia.length,4);
+ }
+});
