@@ -78,3 +78,34 @@
  .tile-icon.original-art.special-original img{width:calc(100% - 2px);height:21px}
  .tile.active .tile-icon.original-art.special-original img{height:17px}
 }
+
+/* Numbered enamel counters, matched to the player list. */
+.tile-tokens{display:flex;flex-wrap:nowrap;align-items:center;justify-content:center;gap:3px;min-height:28px;padding:3px 1px 4px;isolation:isolate}
+.token,.avatar{background:linear-gradient(145deg,#ffffff55,transparent 48%,#00000028),var(--player);border:2px solid #fffdf4;box-shadow:0 2px 0 #153a35,0 3px 5px #10292355,inset 0 0 0 1px #ffffff55;color:#fff;text-shadow:0 1px 2px #000,0 0 3px #0009;font-weight:900;font-variant-numeric:tabular-nums}
+.token{position:relative;flex:0 0 auto;width:25px;height:25px;font-size:13px;line-height:1;border-radius:50%}
+.token::after{content:'';position:absolute;left:5px;top:3px;width:8px;height:3px;border-radius:50%;background:#ffffff70;pointer-events:none}
+.token-current{outline:2px solid #be872b;outline-offset:2px;box-shadow:0 2px 0 #153a35,0 0 0 5px #f6d88870,0 4px 7px #10292355,inset 0 0 0 1px #ffffff55;z-index:1}
+.tile-tokens.crowded{display:grid;grid-template-columns:repeat(2,20px);gap:3px}
+.tile-tokens.crowded .token{width:20px;height:20px;font-size:11px}
+.avatar{width:28px;height:28px;font-size:13px}
+.player.current .avatar{outline:2px solid #be872b;outline-offset:2px}
+@media(max-width:760px){
+ .tile.has-players{isolation:isolate}
+ .tile.has-players .tile-icon{opacity:.3}
+ .tile-tokens{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);min-height:0;padding:0;gap:1px;z-index:2}
+ .token{width:16px;height:16px;font-size:10px;border-width:1.5px;box-shadow:0 1px 0 #153a35,0 2px 3px #10292366}
+ .token::after{width:4px;height:2px;left:3px;top:2px}
+ .token-current{outline-width:1.5px;outline-offset:1px}
+ .tile-tokens:has(.token:nth-child(2)) .token{width:13px;height:13px;font-size:8px}
+ .tile-tokens.crowded{grid-template-columns:repeat(2,12px);gap:1px;bottom:2px}
+ .tile-tokens.crowded .token{width:12px;height:12px;font-size:8px;border-width:1px}
+}
+/* Keep stacked counters inside their square without stretching the board. */
+@media(min-width:761px){
+ .tile-tokens{position:absolute;bottom:5px;left:50%;transform:translateX(-50%);min-height:0;padding:0;z-index:2}
+ .tile.has-players .tile-icon{opacity:.22}
+ .tile.has-players .tile-price{visibility:hidden}
+ .tile.has-players .tile-name{position:absolute;top:8px;left:2px;right:2px;font-size:8px;z-index:1}
+ .tile.has-players .tile-industries{position:absolute;bottom:0;right:2px;z-index:3}
+}
+@media(max-width:760px){.tile-tokens.crowded:has(.token:nth-child(2)) .token{width:12px;height:12px}}

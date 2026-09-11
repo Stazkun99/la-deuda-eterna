@@ -148,17 +148,24 @@ function renderBoard() {
     const n = c.region === 'sur' ? c.industriasNac : c.industriasExp;
     tile.querySelector('.tile-industries').textContent = n ? '▰'.repeat(n) : '';
     const tokens = tile.querySelector('.tile-tokens'); tokens.replaceChildren();
-    for (const p of state.jugadores.filter(p => p.posicion === c.id && !p.enQuiebra)) {
-      const token = element('span', p.nombre.slice(0, 1).toUpperCase(), 'token'); token.style.setProperty('--player', p.color); token.title = p.nombre; tokens.append(token);
+    const occupants = state.jugadores.filter(p => p.posicion === c.id && !p.enQuiebra);
+    tile.classList.toggle('has-players', occupants.length > 0);
+    tokens.classList.toggle('crowded', occupants.length > 2);
+    for (const p of occupants) {
+      const current = state.enJuego && state.jugadores[state.turnoActual]?.id === p.id;
+      const token = element('span', String(state.jugadores.indexOf(p) + 1), 'token' + (current ? ' token-current' : ''));
+      token.style.setProperty('--player', p.color);
+      token.title = p.nombre + (p.userId === userId ? ' · tú' : '') + (current ? ' · en turno' : '');
+      token.setAttribute('aria-hidden', 'true'); tokens.append(token);
     }
-    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias: ' + n : ''}`);
+    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias: ' + n : ''}${occupants.length ? '. Fichas: ' + occupants.map(p=>p.nombre).join(', ') : ''}`);
   }
 }
 function renderPlayers() {
   $('jugadores').replaceChildren(); $('cantidad').textContent = state.jugadores.length + ' / 4';
   for (const p of state.jugadores) {
     const row = element('div', undefined, 'player' + (state.enJuego && state.jugadores[state.turnoActual]?.id === p.id ? ' current' : ''));
-    const avatar = element('span', p.nombre.slice(0, 1).toUpperCase(), 'avatar'); avatar.style.setProperty('--player', p.color);
+    const avatar = element('span', String(state.jugadores.indexOf(p) + 1), 'avatar'); avatar.style.setProperty('--player', p.color);
     const content = element('div'); content.append(element('div', p.nombre + (p.userId === userId ? ' · tú' : '') + (p.esLider ? ' ♛' : ''), 'player-name'));
     const stats = element('div', undefined, 'player-stats'); stats.append(element('span', amount(p.dinero)), element('span', 'Deuda ' + amount(p.deudaPersonal)), element('span', '◆ ' + p.oro)); content.append(stats);
     content.append(element('div', [!p.conectado && 'Desconectado', p.enQuiebra && 'En quiebra', p.enAlianza && 'Alianza · caja común', p.industriasCerradas && 'Industrias cerradas', p.turnosPerdidos > 0 && 'Desempleo: ' + p.turnosPerdidos, p.deudaPersonal >= 30000 && 'Límite de deuda'].filter(Boolean).join(' · '), 'player-status'));
