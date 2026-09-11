@@ -283,13 +283,20 @@ function showProperty(id) {
       openDialog();return;
     }
   const owner=state.jugadores.find(j=>j.id===c.dueño),n=state.tablero.find(s=>s.baseSur===c.nombre),info=catalog.find(i=>i.nombre===c.nombre);
-  box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')+' · '+amount(c.precio)),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
+  box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
   if(original.region==='norte' && specialCatalog[original.id]){const img=element('img');img.src=specialCatalog[original.id].imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
-    if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img,element('p','Carta original de referencia. Los valores de esta edición se muestran en la tabla.','card-note'));}
-  if(info){const table=element('table'),header=element('tr');['Nivel','Nacional','Multinacional'].forEach(x=>header.append(element('th',x)));table.append(header);for(let i=0;i<3;i++){const row=element('tr');[i+1,amount(info.nac[i]),amount(info.exp[i])].forEach(x=>row.append(element('td',x)));table.append(row);}box.append(table);}
+    if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img);}
   const actions=element('div',undefined,'detail-actions');
   if(myProperty(c)&&myTurn()){
-    for(const [label,type]of [['Construir industria nacional','nacional'],['Construir multinacional','exportacion']]){const b=button(label,()=>action('construirIndustria',{nombrePropiedad:c.nombre,tipo:type}),'secondary');b.disabled=!socket.connected||busy||!(state.fase==='tirada'||state.fase==='gestion'&&state.descuento);actions.append(b);}
+    for(const [label,type]of [['Construir industria nacional','nacional'],['Construir multinacional','exportacion']]){
+      const national=type==='nacional',level=national?(c.industriasNac||0):(n?.industriasExp||0);
+      const price=info?.[national?'nac':'exp']?.[level];
+      const cost=price===undefined?null:Math.floor(price*(state.descuento?0.5:1));
+      const text=level>=3?label+' · Máximo alcanzado':label+(cost===null?'':' · '+amount(cost));
+      const b=button(text,()=>action('construirIndustria',{nombrePropiedad:c.nombre,tipo:type}),'secondary');
+      b.disabled=!socket.connected||busy||level>=3||(!national&&c.industriasNac<=level)||!(state.fase==='tirada'||state.fase==='gestion'&&state.descuento);
+      actions.append(b);
+    }
     if(me().dinero<0||state.pendiente?.tipo==='pago'&&me().dinero<state.pendiente.monto)actions.append(button('Subastar terreno e industrias',()=>action('subastarPropiedad',{nombrePropiedad:c.nombre})));
   }
   if(myTurn()&&state.monopolio&&c.id===me().posicion&&owner&&!myProperty(c))actions.append(button('Monopolizar terreno e industrias',()=>action('expropiarPropiedad',{nombrePropiedad:c.nombre})));
