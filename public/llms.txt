@@ -1,0 +1,7 @@
+# La Deuda Eterna — Juego Web Multijugador
+> Juego de mesa de estrategia económica y geopolítica en tiempo real.
+
+## Características
+- Multijugador en tiempo real con WebSockets (Socket.io).
+- Basado en el juego de mesa original de estrategia Sur vs Norte.
+- Totalmente jugable desde el navegador web.
