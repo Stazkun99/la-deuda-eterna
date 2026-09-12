@@ -1,5 +1,7 @@
 # 🎲 La Deuda Eterna — Multiplatform & Web Edition
 
+![Vista previa del tablero](public/preview.png)
+
 Adaptación multijugador en tiempo real del clásico juego de mesa de estrategia económica "La Deuda Eterna". Esta versión incluye el servidor web completo, cliente responsivo y aplicaciones nativas empaquetadas para **Android (.apk)** y **Windows (.exe)** mediante Capacitor y Electron/Node.
 
 ---
