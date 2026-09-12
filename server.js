@@ -5,7 +5,7 @@ const path = require('node:path');
 const { Server } = require('socket.io');
 const { Game, GameError } = require('./lib/game');
 const { Store } = require('./lib/store');
-const ACTIONS = ['iniciarPartida', 'tirarDado', 'terminarTurno', 'decidirCompraPropiedad', 'responderDecisionPago', 'resolverEleccion', 'pedirPrestamo', 'pagarDeuda', 'construirIndustria', 'expropiarPropiedad', 'subastarPropiedad', 'levantarBarrera', 'responderVotoAlianza', 'pujarSubasta'];
+const ACTIONS = ['proponerComercio', 'responderComercio', 'iniciarPartida', 'tirarDado', 'terminarTurno', 'decidirCompraPropiedad', 'responderDecisionPago', 'resolverEleccion', 'pedirPrestamo', 'pagarDeuda', 'construirIndustria', 'expropiarPropiedad', 'subastarPropiedad', 'levantarBarrera', 'responderVotoAlianza', 'pujarSubasta'];
 function createServer(options = {}) {
   const app = express();
   app.disable('x-powered-by');

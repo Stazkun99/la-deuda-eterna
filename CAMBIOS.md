@@ -48,3 +48,14 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 - Los detalles de cada casilla incluyen la imagen ampliada. Se mantienen los nombres y reglas de la edición web; se explican las diferencias de rótulo de Nacionalización y Ayuda USA en el impreso.
 - Los recursos están en `public/assets/tablero/`, con su origen documentado en `manifest.json`. Se pueden regenerar con `python scripts/extract-board-art.py --source "ruta/al/tablero-original.jpg"` (Pillow, solo en desarrollo).
 - Revisados en escritorio y móvil de 390 px; todos los iconos cargan correctamente.
+
+## Comercio entre jugadores y documentación completa
+
+- Botón Comerciar para comprar, vender o intercambiar varias propiedades con dinero opcional.
+- Oferta con términos explícitos, aceptación del destinatario, rechazo o cancelación del proponente.
+- Cada propiedad lleva sus industrias nacionales y multinacionales; se conservan oro y deudas.
+- Caja y patrimonio de alianza compartidos; operaciones entre grupos distintos.
+- Una oferta por sala, hasta 60 segundos y limitada por el reloj del turno. Los bienes no cambian mientras se espera respuesta.
+- Validación de propietario, efectivo, turno, destinatario y estado de las industrias al aceptar; guardado atómico y protección contra doble aceptación.
+- Pruebas de caducidad, abandono, reconexión, importes inválidos y fallo de disco. Suite completa: 52 pruebas.
+- README reescrito con instalación, reglas actuales, comercio, configuración, Render Free, actualización con Git, recursos y solución de problemas.

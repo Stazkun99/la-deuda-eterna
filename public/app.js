@@ -14,7 +14,7 @@ try {
 const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
-let seenRoll = null, diceTimer, specialCatalog = {};
+let seenRoll = null, diceTimer, specialCatalog = {}, tradeShown = null;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -65,6 +65,8 @@ $('prestamo').onclick = () => action('pedirPrestamo');
 $('amortizar').onclick = () => action('pagarDeuda');
 $('levantar').onclick = () => action('levantarBarrera');
 $('propiedades').onclick = showProperties;
+$('comerciar').onclick = showTradeForm;
+$('cerrar-comercio').onclick = () => $('comercio-dialog').close();
 $('cerrar-industrial').onclick = () => $('industrial-dialog').close();
 $('cerrar-detalle').onclick = () => $('detalle').close();
 $('cerrar-carta').onclick = $('continuar-carta').onclick = () => $('carta-dialog').close();
@@ -89,7 +91,7 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { renderLastCard(data); showCard(data, true); });
@@ -175,14 +177,15 @@ function renderPlayers() {
 function updateControls() {
   $('crear').disabled = $('unirse').disabled = !socket.connected;
   if (!state) return;
-  const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !socket.connected;
+  const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
   $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';
-  const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: 30 segundos para pujar.', eleccion:'Hay una elección pendiente.' };
+  const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: 30 segundos para pujar.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
   $('fase').textContent = state.enJuego ? phases[state.fase] || '' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
   $('inicio').hidden = state.enJuego || !p?.esLider;
   $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2;
   $('acciones').hidden = !state.enJuego;
+  $('comerciar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase);
   $('tirar').hidden = state.fase !== 'tirada'; $('tirar').disabled = locked || !mine;
   $('terminar').hidden = state.fase !== 'gestion'; $('terminar').disabled = locked || !mine;
   const collective = ['subasta','votacion'].includes(state.fase);
@@ -229,6 +232,7 @@ setInterval(updateClock, 1000);
 function renderDecision(force = false) {
   if (!state) return;
   const d = state.pendiente, p = me(), container = $('decision');
+  if (d?.tipo !== 'comercio' && tradeShown) { $('comercio-dialog').close(); tradeShown = null; }
   const key = JSON.stringify([d, state.turnoId, p?.dinero, p?.oro, socket.connected, busy]);
   if (!force && key === lastDecisionKey) return;
   lastDecisionKey = key; container.replaceChildren();
@@ -236,6 +240,12 @@ function renderDecision(force = false) {
   if (!d || !p) return;
   const mine = d.jugadorId === p.id;
   const add = (text, event, data, disabled = false, primary = false) => { const b = button(text, () => action(event, { ...data, decisionId: d.id }), primary ? 'primary choice' : 'ghost choice'); b.disabled = disabled || busy || !socket.connected; container.append(b); };
+  if (d.tipo === 'comercio') {
+    container.append(element('h3','Oferta de comercio'),element('p','Esperando la respuesta de '+(state.jugadores.find(q=>q.id===d.destinatarioId)?.nombre||'otro jugador')+'.'));
+    const involved = [d.jugadorId,d.destinatarioId].includes(p.id);
+    if(involved){container.append(button('Ver oferta ⇄',()=>showTradeOffer(d,true),'primary'));showTradeOffer(d);}
+    return;
+  }
   if (d.tipo === 'votacion') {
     container.append(element('h3','Propuesta de alianza'),element('p','Caja, oro y propiedades comunes; cada jugador conserva su deuda. Los votos sin respuesta cuentan como rechazo.'));
     if (d.elegibles.includes(p.id) && !Object.hasOwn(d.votos,p.id)) { add('Unirme a la alianza','responderVotoAlianza',{voto:true},false,true); add('Seguir por mi cuenta','responderVotoAlianza',{voto:false}); }
@@ -309,6 +319,70 @@ function showProperty(id) {
   if(myTurn()&&state.monopolio&&c.id===me().posicion&&owner&&!myProperty(c))actions.append(button('Monopolizar terreno e industrias',()=>action('expropiarPropiedad',{nombrePropiedad:c.nombre})));
   box.append(actions);openDialog();
 }
+function tradeOwns(player, property) {
+  return property.dueño === player.id || !!player.alianzaId && state.jugadores.some(q=>q.id===property.dueño && q.alianzaId===player.alianzaId);
+}
+function showTradeForm() {
+  if(!myTurn() || !['tirada','gestion'].includes(state.fase) || busy || !socket.connected)return;
+  const box=$('comercio-contenido'),p=me();box.replaceChildren();
+  $('comercio-titulo').textContent='Proponer un trato';
+  const rivals=state.jugadores.filter(q=>q.id!==p.id&&q.conectado&&!q.enQuiebra&&!(p.alianzaId&&q.alianzaId===p.alianzaId));
+  if(!rivals.length){box.append(element('p','No hay jugadores conectados de otro grupo para comerciar.'));$('comercio-dialog').showModal();return;}
+  box.append(element('p','Selecciona lo que entregas y lo que recibes. Cada propiedad incluye todas sus industrias nacionales y multinacionales. El trato solo se realiza si la otra persona acepta.'));
+  const form=element('form'),label=element('label','Negociar con'),select=element('select');select.id='comercio-rival';label.htmlFor=select.id;
+  for(const q of rivals){const opt=element('option',q.nombre);opt.value=q.id;select.append(opt);}
+  form.append(label,select);
+  const sides=element('div',undefined,'trade-columns');form.append(sides);
+  let giveList,receiveList,payInput,chargeInput;
+  const side=(title,owner,key)=>{
+    const area=element('section',undefined,'trade-side');area.append(element('h3',title));
+    const list=element('div',undefined,'trade-properties');
+    const props=state.tablero.filter(c=>c.region==='sur'&&tradeOwns(owner,c));
+    for(const c of props){
+      const row=element('label',undefined,'trade-property'),input=element('input');input.type='checkbox';input.value=c.nombre;
+      const img=element('img');img.src=catalog.find(x=>x.nombre===c.nombre)?.icono||'';img.alt='';
+      const north=state.tablero.find(n=>n.baseSur===c.nombre);
+      row.append(input,img,element('span',c.nombre+' · '+c.industriasNac+' nac. / '+(north?.industriasExp||0)+' mult.'));list.append(row);
+    }
+    if(!props.length)list.append(element('p','Sin propiedades. Puedes ofrecer dinero.'));
+    const moneyLabel=element('label','Dinero ($)'),input=element('input');input.type='number';input.min='0';input.max=String(Math.min(1_000_000_000,Math.max(0,owner.dinero)));input.step='1';input.value='0';input.required=true;input.id='trade-'+key;moneyLabel.htmlFor=input.id;
+    area.append(list,moneyLabel,input);sides.append(area);return [list,input];
+  };
+  const fill=()=>{sides.replaceChildren();[giveList,payInput]=side('Tú entregas',p,'pago');[receiveList,chargeInput]=side('Tú recibes',rivals.find(q=>q.id===select.value),'cobro');};
+  select.onchange=fill;fill();
+  form.append(element('p','Para comprar: ofrece dinero y selecciona la propiedad que recibes. Para vender: selecciona la que entregas e indica cuánto cobras. También puedes intercambiar varias propiedades.','card-note'));
+  const send=element('button','Enviar oferta · esperar aceptación','primary');send.type='submit';form.append(send);
+  form.onsubmit=e=>{
+    e.preventDefault();
+    if(!myTurn()||!['tirada','gestion'].includes(state.fase))return notice('Tu turno cambió. Cierra y vuelve a abrir el comercio.');
+    const entrego=[...giveList.querySelectorAll('input:checked')].map(i=>i.value),recibo=[...receiveList.querySelectorAll('input:checked')].map(i=>i.value);
+    if(!entrego.length&&!recibo.length)return notice('Selecciona al menos una propiedad.');
+    const pago=Number(payInput.value),cobro=Number(chargeInput.value);
+    if(pago&&cobro)return notice('Indica dinero solo en una dirección.');
+    action('proponerComercio',{destinatarioId:select.value,entrego,recibo,pago,cobro});
+  };
+  box.append(form);if(!$('comercio-dialog').open)$('comercio-dialog').showModal();
+}
+function showTradeOffer(d, force=false) {
+  const p=me(),mine=p.id===d.jugadorId,first=tradeShown!==d.id;
+  const dialog=$('comercio-dialog'),box=$('comercio-contenido');
+  tradeShown=d.id;box.replaceChildren();
+  const sender=state.jugadores.find(q=>q.id===d.jugadorId),receiver=state.jugadores.find(q=>q.id===d.destinatarioId);
+  $('comercio-titulo').textContent=mine?'Tu oferta a '+receiver?.nombre:'Oferta de '+sender?.nombre;
+  const terms=(title,names,cash)=>{
+    const area=element('section',undefined,'trade-side');area.append(element('h3',title));
+    for(const name of names){const snap=d.propiedades.find(c=>c.nombre===name);area.append(element('p',name+' · '+snap.nacionales+' nacionales / '+snap.multinacionales+' multinacionales'));}
+    if(!names.length)area.append(element('p','Sin propiedades'));
+    area.append(element('strong',amount(cash)));return area;
+  };
+  const cols=element('div',undefined,'trade-columns');
+  cols.append(terms(sender?.nombre+' entrega',d.entrego,d.pago),terms(receiver?.nombre+' entrega',d.recibo,d.cobro));box.append(cols);
+  box.append(element('p','Incluye todas las industrias indicadas. No se transfieren deudas ni oro. La oferta caduca en un máximo de 60 segundos.','card-note'));
+  const answer=(label,accept,style)=>{const b=button(label,()=>action('responderComercio',{decisionId:d.id,aceptar:accept}),style);b.disabled=busy||!socket.connected;box.append(b);};
+  if(mine)answer('Cancelar oferta',false,'secondary');
+  else {answer('Aceptar este trato',true,'primary');answer('Rechazar',false,'secondary');}
+  if((first||force)&&!dialog.open)dialog.showModal();
+}
 function showProperties(){
   selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','PATRIMONIO','eyebrow'),element('h2','Mis propiedades'));
   const list=element('div',undefined,'detail-list'),properties=state.tablero.filter(c=>c.region==='sur'&&myProperty(c));
@@ -355,9 +429,10 @@ $('reglas').onclick=()=>{
     ['Construcción','Compra materias primas en el Sur. Puedes construir hasta tres industrias nacionales y tres multinacionales; cada nivel de exportación necesita el mismo nivel nacional. Ayuda Solidaria permite construir después de tirar al 50%.'],
     ['Dinero y oro','Las rentas son el precio de casilla por las industrias. Las cadenas suman sus rentas. El oro paga manufacturas e intereses, pero no cartas, industrias, fuga de capitales ni monopolios.'],
     ['Deudas','Préstamos en cuotas de $5.000 hasta $30.000 por jugador. Puedes amortizar hasta $5.000 en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
+    ['Comercio','En tu turno, antes de tirar o tras resolver la casilla, puedes proponer propiedades y dinero a otro grupo. Cada terreno incluye sus industrias. El destinatario acepta o rechaza; la oferta caduca en 60 segundos como máximo. Cerrar la ventana no cancela la oferta.'],
     ['Alianzas y subastas','La alianza comparte efectivo, oro y propiedades, conservando las deudas individuales. En embargo y sin efectivo, subasta una propiedad durante 30 segundos; sin ofertas, el FMI paga el 50% y libera el terreno.'],
     ['Final','Gana el último jugador activo o el grupo que alcance las doce propiedades con tres industrias nacionales y tres multinacionales en cada una. Unirse en alianza no da una victoria automática.'],
-    ['Adaptación web','Esta edición admite 2–4 jugadores, alianzas de hasta cuatro, amortización sin visitar el FMI y no obliga a desplazarse al FMI al alcanzar una devaluación. El monopolio opcional compra una propiedad y su exportación, no una cadena completa. No incluye venta privada ni negociación de regalos.']
+    ['Adaptación web','Esta edición admite 2–4 jugadores, alianzas de hasta cuatro, amortización sin visitar el FMI y no obliga a desplazarse al FMI al alcanzar una devaluación. El monopolio opcional compra una propiedad y su exportación, no una cadena completa. El comercio permite acordar propiedades y dinero; no incluye negociación de oro o deudas.']
   ])box.append(element('h3',title),element('p',text));openDialog();
 };
 fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{catalog=data;if(state)renderBoard();}).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));

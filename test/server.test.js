@@ -50,3 +50,14 @@ test('estado persistido permite reconectar después de recrear el servidor',{tim
  const store=memory();const first=await setup(t,store);const a=await client(t,first.url),b=await client(t,first.url);await join(a,0,true);await join(b,1);await act(a,'iniciarPartida',first.game.rooms.PRUEBA,{monopolio:false});await act(a,'tirarDado',first.game.rooms.PRUEBA);const id=first.game.rooms.PRUEBA.pendiente.id;await first.close();
  const second=await setup(t,store),c=await client(t,second.url);assert.equal((await join(c,0)).ok,true);assert.equal(second.game.rooms.PRUEBA.pendiente.id,id);assert.equal((await act(c,'decidirCompraPropiedad',second.game.rooms.PRUEBA,{decisionId:id,comprar:false})).ok,true);
 });
+
+test('comercio por sockets guarda antes de transferir y no repite la aceptación',{timeout:15000},async t=>{
+ let fail=false;const backing=memory(),store={load:backing.load,save:r=>{if(fail)throw new Error('Disco lleno de prueba');backing.save(r);}};
+ const {url,game}=await setup(t,store),a=await client(t,url),b=await client(t,url);await join(a,0,true);await join(b,1);await act(a,'iniciarPartida',game.rooms.PRUEBA,{monopolio:false});
+ let r=game.rooms.PRUEBA;game.transfer(r,game.sur(r,'Cobre'),r.jugadores[1].id);
+ assert.equal((await act(a,'proponerComercio',r,{destinatarioId:r.jugadores[1].id,entrego:[],recibo:['Cobre'],pago:500,cobro:0})).ok,true);
+ const data={turnoId:r.turnoId,decisionId:r.pendiente.id,aceptar:true,actionId:'accept-trade'};fail=true;
+ assert.equal((await emit(b,'responderComercio',data)).ok,false);r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,1000);assert.ok(r.pendiente);
+ fail=false;assert.equal((await emit(b,'responderComercio',data)).ok,true);assert.equal((await emit(b,'responderComercio',data)).duplicate,true);
+ r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,500);assert.equal(game.sur(r,'Cobre').dueño,r.jugadores[0].id);assert.equal(store.load().PRUEBA.pendiente,null);
+});

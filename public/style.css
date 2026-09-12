@@ -109,3 +109,14 @@
  .tile.has-players .tile-industries{position:absolute;bottom:0;right:2px;z-index:3}
 }
 @media(max-width:760px){.tile-tokens.crowded:has(.token:nth-child(2)) .token{width:12px;height:12px}}
+
+#comercio-dialog{max-width:720px;width:calc(100% - 24px)}
+#comercio-dialog select{width:100%;padding:10px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font:inherit}
+.trade-columns{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+.trade-side{background:#eef1e7;padding:14px;border:1px solid var(--line);border-radius:10px;min-width:0}
+.trade-properties{max-height:240px;overflow:auto}
+.trade-property{display:flex;align-items:center;gap:8px;padding:7px 0;margin:0;font-size:12px}
+.trade-property input{width:auto;flex-shrink:0;accent-color:var(--green)}
+.trade-property img{width:30px;height:25px;object-fit:contain}
+#comercio-contenido>button{margin:4px 8px 0 0}
+@media(max-width:520px){.trade-columns{grid-template-columns:1fr;gap:10px}.trade-properties{max-height:160px}#comercio-dialog{padding:26px 16px}}
