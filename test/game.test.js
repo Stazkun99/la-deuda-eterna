@@ -198,7 +198,7 @@ test('Industrialización sin mejoras disponibles informa y no bloquea el turno',
 
 test('la tirada pública contiene los dados reales de 2, 3 o 4 dados y se conserva al recuperar la sala',()=>{
   for(const [debt,count] of [[0,2],[10000,3],[20000,4]]) {
-    const {game,r,act}=fixture();r.jugadores[0].deudaPersonal=debt;
+    const {game,r,act}=fixture();r.jugadores[0].deudaPersonal=debt;r.mazos.solidaridad=[10]; // Fixed reward: the dice test must not draw a movement card.
     act(0,'tirarDado');const roll=game.state(r).ultimaTirada;
     assert.equal(roll.dados.length,count);assert.equal(roll.total,count);assert.equal(r.jugadores[0].posicion,count);
     assert.ok(roll.id);assert.equal(roll.jugador,r.jugadores[0].nombre);

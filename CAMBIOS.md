@@ -59,3 +59,12 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 - Validación de propietario, efectivo, turno, destinatario y estado de las industrias al aceptar; guardado atómico y protección contra doble aceptación.
 - Pruebas de caducidad, abandono, reconexión, importes inválidos y fallo de disco. Suite completa: 52 pruebas.
 - README reescrito con instalación, reglas actuales, comercio, configuración, Render Free, actualización con Git, recursos y solución de problemas.
+
+## Avisos centrales de movimientos
+
+- El centro del tablero muestra origen, acción, importe o bienes y destinatario de las operaciones confirmadas.
+- Pagos de renta y FMI, préstamos, amortización, cobros, construcción, subastas e intercambios; sin avisos duplicados por caja compartida.
+- Cola de avisos con cierre y avance manual. La lectura se pausa con diálogos abiertos o pestaña oculta.
+- Historial de 60 movimientos en el estado guardado, sin repetir avisos antiguos al entrar en una sala.
+- Pruebas de destinatarios, importes, oro, intercambio, alianzas, persistencia y ausencia de avisos si falla el guardado.
+- Se estabiliza una prueba de dados que antes podía sacar aleatoriamente una carta de desplazamiento.

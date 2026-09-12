@@ -57,7 +57,7 @@ test('comercio por sockets guarda antes de transferir y no repite la aceptación
  let r=game.rooms.PRUEBA;game.transfer(r,game.sur(r,'Cobre'),r.jugadores[1].id);
  assert.equal((await act(a,'proponerComercio',r,{destinatarioId:r.jugadores[1].id,entrego:[],recibo:['Cobre'],pago:500,cobro:0})).ok,true);
  const data={turnoId:r.turnoId,decisionId:r.pendiente.id,aceptar:true,actionId:'accept-trade'};fail=true;
- assert.equal((await emit(b,'responderComercio',data)).ok,false);r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,1000);assert.ok(r.pendiente);
+ assert.equal((await emit(b,'responderComercio',data)).ok,false);r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,1000);assert.ok(r.pendiente);assert.equal(r.interacciones.length,0);
  fail=false;assert.equal((await emit(b,'responderComercio',data)).ok,true);assert.equal((await emit(b,'responderComercio',data)).duplicate,true);
  r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,500);assert.equal(game.sur(r,'Cobre').dueño,r.jugadores[0].id);assert.equal(store.load().PRUEBA.pendiente,null);
 });

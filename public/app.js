@@ -15,6 +15,7 @@ const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
 let seenRoll = null, diceTimer, specialCatalog = {}, tradeShown = null;
+let interactionRoom = null, seenInteractions = new Set(), interactionQueue = [], interactionTimer, showingInteraction = false;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -52,6 +53,7 @@ function join(crear) {
     if (result?.ok) { joinedRoom = sala; remember('deuda_eterna_nombre', nombre); remember('deuda_eterna_sala', sala); }
   });
 }
+$('interaccion-siguiente').onclick = nextInteraction;
 $('crear').onclick = () => join(true);
 $('acceso').onsubmit = e => { e.preventDefault(); join(false); };
 $('salir').onclick = () => {
@@ -91,7 +93,7 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { renderLastCard(data); showCard(data, true); });
@@ -108,7 +110,7 @@ socket.on('actualizarEstado', next => {
   $('barrera').textContent = state.barreraProteccionista ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
   $('registro').replaceChildren();
   for (const message of state.registro || []) log($('registro'), message);
-  renderLastCard(state.ultimaCarta);
+  renderLastCard(state.ultimaCarta); renderInteractions();
   renderBoard(); renderPlayers(); updateControls(); renderDecision(); updateClock();
   if (state.resultado) showResult(state.resultado);
   else if (!state.finalizada) lastResult = null;
@@ -193,6 +195,40 @@ function updateControls() {
   $('amortizar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.deudaPersonal <= 0 || p.dinero < Math.min(5000,p.deudaPersonal);
   $('levantar').hidden = !state.barreraProteccionista;
   $('levantar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.dinero < 2000;
+}
+function resetInteractions() {
+  clearTimeout(interactionTimer); interactionRoom=null; seenInteractions.clear(); interactionQueue=[]; showingInteraction=false; $('interaccion').hidden=true;
+}
+function renderInteractions() {
+  const items=state.interacciones || [];
+  if(interactionRoom!==state.codigo){resetInteractions();interactionRoom=state.codigo;for(const item of items)seenInteractions.add(item.id);return;}
+  if(!items.length){resetInteractions();interactionRoom=state.codigo;return;}
+  const fresh=items.filter(item=>!seenInteractions.has(item.id));
+  for(const item of fresh)seenInteractions.add(item.id);
+  if(seenInteractions.size>180)seenInteractions=new Set(items.map(item=>item.id));
+  interactionQueue.push(...fresh);
+  if(!showingInteraction&&interactionQueue.length)nextInteraction();
+}
+function nextInteraction() {
+  clearTimeout(interactionTimer);
+  const item=interactionQueue.shift();
+  if(!item){showingInteraction=false;$('interaccion').hidden=true;return;}
+  showingInteraction=true;
+  const box=$('interaccion');box.hidden=false;box.style.setProperty('--actor',item.color||'#214f43');
+  $('interaccion-accion').textContent=item.accion;
+  $('interaccion-partes').textContent=item.origen+' → '+item.destino;
+  $('interaccion-importe').textContent=item.monto===null?'':amount(item.monto);
+  $('interaccion-importe').hidden=item.monto===null;
+  $('interaccion-detalle').textContent=item.detalle||'';
+  $('interaccion-siguiente').textContent=interactionQueue.length?'Siguiente aviso ('+interactionQueue.length+')':'Cerrar aviso';
+  let remaining=item.detalle?.length>140?9000:6000,last=performance.now();
+  const tick=()=>{
+    const now=performance.now();
+    if(!document.hidden&&!document.querySelector('dialog[open]'))remaining-=now-last;
+    last=now;
+    if(remaining<=0)nextInteraction();else interactionTimer=setTimeout(tick,250);
+  };
+  interactionTimer=setTimeout(tick,250);
 }
 function renderDice(roll, animate) {
   if (!roll) { seenRoll = null; clearTimeout(diceTimer); $('dados-panel').hidden = true; return; }

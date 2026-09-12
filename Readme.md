@@ -67,6 +67,12 @@ Pulsa cualquier casilla para ver sus detalles. Las propiedades muestran la tarje
 
 El número y color de tu ficha coinciden con la lista de jugadores. En móvil se simplifica el texto del tablero; los detalles siguen disponibles al tocar una casilla.
 
+### Avisos de movimientos en el tablero
+
+Los movimientos confirmados aparecen en el centro del tablero para todos los jugadores: origen, acción, importe o bienes y destinatario. Incluyen rentas, pagos al FMI, préstamos, amortizaciones, compras, construcciones, subastas, cobros e intercambios aceptados.
+
+Si se producen varios, se muestran en orden. Puedes cerrarlos o pasar al siguiente. El tiempo de lectura se pausa cuando una carta o ventana está abierta o la pestaña queda oculta. El servidor conserva los últimos 60 movimientos; al entrar de nuevo no se reproducen avisos antiguos. Las acciones rechazadas o cuyo guardado falla no generan movimientos confirmados.
+
 ## Comercio entre jugadores
 
 El jugador del turno puede pulsar **Comerciar ⇄** antes de tirar o después de resolver su casilla. No se puede iniciar un trato durante una compra, pago, subasta, votación u otra elección pendiente.

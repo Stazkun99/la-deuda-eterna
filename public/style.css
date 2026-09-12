@@ -120,3 +120,13 @@
 .trade-property img{width:30px;height:25px;object-fit:contain}
 #comercio-contenido>button{margin:4px 8px 0 0}
 @media(max-width:520px){.trade-columns{grid-template-columns:1fr;gap:10px}.trade-properties{max-height:160px}#comercio-dialog{padding:26px 16px}}
+
+.board-center>.interaction-card{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%);z-index:5;width:calc(100% - 32px);max-width:460px;max-height:75%;overflow:auto;background:#fffef6;border:1px solid #c7d3bf;border-top:4px solid var(--actor,var(--green));border-radius:14px;padding:22px;box-shadow:0 12px 40px #12382f44;text-align:center;overflow-wrap:anywhere;animation:interaction-in .2s ease-out}
+.interaction-card .eyebrow{font-size:11px;color:var(--green);margin:0 0 10px}
+.interaction-parties{font-size:18px;font-weight:750;line-height:1.3;margin:0 0 10px}
+#interaccion-importe{display:block;font-size:32px;color:var(--green)}
+#interaccion-detalle{font-size:13px;line-height:1.5;margin:8px 0;color:var(--muted)}
+#interaccion-siguiente{font-size:11px;padding:5px 12px;margin-top:8px}
+@keyframes interaction-in{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@media(max-width:760px){.board-center>.interaction-card{width:calc(100% - 12px);padding:10px;border-radius:9px;max-height:85%}.interaction-parties{font-size:13px}.interaction-card .eyebrow{font-size:9px;letter-spacing:1px}#interaccion-importe{font-size:24px}#interaccion-detalle{font-size:11px}#interaccion-siguiente{font-size:10px;min-height:28px}}
+@media(prefers-reduced-motion:reduce){.board-center>.interaction-card{animation:none}}
