@@ -16,6 +16,7 @@ let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, se
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
 let seenRoll = null, diceTimer, specialCatalog = {}, tradeShown = null;
 let interactionRoom = null, seenInteractions = new Set(), interactionQueue = [], interactionTimer, showingInteraction = false;
+let movement = null, pendingCard = null, animateNextState = false;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -25,7 +26,7 @@ const myProperty = c => !!me() && (c.dueño === me().id || !!me().alianzaId && s
 function notice(text) { clearTimeout(noticeTimer); $('aviso').textContent = text; $('aviso').hidden = false; noticeTimer = setTimeout(() => $('aviso').hidden = true, 7000); }
 function remember(key, value) { if (storageAvailable) { try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { storageAvailable = false; } } }
 function action(event, data = {}) {
-  if (!socket.connected || busy) return;
+  if (!socket.connected || busy || movement) return;
   busy = true; updateControls();
   socket.timeout(8000).emit(event, { ...data, turnoId: state?.turnoId, actionId: secureId().slice(0, 32) }, (error, result) => {
     busy = false; updateControls();
@@ -63,7 +64,26 @@ $('copiar').onclick = async () => { try { await navigator.clipboard.writeText(st
 $('iniciar').onclick = () => action('iniciarPartida', { monopolio: $('monopolio').checked });
 $('tirar').onclick = () => action('tirarDado');
 $('terminar').onclick = () => action('terminarTurno');
-$('prestamo').onclick = () => action('pedirPrestamo');
+const loanBorrower = () => {
+  const p = me();
+  return p?.deudaPersonal < 30000 ? p : state?.jugadores.find(q => !q.enQuiebra && p?.alianzaId && q.alianzaId === p.alianzaId && q.deudaPersonal < 30000);
+};
+$('prestamo').onclick = () => {
+  const borrower = loanBorrower(); if (!borrower || $('prestamo').disabled) return;
+  const max = 30000 - borrower.deudaPersonal, input = $('prestamo-importe');
+  input.max = max; input.value = Math.min(5000, max);
+  $('prestamo-capacidad').textContent = 'Deuda a nombre de ' + borrower.nombre + '. Puedes pedir hasta ' + amount(max) + '.';
+  $('prestamo-dialog').showModal(); input.focus(); input.select();
+};
+$('cerrar-prestamo').onclick = () => $('prestamo-dialog').close();
+$('prestamo-form').onsubmit = e => {
+  e.preventDefault();
+  const borrower = loanBorrower(), input = $('prestamo-importe');
+  if (!borrower || $('prestamo').disabled) { $('prestamo-dialog').close(); return; }
+  input.max = 30000 - borrower.deudaPersonal;
+  if (!input.reportValidity()) return;
+  action('pedirPrestamo', { monto: Number(input.value) }); $('prestamo-dialog').close();
+};
 $('amortizar').onclick = () => action('pagarDeuda');
 $('levantar').onclick = () => action('levantarBarrera');
 $('propiedades').onclick = showProperties;
@@ -88,21 +108,28 @@ socket.on('connect', () => {
   if (saved && $('nombre').value.trim()) socket.emit('unirseSala', { nombre: $('nombre').value.trim(), sala: saved, userId, sessionToken }, result => { if (result?.ok) joinedRoom = saved; });
   updateControls();
 });
-socket.on('disconnect', () => { busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
+socket.on('disconnect', () => { cancelMovement(); animateNextState = false; pendingCard = null; busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
 socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión · reintentando'; updateControls(); });
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { cancelMovement(); animateNextState = false; pendingCard = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
-socket.on('mostrarCartaModal', data => { renderLastCard(data); showCard(data, true); });
-socket.on('finDeJuegoModal', showResult);
+socket.on('mostrarCartaModal', data => { pendingCard = data; });
+socket.on('finDeJuegoModal', () => {}); // The following state renders the result after movement.
 socket.on('actualizarEstado', next => {
   const previousRoom = state?.codigo;
   state = next;
   if (!me()) return;
-  renderDice(state.ultimaTirada, previousRoom === state.codigo);
+  const roll = state.ultimaTirada;
+  const animate = animateNextState && previousRoom === state.codigo && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (previousRoom !== state.codigo || !state.enJuego || !roll || (movement && movement.rollId !== roll.id)) cancelMovement();
+  if (animate && roll && roll.id !== seenRoll && Number.isInteger(roll.desde) && state.jugadores.some(p => p.id === roll.jugadorId)) {
+    movement = { rollId: roll.id, playerId: roll.jugadorId, position: roll.desde, total: roll.total, node: null, animation: null };
+  }
+  animateNextState = true;
+  renderDice(roll, animate);
   joinedRoom = state.codigo;
   $('login').hidden = true; $('mesa').hidden = false;
   $('sala-codigo').textContent = state.codigo;
@@ -110,11 +137,69 @@ socket.on('actualizarEstado', next => {
   $('barrera').textContent = state.barreraProteccionista ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
   $('registro').replaceChildren();
   for (const message of state.registro || []) log($('registro'), message);
-  renderLastCard(state.ultimaCarta); renderInteractions();
+  renderStart(); renderLastCard(state.ultimaCarta); renderInteractions();
   renderBoard(); renderPlayers(); updateControls(); renderDecision(); updateClock();
-  if (state.resultado) showResult(state.resultado);
+  if (movement && !movement.started) { movement.started = true; void movePiece(movement); }
+  if (!movement) flushLanding();
+  if (state.resultado && !movement) showResult(state.resultado);
   else if (!state.finalizada) lastResult = null;
 });
+function renderStart() {
+  const initial = state.inicioPartida, box = $('sorteo-inicial');
+  box.hidden = !initial;
+  if (!initial) { delete box.dataset.startId; return; }
+  if (box.dataset.startId === initial.id) return;
+  box.dataset.startId = initial.id; box.open = !state.ultimaTirada;
+  const content = $('sorteo-resultados'); content.replaceChildren();
+  for (const t of initial.tiradas) {
+    const row = element('p');
+    row.append(element('span', ['⚀','⚁','⚂','⚃','⚄','⚅'][t.dado - 1], 'initial-die'), document.createTextNode(t.nombre + ': ' + t.dado + ' → ' + amount(t.dinero)));
+    if (t.jugadorId === initial.primeroId) row.append(element('strong', ' · Empieza'));
+    content.append(row);
+  }
+  content.append(element('p', '$5.000 + dado × $200. ' + (initial.empate ? 'Primer turno sorteado entre quienes empataron con el dado más alto.' : 'Empieza el dado más alto.'), 'muted'));
+}
+function displayPosition(p) { return p?.id === movement?.playerId ? movement.position : p?.posicion; }
+function flushLanding() {
+  if (!state || movement) return;
+  renderInteractions(); renderDecision(true);
+  if (pendingCard) { const card = pendingCard; pendingCard = null; renderLastCard(card); showCard(card, true); }
+  if (state.resultado) showResult(state.resultado);
+}
+function cancelMovement() {
+  const old = movement; movement = null;
+  old?.animation?.cancel(); old?.node?.remove();
+  if (state) { renderBoard(); updateControls(); }
+}
+async function movePiece(run) {
+  // Positions come from the rendered cells, so the route follows every responsive layout.
+  await new Promise(resolve => setTimeout(resolve, 900));
+  if (movement !== run) return;
+  const player = state.jugadores.find(p => p.id === run.playerId);
+  const node = element('span', String(state.jugadores.indexOf(player) + 1), 'token token-current moving-token');
+  node.style.setProperty('--player', player.color); node.setAttribute('aria-hidden', 'true');
+  run.node = node; $('tablero').append(node); renderBoard();
+  const point = id => {
+    const board = $('tablero').getBoundingClientRect(), tile = cells.get(id).getBoundingClientRect();
+    return `translate(${tile.left - board.left + tile.width / 2 - node.offsetWidth / 2}px, ${tile.top - board.top + tile.height / 2 - node.offsetHeight / 2}px)`;
+  };
+  try {
+    for (let step = 0; step < run.total; step++) {
+      if (movement !== run) return;
+      const next = (run.position + 1) % 40, from = point(run.position), to = point(next);
+      node.style.transform = to;
+      run.animation = node.animate([{ transform: from }, { transform: to }], { duration: 170, easing: 'ease-in-out' });
+      await run.animation.finished;
+      if (movement !== run) return;
+      run.position = next; renderBoard();
+    }
+  } catch { /* Cancellation snaps to the latest authoritative state. */ }
+  finally {
+    node.remove();
+    if (movement === run) { movement = null; renderBoard(); updateControls(); flushLanding(); }
+  }
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden && movement) { cancelMovement(); flushLanding(); } });
 function position(id) {
   // A perimeter of 40 cells in an 11×11 grid. Pieces belong to cells, never pixels.
   if (id <= 10) return [11, 11 - id];
@@ -143,7 +228,7 @@ function renderBoard() {
           host.classList.toggle('special-original', !!specialCatalog[c.id] && !c.region);
       }
     }
-    const active = state.enJuego && state.jugadores[state.turnoActual]?.posicion === c.id;
+    const active = state.enJuego && displayPosition(state.jugadores[state.turnoActual]) === c.id;
     tile.className = 'tile ' + (c.region === 'norte' ? 'norte' : c.region === 'sur' ? 'sur' : 'special') + (active ? ' active' : '');
     const base = c.baseSur ? state.tablero.find(s => s.nombre === c.baseSur) : c;
     tile.style.setProperty('--group', groups[base.grupo] || '#a6b49a');
@@ -152,12 +237,13 @@ function renderBoard() {
     const n = c.region === 'sur' ? c.industriasNac : c.industriasExp;
     tile.querySelector('.tile-industries').textContent = n ? '▰'.repeat(n) : '';
     const tokens = tile.querySelector('.tile-tokens'); tokens.replaceChildren();
-    const occupants = state.jugadores.filter(p => p.posicion === c.id && !p.enQuiebra);
+    const occupants = state.jugadores.filter(p => displayPosition(p) === c.id && !p.enQuiebra);
     tile.classList.toggle('has-players', occupants.length > 0);
     tokens.classList.toggle('crowded', occupants.length > 2);
     for (const p of occupants) {
       const current = state.enJuego && state.jugadores[state.turnoActual]?.id === p.id;
       const token = element('span', String(state.jugadores.indexOf(p) + 1), 'token' + (current ? ' token-current' : ''));
+      if (movement?.node && p.id === movement.playerId) token.style.visibility = 'hidden';
       token.style.setProperty('--player', p.color);
       token.title = p.nombre + (p.userId === userId ? ' · tú' : '') + (current ? ' · en turno' : '');
       token.setAttribute('aria-hidden', 'true'); tokens.append(token);
@@ -179,11 +265,11 @@ function renderPlayers() {
 function updateControls() {
   $('crear').disabled = $('unirse').disabled = !socket.connected;
   if (!state) return;
-  const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !socket.connected || state.fase === 'comercio';
+  const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !!movement || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
   $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';
   const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: 30 segundos para pujar.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
-  $('fase').textContent = state.enJuego ? phases[state.fase] || '' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
+  $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
   $('inicio').hidden = state.enJuego || !p?.esLider;
   $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2;
   $('acciones').hidden = !state.enJuego;
@@ -200,6 +286,7 @@ function resetInteractions() {
   clearTimeout(interactionTimer); interactionRoom=null; seenInteractions.clear(); interactionQueue=[]; showingInteraction=false; $('interaccion').hidden=true;
 }
 function renderInteractions() {
+  if (movement) return;
   const items=state.interacciones || [];
   if(interactionRoom!==state.codigo){resetInteractions();interactionRoom=state.codigo;for(const item of items)seenInteractions.add(item.id);return;}
   if(!items.length){resetInteractions();interactionRoom=state.codigo;return;}
@@ -267,6 +354,7 @@ function updateClock() {
 setInterval(updateClock, 1000);
 function renderDecision(force = false) {
   if (!state) return;
+  if (movement) { $('decision').replaceChildren(); return; }
   const d = state.pendiente, p = me(), container = $('decision');
   if (d?.tipo !== 'comercio' && tradeShown) { $('comercio-dialog').close(); tradeShown = null; }
   const key = JSON.stringify([d, state.turnoId, p?.dinero, p?.oro, socket.connected, busy]);
@@ -426,7 +514,7 @@ function showProperties(){
   for(const c of properties)list.append(button(c.nombre+' ↗',()=>showProperty(c.id),'secondary'));
   box.append(list);openDialog();
 }
-function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $50 de ayuda del BID.',32:'Cada jugador entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
+function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $1.500 de ayuda al desarrollo del BID, sin generar deuda. Importe de esta edición web.',32:'Cada jugador entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
 function renderLastCard(data) {
   currentCard = data || null;
   const box = $('ultima-carta');
@@ -461,10 +549,11 @@ function showResult(result){
 $('reglas').onclick=()=>{
   selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','EDICIÓN WEB','eyebrow'),element('h2','Cómo jugar'));
   for(const [title,text]of [
+    ['Inicio','Todos reciben $5.000 más un dado × $200: entre $5.200 y $6.200, sin deuda inicial. Empieza quien saque el dado más alto; los empates se resuelven por sorteo entre los empatados. Después se sigue el orden de la mesa.'],
     ['Tu turno','Gestiona tus industrias antes de tirar. Después resuelve la casilla y pulsa Terminar turno. Tienes tres minutos; una desconexión conserva tu turno durante un minuto.'],
     ['Construcción','Compra materias primas en el Sur. Puedes construir hasta tres industrias nacionales y tres multinacionales; cada nivel de exportación necesita el mismo nivel nacional. Ayuda Solidaria permite construir después de tirar al 50%.'],
     ['Dinero y oro','Las rentas son el precio de casilla por las industrias. Las cadenas suman sus rentas. El oro paga manufacturas e intereses, pero no cartas, industrias, fuga de capitales ni monopolios.'],
-    ['Deudas','Préstamos en cuotas de $5.000 hasta $30.000 por jugador. Puedes amortizar hasta $5.000 en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
+    ['Deudas','Préstamos por el importe que elijas, hasta $30.000 de deuda por jugador. Puedes amortizar hasta $5.000 en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
     ['Comercio','En tu turno, antes de tirar o tras resolver la casilla, puedes proponer propiedades y dinero a otro grupo. Cada terreno incluye sus industrias. El destinatario acepta o rechaza; la oferta caduca en 60 segundos como máximo. Cerrar la ventana no cancela la oferta.'],
     ['Alianzas y subastas','La alianza comparte efectivo, oro y propiedades, conservando las deudas individuales. En embargo y sin efectivo, subasta una propiedad durante 30 segundos; sin ofertas, el FMI paga el 50% y libera el terreno.'],
     ['Final','Gana el último jugador activo o el grupo que alcance las doce propiedades con tres industrias nacionales y tres multinacionales en cada una. Unirse en alianza no da una victoria automática.'],

@@ -13,7 +13,7 @@ test('todas las cartas y propiedades tienen arte local WebP válido',()=>{
  function check(url){assert.match(url,/^\/assets\/cartas\/[a-z/0-9-]+\.webp$/);const p=path.resolve(publicRoot,'.'+url);assert.ok(p.startsWith(publicRoot+path.sep));const bytes=fs.readFileSync(p);assert.equal(bytes.toString('ascii',0,4),'RIFF');assert.equal(bytes.toString('ascii',8,12),'WEBP');}
 });
 test('el servidor anuncia la imagen exacta de cada robo y conserva su identidad al reconectar',()=>{
- const events=[],game=new Game({dice:()=>1,emit:(room,event,data)=>events.push({event,data})});
+ const events=[],game=new Game({chooseIndex:()=>0,dice:()=>1,emit:(room,event,data)=>events.push({event,data})});
  for(let i=0;i<2;i++)game.join('s'+i,{nombre:'Jugador '+i,userId:'usuario_'+i,sessionToken:String(i).repeat(64),sala:'ARTE',crear:i===0});
  game.action('s0','iniciarPartida',{monopolio:false});const r=game.rooms.ARTE,p=r.jugadores[0];
  for(const [type,deck]of [['solidaridad',CARTAS_SOLIDARIDAD],['condiciones',CARTAS_CONDICIONES]])for(const c of deck){

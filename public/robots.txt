@@ -1,3 +1,5 @@
+# Acceso público para buscadores, incluidos Googlebot, Bingbot y OAI-SearchBot.
 User-agent: *
 Allow: /
+
 Sitemap: https://la-deuda-eterna.onrender.com/sitemap.xml

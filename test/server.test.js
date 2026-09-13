@@ -6,7 +6,7 @@ const {Store}=require('../lib/store');
 const {io}=require('../node_modules/socket.io/client-dist/socket.io.js');
 function memory(){let snapshot={};return{load:()=>structuredClone(snapshot),save:r=>snapshot=structuredClone(r)};}
 async function setup(t,store=memory()){
- const instance=createServer({store,gameOptions:{dice:()=>1}});instance.server.listen(0,'127.0.0.1');await once(instance.server,'listening');
+ const instance=createServer({store,gameOptions:{chooseIndex:()=>0,dice:()=>1}});instance.server.listen(0,'127.0.0.1');await once(instance.server,'listening');
  t.after(()=>instance.close());return{...instance,url:'http://127.0.0.1:'+instance.server.address().port};
 }
 async function client(t,url){const s=io(url,{transports:['websocket'],forceNew:true,reconnection:false});t.after(()=>s.disconnect());await once(s,'connect');return s;}
@@ -57,7 +57,24 @@ test('comercio por sockets guarda antes de transferir y no repite la aceptación
  let r=game.rooms.PRUEBA;game.transfer(r,game.sur(r,'Cobre'),r.jugadores[1].id);
  assert.equal((await act(a,'proponerComercio',r,{destinatarioId:r.jugadores[1].id,entrego:[],recibo:['Cobre'],pago:500,cobro:0})).ok,true);
  const data={turnoId:r.turnoId,decisionId:r.pendiente.id,aceptar:true,actionId:'accept-trade'};fail=true;
- assert.equal((await emit(b,'responderComercio',data)).ok,false);r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,1000);assert.ok(r.pendiente);assert.equal(r.interacciones.length,0);
+ assert.equal((await emit(b,'responderComercio',data)).ok,false);r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,5200);assert.ok(r.pendiente);assert.equal(r.interacciones.length,0);
  fail=false;assert.equal((await emit(b,'responderComercio',data)).ok,true);assert.equal((await emit(b,'responderComercio',data)).duplicate,true);
- r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,500);assert.equal(game.sur(r,'Cobre').dueño,r.jugadores[0].id);assert.equal(store.load().PRUEBA.pendiente,null);
+ r=game.rooms.PRUEBA;assert.equal(r.jugadores[0].dinero,4700);assert.equal(game.sur(r,'Cobre').dueño,r.jugadores[0].id);assert.equal(store.load().PRUEBA.pendiente,null);
+});
+
+test('SEO: portada rastreable, JSON-LD permitido por CSP, recursos y canonical coherentes',async t=>{
+ const {url}=await setup(t),res=await fetch(url),html=await res.text();
+ const block=html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/);assert.ok(block);
+ const data=JSON.parse(block[1]);assert.equal(data['@graph'][1]['@type'],'VideoGame');
+ assert.equal(data['@graph'][1].numberOfPlayers.maxValue,4);
+ const hash=require('node:crypto').createHash('sha256').update(block[1]).digest('base64');
+ assert.ok(res.headers.get('content-security-policy').includes("'sha256-"+hash+"'"));
+ assert.ok(html.includes('name="description"'));assert.ok(html.includes('id="sobre-el-juego"'));
+ assert.ok(html.includes('rel="canonical" href="https://la-deuda-eterna.onrender.com/"'));
+ const redirect=await fetch(url+'/index.html',{redirect:'manual'});assert.equal(redirect.status,301);assert.equal(redirect.headers.get('location'),'/');
+ for(const resource of ['/robots.txt','/llms.txt','/index.md','/sitemap.xml','/preview.png','/google7a2bd9c087397093.html'])assert.equal((await fetch(url+resource)).status,200,resource);
+ const robots=await(await fetch(url+'/robots.txt')).text();assert.match(robots,/User-agent: \*\s+Allow: \//);assert.ok(!robots.includes('Disallow: /'));
+ assert.equal((await fetch(url+'/health')).headers.get('x-robots-tag'),'noindex');
+ assert.equal((await fetch(url+'/api/catalogo')).headers.get('x-robots-tag'),'noindex');
+ assert.equal((await fetch(url+'/missing-page-test')).status,404);
 });

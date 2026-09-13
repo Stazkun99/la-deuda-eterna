@@ -59,11 +59,15 @@ Para probar tú solo una sala multijugador, usa una ventana normal y otra de inc
 1. Escribe tu nombre y crea una sala.
 2. Comparte el código con tus amigos; entran desde la misma web y eligen **Unirme a la sala**.
 3. El anfitrión inicia cuando haya al menos dos jugadores conectados. Puede activar los monopolios antes de empezar.
+Cada jugador recibe **$5.000 + un dado × $200** (entre $5.200 y $6.200), con deuda inicial cero. La tirada más alta decide quién empieza. Si hay empate en el valor más alto, se sortea el primer turno únicamente entre esos jugadores, sin prioridad para el anfitrión. Después se sigue el orden de la mesa. Los resultados quedan visibles en «Dados y dinero inicial» y en el registro. Esta regla se aplica al iniciar partidas nuevas.
+
 4. Durante tu turno, gestiona deuda, construcción o comercio y pulsa **Tirar los dados**.
 5. Resuelve la compra, pago, carta o elección que corresponda a la casilla.
 6. Pulsa **Terminar turno** cuando no haya decisiones pendientes y hayas resuelto un posible saldo negativo.
 
 Pulsa cualquier casilla para ver sus detalles. Las propiedades muestran la tarjeta original, su dueño, las industrias actuales y las acciones disponibles; los botones de construcción indican el coste de la siguiente industria.
+
+Después de la tirada, la ficha recorre las casillas una a una, también al pasar por la salida. Las decisiones y cartas aparecen al terminar el recorrido. Al reconectar se muestra la posición actual, sin repetir tiradas; se respeta la preferencia de movimiento reducido.
 
 El número y color de tu ficha coinciden con la lista de jugadores. En móvil se simplifica el texto del tablero; los detalles siguen disponibles al tocar una casilla.
 
@@ -111,7 +115,7 @@ Esta sección describe la implementación web. No reproduce todas las variantes 
 
 ### Deuda, oro y FMI
 
-- Los préstamos se conceden en cuotas de $5.000, hasta $30.000 de deuda personal. Si un aliado ya alcanzó su límite, puede solicitarse a cargo de otro miembro con capacidad.
+- Puedes elegir el importe entero del préstamo, desde $1 hasta completar $30.000 de deuda personal. Si un aliado ya alcanzó su límite, puede solicitarse a cargo de otro miembro con capacidad.
 - La amortización es de hasta $5.000 por acción, antes de tirar o en gestión final, sin visitar el FMI.
 - Se tiran dos dados; tres desde $10.000 de deuda personal y cuatro desde $20.000.
 - Los intereses ordinarios se cobran al pasar o llegar a la sede del FMI. Alcanzar un umbral de deuda cambia los dados, sin trasladar automáticamente la ficha al FMI.
@@ -336,3 +340,20 @@ Los scripts no modifican los originales. Sus coordenadas se usan únicamente par
 Posibles ampliaciones que **no están implementadas**: almacenamiento externo persistente, cuentas y recuperación de acceso, espectadores, partidas con más de cuatro jugadores, variantes adicionales del reglamento, disolución voluntaria de alianzas y despliegue con varias instancias.
 
 La edición web está basada en el material de La Deuda Eterna. Los originales visuales utilizados se identifican en sus manifiestos; no se presentan como ilustraciones nuevas del proyecto. `package.json` declara la licencia ISC para el paquete. Esa declaración no establece por sí sola la licencia de los dibujos, tarjetas o reglamento originales.
+
+### Ajuste de la ayuda al desarrollo
+
+La casilla 30 (Ayuda BID) entrega **$1.500**, sin generar deuda. Este importe sustituye los $50 de la versión anterior; la ilustración original se conserva y los detalles de la casilla muestran la regla de esta edición.
+
+## Buscadores y asistentes de IA
+
+La portada incluye descripción, URL canónica, Open Graph, Twitter Card, datos estructurados JSON-LD (`WebSite` y `VideoGame`) y una explicación visible del juego sin depender de JavaScript. `/index.html` redirige a `/` para evitar duplicados. Se mantiene el archivo de verificación de Google.
+
+- `public/robots.txt` permite el rastreo público, también de OAI-SearchBot. No es una protección de datos privados.
+- `public/sitemap.xml` lista la portada canónica. No inventa fechas de actualización ni páginas inexistentes.
+- `public/llms.txt` orienta hacia la guía pública `public/index.md`. Es un recurso complementario, no una garantía de indexación o citas de IA.
+- `/health` y `/api` envían `X-Robots-Tag: noindex`.
+
+Tras desplegar, verifica la propiedad en Google Search Console con el archivo existente, envía `https://la-deuda-eterna.onrender.com/sitemap.xml` y usa Inspección de URLs para probar la portada publicada y solicitar indexación. Revisa también la disponibilidad de robots.txt: durante esta revisión, una primera respuesta pública bloqueaba todo y otra posterior permitía el rastreo. Se desconoce la causa exacta; comprueba especialmente el arranque del alojamiento.
+
+No hace falta instalar Analytics, Tag Manager ni un script externo para aparecer en búsquedas. Google no exige archivos ni marcado especiales para sus funciones de IA; OpenAI utiliza OAI-SearchBot para búsqueda y GPTBot para entrenamiento. Referencias: [Google](https://developers.google.com/search/docs/appearance/ai-features), [rastreadores OpenAI](https://developers.openai.com/api/docs/bots), [propuesta llms.txt](https://llmstxt.org/).

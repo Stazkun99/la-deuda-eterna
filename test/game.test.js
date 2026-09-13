@@ -5,11 +5,13 @@ const { Game, GameError } = require('../lib/game');
 function fixture(count = 3) {
   let time = 1_000_000;
   const messages = [];
-  const game = new Game({ now: () => time, dice: () => 1, emit: (...args) => messages.push(args) });
+  const game = new Game({ now: () => time, chooseIndex: () => 0, dice: () => 1, emit: (...args) => messages.push(args) });
   for (let i = 0; i < count; i++) game.join('s' + i, { nombre: 'Jugador ' + i, userId: 'usuario_' + i, sessionToken: String(i).repeat(64), sala: 'PRUEBA', crear: i === 0 });
   const r = game.rooms.PRUEBA;
   const act = (index, event, data = {}) => game.action('s' + index, event, { turnoId: r.turnoId, ...data });
   act(0, 'iniciarPartida', { monopolio: true });
+  // These rule scenarios intentionally use a tight $1,000 budget. Startup has its own tests.
+  for (const player of r.jugadores) player.dinero = 1000;
   return { game, r, act, messages, advance: ms => { time += ms; game.tick(); } };
 }
 const rejects = fn => assert.throws(fn, GameError);
@@ -205,4 +207,35 @@ test('la tirada pública contiene los dados reales de 2, 3 o 4 dados y se conser
     const restored=new Game({rooms:structuredClone(game.rooms)});
     assert.deepEqual(restored.state(restored.rooms.PRUEBA).ultimaTirada,roll);
   }
+});
+
+test('préstamo de importe elegido: efectivo, deuda y aviso coinciden', () => {
+  const { r, act } = fixture(); const p = r.jugadores[0], cash = p.dinero;
+  act(0, 'pedirPrestamo', { monto: 1234 });
+  assert.equal(p.deudaPersonal, 1234); assert.equal(p.dinero, cash + 1234);
+  assert.equal(r.interacciones.at(-1).monto, 1234);
+  act(0, 'pedirPrestamo', { monto: 28766 }); assert.equal(p.deudaPersonal, 30000);
+  rejects(() => act(0, 'pedirPrestamo', { monto: 1 }));
+});
+test('préstamo rechaza importes inválidos sin cambiar saldo ni deuda', () => {
+  for (const monto of [0, -1, 1.5, '1000', null, NaN, Infinity, 30001]) {
+    const { r, act } = fixture(); const before = JSON.stringify(r);
+    rejects(() => act(0, 'pedirPrestamo', { monto })); assert.equal(JSON.stringify(r), before);
+  }
+});
+test('préstamo respeta capacidad restante y deuda individual en alianza', () => {
+  const { r, act } = fixture(); const [p,q] = r.jugadores;
+  p.alianzaId = q.alianzaId = 'equipo'; p.deudaPersonal = 29900;
+  rejects(() => act(0, 'pedirPrestamo', { monto: 101 }));
+  act(0, 'pedirPrestamo', { monto: 100 });
+  const cash = q.dinero; act(0, 'pedirPrestamo', { monto: 789 });
+  assert.equal(p.deudaPersonal, 30000); assert.equal(q.deudaPersonal, 789);
+  assert.equal(q.dinero, cash + 789); assert.equal(p.dinero, q.dinero);
+});
+test('tirada conserva origen y destino del recorrido al cruzar la salida', () => {
+  const { game, r, act } = fixture(); const p = r.jugadores[0]; p.posicion = 39;
+  act(0, 'tirarDado');
+  assert.equal(r.ultimaTirada.desde, 39); assert.equal(r.ultimaTirada.hasta, 1);
+  assert.equal(r.ultimaTirada.total, 2); assert.equal(r.ultimaTirada.jugadorId, p.id);
+  assert.equal(game.state(r).ultimaTirada.desde, 39);
 });

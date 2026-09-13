@@ -68,3 +68,17 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 - Historial de 60 movimientos en el estado guardado, sin repetir avisos antiguos al entrar en una sala.
 - Pruebas de destinatarios, importes, oro, intercambio, alianzas, persistencia y ausencia de avisos si falla el guardado.
 - Se estabiliza una prueba de dados que antes podía sacar aleatoriamente una carta de desplazamiento.
+
+## Movimiento y préstamos personalizables
+- Recorrido animado casilla a casilla tras los dados, con decisiones al llegar y sincronización al reconectar.
+- Formulario de préstamo con importe libre entero, capacidad restante y validación del límite en el servidor.
+
+## Reparto inicial y primer turno
+- Capital inicial de $5.000 más un dado × $200, sin deuda inicial.
+- Empieza el dado más alto; sorteo uniforme entre empatados, sin favorecer al anfitrión. Resultados visibles y guardados.
+- Ayuda al desarrollo (casilla 30): $1.500 en efectivo sin deuda; detalles y aviso actualizados.
+
+## Indexación y contenido público
+- Metadatos, canonical, tarjetas sociales y JSON-LD coherente con contenido HTML visible.
+- Guía pública en Markdown, llms.txt y sitemap; verificación de Google conservada.
+- Redirección de index.html, noindex para endpoints técnicos y CSP con hash del JSON-LD.

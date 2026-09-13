@@ -5,7 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <meta name="theme-color" content="#122b29">
-  <title>La Deuda Eterna · Mesa de juego</title>
+  <title>La Deuda Eterna online · Juego de mesa multijugador gratis</title>
+  <meta name="description" content="Juega gratis a La Deuda Eterna online con 2–4 jugadores. Compra propiedades, construye industrias, negocia alianzas y gestiona tu deuda con el FMI.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <link rel="canonical" href="https://la-deuda-eterna.onrender.com/">
+  <link rel="describedby" href="/llms.txt" type="text/plain">
+  <link rel="alternate" href="/index.md" type="text/markdown" title="Información del juego en texto">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="es_ES">
+  <meta property="og:site_name" content="La Deuda Eterna">
+  <meta property="og:title" content="La Deuda Eterna · Juega online con tus amigos">
+  <meta property="og:description" content="Juega gratis a La Deuda Eterna online con 2–4 jugadores. Compra propiedades, construye industrias, negocia alianzas y gestiona tu deuda con el FMI.">
+  <meta property="og:url" content="https://la-deuda-eterna.onrender.com/">
+  <meta property="og:image" content="https://la-deuda-eterna.onrender.com/preview.png">
+  <meta property="og:image:alt" content="Tablero de La Deuda Eterna con propiedades, fichas y controles de partida">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="La Deuda Eterna · Juego de mesa online">
+  <meta name="twitter:description" content="Juega gratis a La Deuda Eterna online con 2–4 jugadores. Compra propiedades, construye industrias, negocia alianzas y gestiona tu deuda con el FMI.">
+  <meta name="twitter:image" content="https://la-deuda-eterna.onrender.com/preview.png">
+  <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://la-deuda-eterna.onrender.com/#website",
+      "name": "La Deuda Eterna",
+      "url": "https://la-deuda-eterna.onrender.com/",
+      "inLanguage": "es"
+    },
+    {
+      "@type": "VideoGame",
+      "@id": "https://la-deuda-eterna.onrender.com/#game",
+      "name": "La Deuda Eterna",
+      "url": "https://la-deuda-eterna.onrender.com/",
+      "description": "Juega gratis a La Deuda Eterna online con 2–4 jugadores. Compra propiedades, construye industrias, negocia alianzas y gestiona tu deuda con el FMI.",
+      "inLanguage": "es",
+      "isAccessibleForFree": true,
+      "gamePlatform": "Navegador web",
+      "playMode": "https://schema.org/MultiPlayer",
+      "numberOfPlayers": {
+        "@type": "QuantitativeValue",
+        "minValue": 2,
+        "maxValue": 4
+      },
+      "genre": [
+        "Estrategia",
+        "Juego de mesa",
+        "Estrategia económica"
+      ],
+      "image": "https://la-deuda-eterna.onrender.com/preview.png"
+    }
+  ]
+}</script>
   <link rel="stylesheet" href="style.css">
   <script defer src="/socket.io/socket.io.js"></script>
   <script defer src="app.js"></script>
@@ -16,6 +67,19 @@
     <section id="login" class="login-layout">
       <div class="intro"><p class="eyebrow">ECONOMÍA · ESTRATEGIA · SOLIDARIDAD</p><h1>El futuro<br>está en <em>juego.</em></h1><p>Industrializa el Sur. Llega a los mercados del Norte.<br>Negocia, construye alianzas y desafía al FMI.</p><div class="intro-tags"><span>2–4 jugadores</span><span>En tiempo real</span><span>Una mesa compartida</span></div></div>
       <form id="acceso" class="login-card"><p class="eyebrow">TU LUGAR EN LA MESA</p><h2>Entra a la partida</h2><label for="nombre">Tu nombre o nación</label><input id="nombre" required maxlength="40" autocomplete="nickname" placeholder="¿Cómo te llamas?"><button id="crear" type="button" class="primary">Crear una nueva sala <span>＋</span></button><div class="separator">o únete a tus amigos</div><label for="codigo">Código de sala</label><input id="codigo" minlength="3" maxlength="12" pattern="[A-Za-z0-9_\-]{3,12}" placeholder="Ej. ANDES" autocapitalize="characters" autocomplete="off"><button id="unirse" type="submit" class="secondary">Unirme a la sala →</button><p class="muted">Tu plaza se guarda en este navegador para que puedas volver.</p></form>
+      <section class="game-about" aria-labelledby="sobre-el-juego">
+        <p class="eyebrow">LA DEUDA ETERNA ONLINE</p><h2 id="sobre-el-juego">Un juego de mesa de estrategia para jugar con amigos</h2>
+        <p>La Deuda Eterna es una adaptación web gratuita de un juego de mesa de estrategia económica y geopolítica. De 2 a 4 jugadores compiten en un tablero de 40 casillas: compran materias primas del Sur, construyen industrias y acceden a los mercados del Norte mientras gestionan sus deudas con el FMI.</p>
+        <p>Puedes jugar desde el navegador en ordenador o móvil, sin instalar aplicaciones. Crea una sala, comparte el código con tus amigos y negocia propiedades, dinero o alianzas durante la partida.</p>
+        <h3>Cómo empezar una partida</h3>
+        <ol><li>Escribe tu nombre y crea una sala gratis.</li><li>Comparte el código para que tus amigos se unan desde sus navegadores.</li><li>El anfitrión inicia cuando haya al menos dos jugadores. Cada uno recibe $5.000 más un dado × $200; empieza el dado más alto, con sorteo si hay empate.</li><li>Compra y construye, tira los dados, resuelve la casilla y termina tu turno. Gana el último jugador o grupo activo, o el que complete el desarrollo industrial de las doce propiedades.</li></ol>
+        <h3>Preguntas frecuentes</h3>
+        <details><summary>¿Es gratis y hace falta registrarse?</summary><p>Es gratis. Para entrar solo necesitas un nombre y un código de sala; no se pide correo ni contraseña. El navegador guarda una sesión para recuperar tu plaza.</p></details>
+        <details><summary>¿Cuántas personas pueden jugar?</summary><p>Entre 2 y 4 jugadores en tiempo real. Cada persona entra desde su navegador y necesita conexión a Internet.</p></details>
+        <details><summary>¿Qué puedes hacer durante la partida?</summary><p>Comprar propiedades, construir industrias nacionales y multinacionales, cobrar rentas, intercambiar propiedades y dinero, formar alianzas y pedir préstamos con un importe elegido. Solidaridad y las condiciones del FMI pueden cambiar la situación.</p></details>
+        <details><summary>¿Esta edición conserva todas las reglas originales?</summary><p>Es una adaptación web con ajustes propios: capital inicial de $5.200 a $6.200, préstamos personalizables y ayuda BID de $1.500 sin deuda. Los detalles del tablero explican los efectos aplicados.</p></details>
+        <details><summary>¿Se puede continuar una partida más tarde?</summary><p>La sesión permite reconectar mientras la sala siga disponible. El alojamiento gratuito puede tardar en arrancar y las partidas pueden perderse si el servidor se reinicia o se actualiza.</p></details>
+      </section>
     </section>
     <section id="mesa" hidden>
       <div class="mesa-heading"><div><p class="eyebrow">MESA MULTIJUGADOR</p><h1>La Deuda Eterna<span id="sala-codigo"></span></h1></div><div class="heading-actions"><button id="copiar" class="ghost">Copiar código</button><button id="salir" class="ghost danger">Abandonar ↗</button></div></div>
@@ -23,7 +87,7 @@
         <div class="board-column"><p class="scroll-hint">Toca una casilla para ver su nombre, precio e industrias.</p><div class="board-scroll" tabindex="0" aria-label="Tablero desplazable"><div id="tablero" aria-label="Tablero de 40 casillas">
           <div class="board-center"><section id="interaccion" class="interaction-card" role="status" aria-live="polite" hidden><p id="interaccion-accion" class="eyebrow"></p><p id="interaccion-partes" class="interaction-parties"></p><strong id="interaccion-importe"></strong><p id="interaccion-detalle"></p><button id="interaccion-siguiente" class="ghost">Cerrar aviso</button></section><div class="center-top"><span>NORTE / MERCADOS</span><span id="barrera">COMERCIO ABIERTO</span></div><div class="center-title"><p class="eyebrow">UN JUEGO DE PODER Y RESISTENCIA</p><h2>DEUDA<br><em>ETERNA</em><span>↗</span></h2><p>Construir. Negociar. Resistir.</p></div><div id="ultima-carta" class="last-card"><span class="eyebrow">LA MESA ESTÁ LISTA</span><p>Una decisión puede cambiar toda la partida.</p></div><div class="center-stats"><div><span>DEUDA TOTAL AL FMI</span><strong id="deuda">$0</strong></div><div><span>RONDA DE ACCIÓN</span><strong id="turno-centro">En espera</strong></div></div><div class="center-bottom"><span>SUR / MATERIAS PRIMAS</span><span>● Fichas &nbsp; ▰ Industrias</span></div></div>
         </div></div><div class="board-caption"><span><i class="dot south"></i> Materias primas del Sur</span><span><i class="dot north"></i> Manufacturas del Norte</span><span>Pulsa una casilla para ver sus detalles ↗</span></div></div>
-        <aside class="sidebar"><section class="panel turn-panel"><p class="eyebrow">EL SIGUIENTE MOVIMIENTO</p><h2 id="turno">Esperando jugadores</h2><p id="fase" class="muted"></p><p id="reloj" class="muted" hidden></p><div id="inicio"><label class="check"><input type="checkbox" id="monopolio"> Permitir monopolios en esta partida</label><button id="iniciar" class="primary">Iniciar partida →</button></div><div id="acciones" hidden><button id="tirar" class="primary">Tirar los dados ⚄</button><button id="terminar" class="secondary">Terminar turno →</button><div class="button-pair"><button id="prestamo" class="ghost">Préstamo +$5.000</button><button id="amortizar" class="ghost">Amortizar deuda</button></div><button id="levantar" class="ghost" hidden>Levantar barrera · $2.000</button><button id="comerciar" class="secondary">Comerciar ⇄</button><button id="propiedades" class="ghost">Mis propiedades ↗</button></div><div id="dados-panel" hidden><div id="dados-caras" aria-hidden="true"></div><p id="dados-resultado" role="status"></p></div><div id="decision" aria-live="polite"></div></section>
+        <aside class="sidebar"><section class="panel turn-panel"><p class="eyebrow">EL SIGUIENTE MOVIMIENTO</p><h2 id="turno">Esperando jugadores</h2><p id="fase" class="muted"></p><p id="reloj" class="muted" hidden></p><div id="inicio"><label class="check"><input type="checkbox" id="monopolio"> Permitir monopolios en esta partida</label><button id="iniciar" class="primary">Iniciar partida →</button></div><div id="acciones" hidden><button id="tirar" class="primary">Tirar los dados ⚄</button><button id="terminar" class="secondary">Terminar turno →</button><div class="button-pair"><button id="prestamo" class="ghost">Pedir préstamo</button><button id="amortizar" class="ghost">Amortizar deuda</button></div><button id="levantar" class="ghost" hidden>Levantar barrera · $2.000</button><button id="comerciar" class="secondary">Comerciar ⇄</button><button id="propiedades" class="ghost">Mis propiedades ↗</button></div><details id="sorteo-inicial" hidden><summary>Dados y dinero inicial</summary><div id="sorteo-resultados"></div></details><div id="dados-panel" hidden><div id="dados-caras" aria-hidden="true"></div><p id="dados-resultado" role="status"></p></div><div id="decision" aria-live="polite"></div></section>
           <section class="panel"><div class="section-head"><h2>En la mesa</h2><span id="cantidad"></span></div><div id="jugadores"></div></section>
           <section class="panel activity"><div class="tabs"><button id="tab-registro" aria-selected="true">Registro</button><button id="tab-chat" aria-selected="false">Chat</button></div><div id="registro" class="messages" role="log" aria-label="Registro de partida"></div><div id="chat-panel" hidden><div id="chat" class="messages" role="log" aria-label="Mensajes de chat"></div><form id="chat-form"><input id="mensaje" maxlength="300" aria-label="Mensaje" placeholder="Habla con la mesa…"><button class="primary" aria-label="Enviar mensaje">↑</button></form></div></section>
         </aside>
@@ -31,6 +95,7 @@
     </section>
     <p id="aviso" role="alert" hidden></p>
   </main>
+  <dialog id="prestamo-dialog" aria-labelledby="prestamo-titulo"><button id="cerrar-prestamo" class="dialog-close" aria-label="Cerrar">×</button><form id="prestamo-form"><p class="eyebrow">FINANCIACIÓN DEL FMI</p><h2 id="prestamo-titulo">Pedir un préstamo</h2><p id="prestamo-capacidad"></p><label for="prestamo-importe">¿Cuánto quieres pedir?</label><input id="prestamo-importe" type="number" min="1" step="1" required inputmode="numeric" aria-describedby="prestamo-capacidad"><p class="muted">La deuda personal no puede superar $30.000. Una deuda mayor puede aumentar tus intereses y dados.</p><button class="primary" type="submit">Solicitar préstamo →</button></form></dialog>
   <dialog id="detalle"><button id="cerrar-detalle" class="dialog-close" aria-label="Cerrar">×</button><div id="detalle-contenido"></div></dialog>
   <dialog id="comercio-dialog" aria-labelledby="comercio-titulo"><button id="cerrar-comercio" class="dialog-close" aria-label="Cerrar comercio">×</button><h2 id="comercio-titulo">Comerciar</h2><div id="comercio-contenido"></div></dialog>
 <dialog id="industrial-dialog" aria-labelledby="industrial-titulo"><button id="cerrar-industrial" class="dialog-close" aria-label="Volver al tablero">×</button><h2 id="industrial-titulo">Industrialización</h2><p id="industrial-ayuda"></p><div id="industrial-opciones"></div></dialog>

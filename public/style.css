@@ -130,3 +130,12 @@
 @keyframes interaction-in{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
 @media(max-width:760px){.board-center>.interaction-card{width:calc(100% - 12px);padding:10px;border-radius:9px;max-height:85%}.interaction-parties{font-size:13px}.interaction-card .eyebrow{font-size:9px;letter-spacing:1px}#interaccion-importe{font-size:24px}#interaccion-detalle{font-size:11px}#interaccion-siguiente{font-size:10px;min-height:28px}}
 @media(prefers-reduced-motion:reduce){.board-center>.interaction-card{animation:none}}
+
+#tablero{position:relative}
+#tablero>.moving-token{position:absolute;left:0;top:0;z-index:12;pointer-events:none;width:27px;height:27px;font-size:14px;will-change:transform}
+#prestamo-form>.primary{margin-top:12px;width:100%}
+@media(max-width:760px){#tablero>.moving-token{width:19px;height:19px;font-size:10px}}
+
+#sorteo-inicial{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:12px}#sorteo-inicial summary{cursor:pointer;font-weight:700}#sorteo-resultados p{overflow-wrap:anywhere;line-height:1.5}.initial-die{font-size:24px;vertical-align:middle;margin-right:7px;color:var(--green)}
+
+.game-about{grid-column:1/-1;border-top:1px solid var(--line);padding-top:30px;line-height:1.7}.game-about h2{font:32px Georgia,serif;line-height:1.2}.game-about p,.game-about li{font-size:14px;color:var(--muted)}.game-about h3{font-size:18px}.game-about details{border-bottom:1px solid var(--line);padding:12px 0}.game-about summary{cursor:pointer;font-weight:600;font-size:14px}

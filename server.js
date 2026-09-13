@@ -2,11 +2,15 @@
 const express = require('express');
 const http = require('node:http');
 const path = require('node:path');
+const { readFileSync } = require('node:fs');
+const { createHash } = require('node:crypto');
 const { Server } = require('socket.io');
 const { Game, GameError } = require('./lib/game');
 const { Store } = require('./lib/store');
 const ACTIONS = ['proponerComercio', 'responderComercio', 'iniciarPartida', 'tirarDado', 'terminarTurno', 'decidirCompraPropiedad', 'responderDecisionPago', 'resolverEleccion', 'pedirPrestamo', 'pagarDeuda', 'construirIndustria', 'expropiarPropiedad', 'subastarPropiedad', 'levantarBarrera', 'responderVotoAlianza', 'pujarSubasta'];
 function createServer(options = {}) {
+  const structuredDataHashes = [...readFileSync(path.join(__dirname, 'public/index.html'), 'utf8').matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+    .map(match => "'sha256-" + createHash('sha256').update(match[1]).digest('base64') + "'").join(' ');
   const app = express();
   app.disable('x-powered-by');
   const server = http.createServer(app);
@@ -36,10 +40,12 @@ function createServer(options = {}) {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'same-origin');
     res.setHeader('X-Frame-Options', 'DENY');
-    res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+    res.setHeader('Content-Security-Policy', `default-src 'self'; script-src 'self' ${structuredDataHashes}; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'`);
     if (req.path === '/' || /\.(html|js)$/.test(req.path)) res.setHeader('Cache-Control', 'no-cache');
     next();
   });
+  app.get('/index.html', (_req, res) => res.redirect(301, '/'));
+  app.use(['/health', '/api'], (_req, res, next) => { res.setHeader('X-Robots-Tag', 'noindex'); next(); });
   app.get('/health', (_req, res) => res.status(healthy ? 200 : 503).json({ ok: healthy }));
   app.get('/api/catalogo', (_req, res) => {
     const art = require('./public/assets/cartas/manifest.json');
