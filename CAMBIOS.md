@@ -82,3 +82,7 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 - Metadatos, canonical, tarjetas sociales y JSON-LD coherente con contenido HTML visible.
 - Guía pública en Markdown, llms.txt y sitemap; verificación de Google conservada.
 - Redirección de index.html, noindex para endpoints técnicos y CSP con hash del JSON-LD.
+
+## Dados sobre la mesa
+- Dados con caras y volumen en CSS, caída, giro y rebotes en el centro del tablero.
+- Entre dos y cuatro dados con resultados del servidor, movimiento reducido y retirada automática para mostrar los avisos.

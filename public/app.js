@@ -301,6 +301,7 @@ function nextInteraction() {
   const item=interactionQueue.shift();
   if(!item){showingInteraction=false;$('interaccion').hidden=true;return;}
   showingInteraction=true;
+  if (!$('dados-panel').classList.contains('rolling')) $('dados-panel').hidden = true;
   const box=$('interaccion');box.hidden=false;box.style.setProperty('--actor',item.color||'#214f43');
   $('interaccion-accion').textContent=item.accion;
   $('interaccion-partes').textContent=item.origen+' → '+item.destino;
@@ -317,31 +318,40 @@ function nextInteraction() {
   };
   interactionTimer=setTimeout(tick,250);
 }
+function diceCube(value) {
+  const cube = element('span', undefined, 'dice-cube');
+  const dots = { 1:[5], 2:[1,9], 3:[1,5,9], 4:[1,3,7,9], 5:[1,3,5,7,9], 6:[1,3,4,6,7,9] };
+  const top = [2,3,1,1,3,2][value-1], right = [3,1,2,5,6,4][value-1];
+  for (const [side,n] of [['front',value],['back',7-value],['top',top],['bottom',7-top],['right',right],['left',7-right]]) {
+    const face = element('span', undefined, 'dice-face face-'+side);
+    for (const cell of dots[n]) { const dot = element('i', undefined, 'dice-pip'); dot.style.gridArea = `${Math.ceil(cell/3)} / ${(cell-1)%3+1}`; face.append(dot); }
+    cube.append(face);
+  }
+  return cube;
+}
 function renderDice(roll, animate) {
-  if (!roll) { seenRoll = null; clearTimeout(diceTimer); $('dados-panel').hidden = true; return; }
+  const panel = $('dados-panel');
+  if (!roll) { seenRoll = null; clearTimeout(diceTimer); panel.hidden = true; panel.classList.remove('rolling'); return; }
   if (roll.id === seenRoll) return;
-  seenRoll = roll.id;
-  clearTimeout(diceTimer);
-  const panel = $('dados-panel'), faces = $('dados-caras'), label = $('dados-resultado');
-  panel.hidden = false;
-  faces.replaceChildren();
-  const dice = roll.dados.map((value, i) => {
-    const die = element('span', '⚀', 'die'); die.style.setProperty('--delay', (i * 60) + 'ms'); faces.append(die); return die;
+  seenRoll = roll.id; clearTimeout(diceTimer);
+  const faces = $('dados-caras'), label = $('dados-resultado');
+  panel.hidden = false; panel.classList.remove('rolling'); faces.replaceChildren();
+  faces.dataset.count = roll.dados.length;
+  roll.dados.forEach((value,i) => {
+    const landing = element('span', undefined, 'dice-landing');
+    landing.style.setProperty('--delay', (i*45)+'ms');
+    landing.style.setProperty('--drift', (i%2 ? 65 : -65)+'px');
+    landing.style.setProperty('--tilt', [-12,14,8,-8][i]+'deg');
+    landing.append(diceCube(value)); faces.append(landing);
   });
   const finish = () => {
     panel.classList.remove('rolling');
-    dice.forEach((die, i) => { die.textContent = ['⚀','⚁','⚂','⚃','⚄','⚅'][roll.dados[i] - 1]; });
     label.textContent = roll.jugador + ': ' + roll.dados.join(' + ') + ' = ' + roll.total;
+    diceTimer = setTimeout(() => { panel.hidden = true; }, 2600);
   };
   if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
   panel.classList.add('rolling'); label.textContent = roll.jugador + ' está tirando…';
-  const started = performance.now();
-  const frame = () => {
-    if (performance.now() - started >= 850) { finish(); return; }
-    dice.forEach(die => { die.textContent = ['⚀','⚁','⚂','⚃','⚄','⚅'][Math.floor(Math.random() * 6)]; });
-    diceTimer = setTimeout(frame, 85);
-  };
-  frame();
+  diceTimer = setTimeout(finish, 850);
 }
 function updateClock() {
   const node = $('reloj');
