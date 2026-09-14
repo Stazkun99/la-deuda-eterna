@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js"
+    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js && node --check public/audio.js"
   },
   "keywords": [],
   "author": "",

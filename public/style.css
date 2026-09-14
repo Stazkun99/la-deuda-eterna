@@ -151,3 +151,5 @@
 @keyframes dice-shadow{0%{opacity:0;filter:blur(14px)}48%{opacity:1;filter:blur(3px)}67%{opacity:.35;filter:blur(10px)}100%{opacity:1;filter:blur(7px)}}
 @media(max-width:760px){#dados-caras{--size:32px;gap:18px 24px;padding:20px}.dice-face{padding:5px;gap:2px;border-radius:5px}#dados-resultado{font-size:11px;margin-top:10px;padding:6px 10px}}
 @media(prefers-reduced-motion:reduce){.rolling .dice-landing,.rolling .dice-cube,.rolling .dice-landing::before{animation:none}}
+
+#sonido{white-space:nowrap;font-size:12px}#sonido[aria-pressed="false"]{color:var(--muted)}@media(max-width:460px){.topbar{gap:6px;padding-inline:10px}.topbar #conexion{font-size:9px}#sonido{font-size:10px;padding:7px 5px}}

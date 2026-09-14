@@ -108,12 +108,12 @@ socket.on('connect', () => {
   if (saved && $('nombre').value.trim()) socket.emit('unirseSala', { nombre: $('nombre').value.trim(), sala: saved, userId, sessionToken }, result => { if (result?.ok) joinedRoom = saved; });
   updateControls();
 });
-socket.on('disconnect', () => { cancelMovement(); animateNextState = false; pendingCard = null; busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
+socket.on('disconnect', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
 socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión · reintentando'; updateControls(); });
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { cancelMovement(); animateNextState = false; pendingCard = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
@@ -191,7 +191,7 @@ async function movePiece(run) {
       run.animation = node.animate([{ transform: from }, { transform: to }], { duration: 170, easing: 'ease-in-out' });
       await run.animation.finished;
       if (movement !== run) return;
-      run.position = next; renderBoard();
+      run.position = next; globalThis.GameAudio?.play('step'); renderBoard();
     }
   } catch { /* Cancellation snaps to the latest authoritative state. */ }
   finally {
@@ -301,6 +301,7 @@ function nextInteraction() {
   const item=interactionQueue.shift();
   if(!item){showingInteraction=false;$('interaccion').hidden=true;return;}
   showingInteraction=true;
+  globalThis.GameAudio?.interaction(item, me()?.nombre);
   if (!$('dados-panel').classList.contains('rolling')) $('dados-panel').hidden = true;
   const box=$('interaccion');box.hidden=false;box.style.setProperty('--actor',item.color||'#214f43');
   $('interaccion-accion').textContent=item.accion;
@@ -350,6 +351,7 @@ function renderDice(roll, animate) {
     diceTimer = setTimeout(() => { panel.hidden = true; }, 2600);
   };
   if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
+  globalThis.GameAudio?.play('dice', roll.dados.length);
   panel.classList.add('rolling'); label.textContent = roll.jugador + ' está tirando…';
   diceTimer = setTimeout(finish, 850);
 }
@@ -539,6 +541,7 @@ function renderLastCard(data) {
 function showCard(data, automatic = false) {
   if (!data) return;
   if (automatic && data.roboId && data.roboId === lastCardShown) return;
+  if (automatic) globalThis.GameAudio?.play(data.tipo === 'solidaridad' ? 'solidarity' : 'fmi');
   lastCardShown = data.roboId || null;
   $('carta-tipo').textContent = data.tipo === 'solidaridad' ? 'SOLIDARIDAD' : 'CONDICIONES FMI';
   $('carta-titulo').textContent = data.titulo;

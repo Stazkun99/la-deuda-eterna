@@ -86,3 +86,7 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 ## Dados sobre la mesa
 - Dados con caras y volumen en CSS, caída, giro y rebotes en el centro del tablero.
 - Entre dos y cuatro dados con resultados del servidor, movimiento reducido y retirada automática para mostrar los avisos.
+
+## Sonidos del juego
+
+Efectos sintetizados originales para dados, pasos, cobros y pagos, construcción, intercambio, préstamos, Solidaridad, FMI, ayuda BID y golpe militar. El botón Sonido permite silenciarlos y guarda la preferencia. Se activan después de interactuar con la página, no se reproducen tiradas antiguas al reconectar y se silencian al ocultar la pestaña. No hay descargas de audio ni servicios externos.

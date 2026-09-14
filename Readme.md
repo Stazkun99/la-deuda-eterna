@@ -357,3 +357,7 @@ La portada incluye descripción, URL canónica, Open Graph, Twitter Card, datos 
 Tras desplegar, verifica la propiedad en Google Search Console con el archivo existente, envía `https://la-deuda-eterna.onrender.com/sitemap.xml` y usa Inspección de URLs para probar la portada publicada y solicitar indexación. Revisa también la disponibilidad de robots.txt: durante esta revisión, una primera respuesta pública bloqueaba todo y otra posterior permitía el rastreo. Se desconoce la causa exacta; comprueba especialmente el arranque del alojamiento.
 
 No hace falta instalar Analytics, Tag Manager ni un script externo para aparecer en búsquedas. Google no exige archivos ni marcado especiales para sus funciones de IA; OpenAI utiliza OAI-SearchBot para búsqueda y GPTBot para entrenamiento. Referencias: [Google](https://developers.google.com/search/docs/appearance/ai-features), [rastreadores OpenAI](https://developers.openai.com/api/docs/bots), [propuesta llms.txt](https://llmstxt.org/).
+
+## Sonidos del juego
+
+Efectos sintetizados originales para dados, pasos, cobros y pagos, construcción, intercambio, préstamos, Solidaridad, FMI, ayuda BID y golpe militar. El botón Sonido permite silenciarlos y guarda la preferencia. Se activan después de interactuar con la página, no se reproducen tiradas antiguas al reconectar y se silencian al ocultar la pestaña. No hay descargas de audio ni servicios externos.
