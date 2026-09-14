@@ -159,6 +159,17 @@ function renderStart() {
   }
   content.append(element('p', '$5.000 + dado × $200. ' + (initial.empate ? 'Primer turno sorteado entre quienes empataron con el dado más alto.' : 'Empieza el dado más alto.'), 'muted'));
 }
+function pieceFor(player) {
+  // Colors belong to the player and remain stable if another player leaves the room.
+  const pieces = { '#e74c3c':['carrito','Carrito'], '#2ecc71':['sombrero','Sombrero'], '#3498db':['bota','Bota'], '#f1c40f':['balsa','Balsa'] };
+  const [asset,name] = pieces[player.color?.toLowerCase()] || pieces['#e74c3c'];
+  return { asset, name };
+}
+function decoratePiece(node, player) {
+  const piece = pieceFor(player), img = element('img');
+  img.src = '/assets/fichas/' + piece.asset + '.svg'; img.alt = ''; img.draggable = false;
+  node.replaceChildren(img); node.title = player.nombre + ' · ' + piece.name;
+}
 function displayPosition(p) { return p?.id === movement?.playerId ? movement.position : p?.posicion; }
 function flushLanding() {
   if (!state || movement) return;
@@ -177,6 +188,7 @@ async function movePiece(run) {
   if (movement !== run) return;
   const player = state.jugadores.find(p => p.id === run.playerId);
   const node = element('span', String(state.jugadores.indexOf(player) + 1), 'token token-current moving-token');
+  decoratePiece(node, player);
   node.style.setProperty('--player', player.color); node.setAttribute('aria-hidden', 'true');
   run.node = node; $('tablero').append(node); renderBoard();
   const point = id => {
@@ -235,7 +247,21 @@ function renderBoard() {
     const owner = state.jugadores.find(p => p.id === c.dueño);
     tile.style.setProperty('--owner', owner?.color || 'transparent');
     const n = c.region === 'sur' ? c.industriasNac : c.industriasExp;
-    tile.querySelector('.tile-industries').textContent = n ? '▰'.repeat(n) : '';
+    const industry = tile.querySelector('.tile-industries');
+    const industryType = c.region === 'sur' ? 'nacional' : 'multinacional';
+    const closed = !!owner?.industriasCerradas;
+    const industryKey = `${industryType}:${n || 0}:${closed}`;
+    if (industry.dataset.key !== industryKey) {
+      industry.dataset.key = industryKey; industry.replaceChildren();
+      industry.className = 'tile-industries ' + industryType + (closed ? ' industry-closed' : '');
+      industry.title = n ? `${n} industria${n > 1 ? 's' : ''} ${industryType === 'nacional' ? 'nacional' : 'multinacional'}${n > 1 ? 'es' : ''}${closed ? ' · Cerradas' : ''}` : '';
+      if (n) {
+        const building = element('img'); building.src = '/assets/industrias/' + industryType + '.svg'; building.alt = ''; building.draggable = false;
+        industry.append(building, element('strong', String(n), 'industry-level'));
+        industry.setAttribute('aria-hidden', 'true');
+      }
+    }
+    tile.classList.toggle('has-industries', !!n);
     const tokens = tile.querySelector('.tile-tokens'); tokens.replaceChildren();
     const occupants = state.jugadores.filter(p => displayPosition(p) === c.id && !p.enQuiebra);
     tile.classList.toggle('has-players', occupants.length > 0);
@@ -245,18 +271,20 @@ function renderBoard() {
       const token = element('span', String(state.jugadores.indexOf(p) + 1), 'token' + (current ? ' token-current' : ''));
       if (movement?.node && p.id === movement.playerId) token.style.visibility = 'hidden';
       token.style.setProperty('--player', p.color);
-      token.title = p.nombre + (p.userId === userId ? ' · tú' : '') + (current ? ' · en turno' : '');
+      decoratePiece(token, p);
+      token.title = p.nombre + ' · ' + pieceFor(p).name + (p.userId === userId ? ' · tú' : '') + (current ? ' · en turno' : '');
       token.setAttribute('aria-hidden', 'true'); tokens.append(token);
     }
-    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias: ' + n : ''}${occupants.length ? '. Fichas: ' + occupants.map(p=>p.nombre).join(', ') : ''}`);
+    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias ' + (c.region === 'sur' ? 'nacionales' : 'multinacionales') + ': ' + n + (owner?.industriasCerradas ? ', cerradas' : '') : ''}${occupants.length ? '. Fichas: ' + occupants.map(p=>p.nombre).join(', ') : ''}`);
   }
 }
 function renderPlayers() {
   $('jugadores').replaceChildren(); $('cantidad').textContent = state.jugadores.length + ' / 4';
   for (const p of state.jugadores) {
     const row = element('div', undefined, 'player' + (state.enJuego && state.jugadores[state.turnoActual]?.id === p.id ? ' current' : ''));
-    const avatar = element('span', String(state.jugadores.indexOf(p) + 1), 'avatar'); avatar.style.setProperty('--player', p.color);
+    const avatar = element('span', String(state.jugadores.indexOf(p) + 1), 'avatar'); avatar.style.setProperty('--player', p.color); decoratePiece(avatar, p);
     const content = element('div'); content.append(element('div', p.nombre + (p.userId === userId ? ' · tú' : '') + (p.esLider ? ' ♛' : ''), 'player-name'));
+    content.append(element('div', 'Ficha: ' + pieceFor(p).name, 'piece-name'));
     const stats = element('div', undefined, 'player-stats'); stats.append(element('span', amount(p.dinero)), element('span', 'Deuda ' + amount(p.deudaPersonal)), element('span', '◆ ' + p.oro)); content.append(stats);
     content.append(element('div', [!p.conectado && 'Desconectado', p.enQuiebra && 'En quiebra', p.enAlianza && 'Alianza · caja común', p.industriasCerradas && 'Industrias cerradas', p.turnosPerdidos > 0 && 'Desempleo: ' + p.turnosPerdidos, p.deudaPersonal >= 30000 && 'Límite de deuda'].filter(Boolean).join(' · '), 'player-status'));
     row.append(avatar, content); $('jugadores').append(row);

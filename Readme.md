@@ -69,7 +69,7 @@ Pulsa cualquier casilla para ver sus detalles. Las propiedades muestran la tarje
 
 Después de la tirada, la ficha recorre las casillas una a una, también al pasar por la salida. Las decisiones y cartas aparecen al terminar el recorrido. Al reconectar se muestra la posición actual, sin repetir tiradas; se respeta la preferencia de movimiento reducido.
 
-El número y color de tu ficha coinciden con la lista de jugadores. En móvil se simplifica el texto del tablero; los detalles siguen disponibles al tocar una casilla.
+La figura y el color de tu ficha coinciden con la lista de jugadores: carrito rojo, sombrero verde, bota azul y balsa amarilla. Se mantienen al reconectar y si otro jugador abandona. En móvil se simplifica el texto del tablero; los detalles siguen disponibles al tocar una casilla.
 
 ### Avisos de movimientos en el tablero
 
@@ -361,3 +361,7 @@ No hace falta instalar Analytics, Tag Manager ni un script externo para aparecer
 ## Sonidos del juego
 
 Efectos sintetizados originales para dados, pasos, cobros y pagos, construcción, intercambio, préstamos, Solidaridad, FMI, ayuda BID y golpe militar. El botón Sonido permite silenciarlos y guarda la preferencia. Se activan después de interactuar con la página, no se reproducen tiradas antiguas al reconectar y se silencian al ocultar la pestaña. No hay descargas de audio ni servicios externos.
+
+## Edificios del tablero
+
+Las industrias nacionales se representan con una fábrica en tonos tierra; las multinacionales, con torres azules. El número junto al edificio indica el nivel (1–3). Las industrias cerradas aparecen en gris y con el nivel tachado. Los detalles de cada casilla conservan sus costes y reglas.

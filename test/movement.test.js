@@ -17,6 +17,7 @@ function fixture() {
       animate(frames) { let resolve, reject; const finished = new Promise((a,b) => { resolve=a; reject=b; });
         const animation = { finished, resolve, cancel: () => reject(new Error('cancelled')), frames }; animations.push(animation); return animation; }
     }; nodes.push(node); return node; },
+    decoratePiece() {},
     renderBoard: () => steps.push(context.movement?.position), updateControls() {},
     flushLanding: () => context.flushed++
   };

@@ -153,3 +153,17 @@
 @media(prefers-reduced-motion:reduce){.rolling .dice-landing,.rolling .dice-cube,.rolling .dice-landing::before{animation:none}}
 
 #sonido{white-space:nowrap;font-size:12px}#sonido[aria-pressed="false"]{color:var(--muted)}@media(max-width:460px){.topbar{gap:6px;padding-inline:10px}.topbar #conexion{font-size:9px}#sonido{font-size:10px;padding:7px 5px}}
+
+.token>img,.avatar>img{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 1px 1px #10292366);pointer-events:none}
+.token::after{display:none}.token{width:30px;height:30px;padding:1px}.avatar{width:32px;height:32px;padding:1px}.player{grid-template-columns:32px 1fr}.piece-name{font-size:10px;color:var(--muted)}
+.tile-tokens.crowded{grid-template-columns:repeat(2,23px)}.tile-tokens.crowded .token{width:23px;height:23px}
+#tablero>.moving-token{width:34px;height:34px}
+@media(max-width:760px){.token{width:23px;height:23px;padding:0}.tile-tokens:has(.token:nth-child(2)) .token{width:17px;height:17px}.tile-tokens.crowded{grid-template-columns:repeat(2,14px);gap:1px}.tile-tokens.crowded .token,.tile-tokens.crowded:has(.token:nth-child(2)) .token{width:14px;height:14px}#tablero>.moving-token{width:25px;height:25px}}
+
+.tile .tile-industries,.tile.has-players .tile-industries{position:absolute;top:2px;right:2px;bottom:auto;display:flex;align-items:center;gap:1px;height:23px;padding:1px 3px 1px 1px;border:1px solid #b78b51;border-radius:5px;background:#fff3d6;box-shadow:0 2px 3px #163b3626;z-index:4;pointer-events:none;color:#613e1b}
+.tile .tile-industries.multinacional{border-color:#5b95a9;background:#e3f6fb;color:#1d5067}
+.tile-industries img{width:22px;height:22px;object-fit:contain}.industry-level{font-size:12px;line-height:1;font-weight:900}.industry-closed{filter:grayscale(1);opacity:.65}.industry-closed .industry-level{text-decoration:line-through}
+.tile.has-industries .tile-icon{opacity:.5}.tile.has-industries.has-players .tile-name{top:27px;font-size:7px}.tile.has-industries .tile-name{max-width:100%}
+.industry-legend{display:flex;align-items:center;gap:5px;flex-wrap:wrap;width:100%}.industry-legend img{width:22px;height:22px}
+@media(max-width:760px){.tile .tile-industries,.tile.has-players .tile-industries{top:0;right:0;height:14px;padding:0 1px;gap:0;border-radius:3px}.tile-industries img{width:13px;height:13px}.industry-level{font-size:9px}.tile.has-industries.has-players .tile-industries{opacity:.94}.industry-legend{font-size:10px}}
+.tile .tile-industries:empty{display:none}

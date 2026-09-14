@@ -90,3 +90,11 @@ No se han creado commits ni se ha modificado el despliegue de producción.
 ## Sonidos del juego
 
 Efectos sintetizados originales para dados, pasos, cobros y pagos, construcción, intercambio, préstamos, Solidaridad, FMI, ayuda BID y golpe militar. El botón Sonido permite silenciarlos y guarda la preferencia. Se activan después de interactuar con la página, no se reproducen tiradas antiguas al reconectar y se silencian al ocultar la pestaña. No hay descargas de audio ni servicios externos.
+
+## Fichas con figuras
+- Carrito, sombrero, bota y balsa en SVG, consistentes en tablero, movimiento y lista de jugadores.
+- Figura estable asociada al color del jugador, con tamaños adaptados a móvil y casillas compartidas.
+
+## Edificios del tablero
+
+Las industrias nacionales se representan con una fábrica en tonos tierra; las multinacionales, con torres azules. El número junto al edificio indica el nivel (1–3). Las industrias cerradas aparecen en gris y con el nivel tachado. Los detalles de cada casilla conservan sus costes y reglas.
