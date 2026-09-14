@@ -16,7 +16,7 @@ let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, se
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
 let seenRoll = null, diceTimer, specialCatalog = {}, tradeShown = null;
 let interactionRoom = null, seenInteractions = new Set(), interactionQueue = [], interactionTimer, showingInteraction = false;
-let movement = null, pendingCard = null, animateNextState = false;
+let movement = null, pendingCard = null, pendingLanding = null, animateNextState = false;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
 const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pesca:'#6d9372',mineria:'#749da8',energia:'#ac8ba6' };
@@ -108,21 +108,28 @@ socket.on('connect', () => {
   if (saved && $('nombre').value.trim()) socket.emit('unirseSala', { nombre: $('nombre').value.trim(), sala: saved, userId, sessionToken }, result => { if (result?.ok) joinedRoom = saved; });
   updateControls();
 });
-socket.on('disconnect', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
+socket.on('disconnect', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
 socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión · reintentando'; updateControls(); });
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
 socket.on('finDeJuegoModal', () => {}); // The following state renders the result after movement.
 socket.on('actualizarEstado', next => {
-  const previousRoom = state?.codigo;
+  const previousState = state, previousRoom = state?.codigo;
   state = next;
   if (!me()) return;
   const roll = state.ultimaTirada;
+  if (animateNextState && previousRoom === state.codigo && state.enJuego) {
+    if (roll && roll.id !== previousState?.ultimaTirada?.id && Number.isInteger(roll.hasta)) pendingLanding = roll.hasta;
+    else {
+      const moved = state.jugadores.find(p => previousState?.jugadores.some(q => q.id === p.id && q.posicion !== p.posicion));
+      if (moved) pendingLanding = moved.posicion;
+    }
+  } else pendingLanding = null;
   const animate = animateNextState && previousRoom === state.codigo && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (previousRoom !== state.codigo || !state.enJuego || !roll || (movement && movement.rollId !== roll.id)) cancelMovement();
   if (animate && roll && roll.id !== seenRoll && Number.isInteger(roll.desde) && state.jugadores.some(p => p.id === roll.jugadorId)) {
@@ -173,6 +180,7 @@ function decoratePiece(node, player) {
 function displayPosition(p) { return p?.id === movement?.playerId ? movement.position : p?.posicion; }
 function flushLanding() {
   if (!state || movement) return;
+  if (pendingLanding !== null) { globalThis.GameAudio?.land(pendingLanding); pendingLanding = null; }
   renderInteractions(); renderDecision(true);
   if (pendingCard) { const card = pendingCard; pendingCard = null; renderLastCard(card); showCard(card, true); }
   if (state.resultado) showResult(state.resultado);

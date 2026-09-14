@@ -32,3 +32,25 @@ test('sonidos: pestaña oculta para audio y no acumula eventos para reproducir d
  const count=f.nodes.length;f.window.GameAudio.play('fmi');assert.equal(f.nodes.length,count);
  f.document.hidden=false;f.handlers.visibilitychange();assert.equal(f.nodes.length,count);
 });
+
+test('ambientes: las 40 casillas tienen sonido y las propiedades tienen escenas distintas',()=>{
+ const f=setup();f.handlers.pointerdown();
+ const signatures=new Map();
+ for(let id=0;id<40;id++){
+  const before=f.nodes.length;f.window.GameAudio.land(id);
+  assert.ok(f.nodes.length>before,'Casilla '+id);
+  signatures.set(id,JSON.stringify(f.nodes.slice(before).map(n=>[n.type,n.frequency.value])));
+  f.audio().currentTime+=3;
+ }
+ assert.notEqual(signatures.get(9),signatures.get(11));
+ assert.notEqual(signatures.get(29),signatures.get(31));
+ assert.notEqual(signatures.get(15),signatures.get(35));
+});
+test('ambientes: una llegada inmediata no duplica el sonido y el silencio los detiene',()=>{
+ const f=setup();f.handlers.pointerdown();f.window.GameAudio.land(11);
+ const count=f.nodes.length;assert.equal(count,6);f.window.GameAudio.land(11);assert.equal(f.nodes.length,count);
+ f.handlers['button:click']();assert.ok(f.nodes.every(n=>n.stopped));
+ f.window.GameAudio.land(9);assert.equal(f.nodes.length,count);
+ for(const id of [-1,40,null,'11'])f.window.GameAudio.land(id);
+ assert.equal(f.nodes.length,count);
+});
