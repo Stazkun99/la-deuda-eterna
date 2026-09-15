@@ -227,6 +227,29 @@ function position(id) {
   if (id <= 30) return [1, id - 19];
   return [id - 29, 11];
 }
+function renderBarrier(tile, cell) {
+  if (cell.region !== 'norte') return;
+  let shutter = tile.querySelector('.north-barrier');
+  const blocked = !!state.barreraProteccionista;
+  if (!shutter) {
+    shutter = element('span', undefined, 'north-barrier'); shutter.setAttribute('aria-hidden', 'true');
+    const band = element('span', undefined, 'barrier-band');
+    band.append(element('span', '×', 'barrier-lock'), element('span', 'BLOQUEADO', 'barrier-label'));
+    shutter.append(band); tile.append(shutter);
+  }
+  const previous = shutter.dataset.blocked;
+  tile.classList.toggle('north-blocked', blocked);
+  if (previous === String(blocked)) return;
+  shutter.dataset.blocked = String(blocked);
+  shutter.getAnimations().forEach(animation => animation.cancel());
+  const animate = previous !== undefined && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+  shutter.hidden = !blocked && !animate;
+  if (animate) {
+    const frames = blocked ? [{transform:'scaleY(0)',opacity:0},{transform:'scaleY(1)',opacity:1}] : [{transform:'scaleY(1)',opacity:1},{transform:'scaleY(0)',opacity:0}];
+    const animation = shutter.animate(frames, {duration: blocked ? 650 : 450, easing:'cubic-bezier(.2,.7,.2,1)', fill:'forwards'});
+    animation.finished.then(() => { if(shutter.dataset.blocked === String(blocked))shutter.hidden = !blocked; animation.cancel(); }).catch(() => {});
+  }
+}
 function renderBoard() {
   for (const c of state.tablero) {
     let tile = cells.get(c.id);
@@ -283,7 +306,8 @@ function renderBoard() {
       token.title = p.nombre + ' · ' + pieceFor(p).name + (p.userId === userId ? ' · tú' : '') + (current ? ' · en turno' : '');
       token.setAttribute('aria-hidden', 'true'); tokens.append(token);
     }
-    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias ' + (c.region === 'sur' ? 'nacionales' : 'multinacionales') + ': ' + n + (owner?.industriasCerradas ? ', cerradas' : '') : ''}${occupants.length ? '. Fichas: ' + occupants.map(p=>p.nombre).join(', ') : ''}`);
+    renderBarrier(tile, c);
+    tile.setAttribute('aria-label', `${c.id}. ${c.nombre}${c.region === 'norte' && state.barreraProteccionista ? '. Bloqueada por la barrera: sin cobros de exportación' : ''}${owner ? '. Propietario: ' + owner.nombre : ''}${n ? '. Industrias ' + (c.region === 'sur' ? 'nacionales' : 'multinacionales') + ': ' + n + (owner?.industriasCerradas ? ', cerradas' : '') : ''}${occupants.length ? '. Fichas: ' + occupants.map(p=>p.nombre).join(', ') : ''}`);
   }
 }
 function renderPlayers() {

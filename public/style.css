@@ -167,3 +167,10 @@
 .industry-legend{display:flex;align-items:center;gap:5px;flex-wrap:wrap;width:100%}.industry-legend img{width:22px;height:22px}
 @media(max-width:760px){.tile .tile-industries,.tile.has-players .tile-industries{top:0;right:0;height:14px;padding:0 1px;gap:0;border-radius:3px}.tile-industries img{width:13px;height:13px}.industry-level{font-size:9px}.tile.has-industries.has-players .tile-industries{opacity:.94}.industry-legend{font-size:10px}}
 .tile .tile-industries:empty{display:none}
+
+/* The shutter belongs to the cell; counters and building levels stay above it. */
+.north-barrier{position:absolute;inset:0;z-index:3;transform-origin:top;display:flex;align-items:center;justify-content:center;border-radius:3px;pointer-events:none;background:repeating-linear-gradient(0deg,#42545e99 0 4px,#87959888 4px 6px,#263a4377 6px 7px);box-shadow:inset 3px 0 0 #35495199,inset -3px 0 0 #35495199,inset 0 3px 0 #1d343c}
+.barrier-band{position:relative;display:flex;justify-content:center;align-items:center;gap:3px;width:100%;padding:5px 1px;background:#233b42ed;border-top:3px solid transparent;border-bottom:3px solid transparent;border-image:repeating-linear-gradient(135deg,#eac765 0 6px,#263b40 6px 12px) 3;box-shadow:0 2px 4px #10292355;color:#fff0b3}
+.barrier-lock{display:grid;place-items:center;border:1px solid #f1cf74;border-radius:3px;width:13px;height:13px;font-size:12px;line-height:1;font-weight:900}.barrier-label{font-size:6px;letter-spacing:.5px;font-weight:900}
+.tile.north-blocked{background:#c9d2ce}.tile.north-blocked .tile-icon{filter:grayscale(.8);opacity:.3}.tile.north-blocked .tile-price{visibility:hidden}.tile.north-blocked .tile-tokens{z-index:5}.tile.north-blocked .tile-industries{z-index:5}
+@media(max-width:760px){.barrier-label{display:none}.barrier-band{padding:1px 0;border-top-width:2px;border-bottom-width:2px}.barrier-lock{width:10px;height:10px;font-size:9px}.north-barrier{background:repeating-linear-gradient(0deg,#42545e99 0 3px,#87959888 3px 5px)}.tile.north-blocked.has-players .barrier-band{align-self:flex-start;margin-top:3px;justify-content:flex-start;padding-left:2px}}
