@@ -54,6 +54,47 @@ function join(crear) {
     if (result?.ok) { joinedRoom = sala; remember('deuda_eterna_nombre', nombre); remember('deuda_eterna_sala', sala); }
   });
 }
+let board3d = null, board3dLoading = false, selected3d = null;
+const dialog3d = $('tablero-3d-dialog');
+$('cerrar-3d').onclick = () => dialog3d.close();
+$('ir-turno-3d').onclick = () => {$('panel-3d').scrollIntoView({block:'start'});$('turno').setAttribute('tabindex','-1');$('turno').focus({preventScroll:true});};
+const controls3d = Game3DUI.createMount([
+  [document.querySelector('.sidebar'), $('panel-3d')],
+  [$('interaccion'), $('avisos-3d')], [$('ultima-carta'), $('ultima-carta-3d')],
+  [$('aviso'), $('notificaciones-3d')],
+  ...['conexion','sonido','reglas','copiar','salir'].map(id=>[$(id),$('utilidades-3d')])
+]);
+dialog3d.addEventListener('close', () => { if(dialog3d.open)return; board3d?.setActive(false); controls3d.restore(); });
+$('abrir-3d').onclick = async () => {
+  if (!state) return;
+  dialog3d.showModal(); controls3d.mount(); updateControls();
+  if (board3d) { board3d.setActive(true); board3d.update(); return; }
+  if (board3dLoading) return;
+  board3dLoading = true; $('estado-3d').textContent = 'Preparando la mesa…';
+  try {
+    const room=state.codigo;
+    const module = await import('/board3d.mjs');
+    if(!state||state.codigo!==room||!dialog3d.open)return;
+    board3d = module.createBoard3D({ host:$('escena-3d'), legend:$('jugadores-3d'), onDiceLabel:text=>{$('resultado-dados-3d').textContent=text;}, getState:()=>state, getArt:()=>({catalog,specialCatalog}), onSelect:id=>{
+      selected3d=id; $('casilla-3d').value=String(id); $('detalle-3d').disabled=false;
+      const cell=state?.tablero.find(c=>c.id===id); if(cell)$('estado-3d').textContent=cell.nombre + (cell.precio?' · '+amount(cell.precio):'') + (cell.region?' · '+(cell.region==='sur'?'Nacionales: '+(cell.industriasNac||0):'Multinacionales: '+(cell.industriasExp||0))+'/3':'') + (cell.region==='norte'&&state.barreraProteccionista?' · Barrera activa':'');
+    }, onError:()=>{board3d?.dispose();board3d=null;controls3d.restore();dialog3d.close();notice('Se ha perdido la vista 3D. Puedes continuar en 2D sin salir de la partida.');} });
+    $('casilla-3d').replaceChildren(element('option','Elige una casilla…'));
+    $('casilla-3d').firstElementChild.value='';
+    for(const c of state.tablero){const option=element('option',c.id+' · '+c.nombre);option.value=c.id;$('casilla-3d').append(option);}
+    board3d.showScenery($('decorados-3d').checked); board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
+  } catch { board3d?.dispose();board3d=null;$('escena-3d').replaceChildren(); controls3d.restore();dialog3d.close();notice('No se pudo cargar el 3D en este navegador. Puedes seguir jugando en 2D.'); }
+  finally { board3dLoading=false; }
+};
+$('enfocar-3d').onclick=()=>board3d?.focus();
+$('decorados-3d').onchange=()=>board3d?.showScenery($('decorados-3d').checked);
+$('girar-3d').onclick=()=>board3d?.rotate();
+$('acercar-3d').onclick=()=>board3d?.zoom(.8);
+$('alejar-3d').onclick=()=>board3d?.zoom(1.25);
+$('reset-3d').onclick=()=>board3d?.reset();
+$('cenital-3d').onclick=()=>board3d?.overhead();
+$('casilla-3d').onchange=()=>{if($('casilla-3d').value!=='')board3d?.select(Number($('casilla-3d').value));};
+$('detalle-3d').onclick=()=>{if(selected3d!==null&&state)showProperty(selected3d);};
 $('interaccion-siguiente').onclick = nextInteraction;
 $('crear').onclick = () => join(true);
 $('acceso').onsubmit = e => { e.preventDefault(); join(false); };
@@ -62,7 +103,7 @@ $('salir').onclick = () => {
 };
 $('copiar').onclick = async () => { try { await navigator.clipboard.writeText(state.codigo); notice('Código copiado: ' + state.codigo); } catch { notice('Código de sala: ' + state.codigo); } };
 $('iniciar').onclick = () => action('iniciarPartida', { monopolio: $('monopolio').checked });
-$('tirar').onclick = () => action('tirarDado');
+$('tirar').onclick = $('tirar-3d').onclick = () => action('tirarDado');
 $('terminar').onclick = () => action('terminarTurno');
 const loanBorrower = () => {
   const p = me();
@@ -113,7 +154,7 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
@@ -144,8 +185,11 @@ socket.on('actualizarEstado', next => {
   $('barrera').textContent = state.barreraProteccionista ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
   $('registro').replaceChildren();
   for (const message of state.registro || []) log($('registro'), message);
+  // Open once per room entry, before decisions so their dialogs stay above the table.
+  // Subsequent updates and reconnects respect a manual switch to 2D or a WebGL fallback.
+  if (previousRoom !== state.codigo) void $('abrir-3d').onclick();
   renderStart(); renderLastCard(state.ultimaCarta); renderInteractions();
-  renderBoard(); renderPlayers(); updateControls(); renderDecision(); updateClock();
+  renderBoard(); board3d?.update({animate}); renderPlayers(); updateControls(); renderDecision(); updateClock();
   if (movement && !movement.started) { movement.started = true; void movePiece(movement); }
   if (!movement) flushLanding();
   if (state.resultado && !movement) showResult(state.resultado);
@@ -324,6 +368,7 @@ function renderPlayers() {
 }
 function updateControls() {
   $('crear').disabled = $('unirse').disabled = !socket.connected;
+  $('tirar-3d').disabled = true;
   if (!state) return;
   const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !!movement || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
@@ -335,6 +380,7 @@ function updateControls() {
   $('acciones').hidden = !state.enJuego;
   $('comerciar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase);
   $('tirar').hidden = state.fase !== 'tirada'; $('tirar').disabled = locked || !mine;
+  $('tirar-3d').disabled = locked || !mine || !state.enJuego || state.fase !== 'tirada';
   $('terminar').hidden = state.fase !== 'gestion'; $('terminar').disabled = locked || !mine;
   const collective = ['subasta','votacion'].includes(state.fase);
   $('prestamo').disabled = locked || !mine || collective || !state.jugadores.some(q => (q.id === p.id || p.alianzaId && q.alianzaId === p.alianzaId) && q.deudaPersonal < 30000);
@@ -373,7 +419,7 @@ function nextInteraction() {
   let remaining=item.detalle?.length>140?9000:6000,last=performance.now();
   const tick=()=>{
     const now=performance.now();
-    if(!document.hidden&&!document.querySelector('dialog[open]'))remaining-=now-last;
+    if(!document.hidden&&!Game3DUI.hasBlockingDialog())remaining-=now-last;
     last=now;
     if(remaining<=0)nextInteraction();else interactionTimer=setTimeout(tick,250);
   };
@@ -633,7 +679,7 @@ $('reglas').onclick=()=>{
     ['Adaptación web','Esta edición admite 2–4 jugadores, alianzas de hasta cuatro, amortización sin visitar el FMI y no obliga a desplazarse al FMI al alcanzar una devaluación. El monopolio opcional compra una propiedad y su exportación, no una cadena completa. El comercio permite acordar propiedades y dinero; no incluye negociación de oro o deudas.']
   ])box.append(element('h3',title),element('p',text));openDialog();
 };
-fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{catalog=data;if(state)renderBoard();}).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
+fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{catalog=data;if(state){renderBoard();board3d?.update();}}).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
 if(!storageAvailable)notice('Este navegador no permite guardar la sesión. No podrás recuperar tu plaza al cerrarlo.');
-fetch('/assets/tablero/manifest.json').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{specialCatalog=data;if(state)renderBoard();}).catch(()=>notice('No se pudieron cargar las ilustraciones del tablero. Recarga la página.'));
+fetch('/assets/tablero/manifest.json').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{specialCatalog=data;if(state){renderBoard();board3d?.update();}}).catch(()=>notice('No se pudieron cargar las ilustraciones del tablero. Recarga la página.'));
 socket.connect();

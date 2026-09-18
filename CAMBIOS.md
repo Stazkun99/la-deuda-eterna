@@ -106,3 +106,46 @@ Al caer suena una escena breve sintetizada: mugido en Ganado, saltos y salpicadu
 ## Barrera visual del Norte
 
 Al activar la barrera proteccionista, bajan persianas con franjas de advertencia sobre las doce casillas del Norte. Permanecen hasta levantar la barrera y señalan que las exportaciones no generan cobros. Se conservan visibles las fichas y los niveles. La animación no se repite al actualizar el turno y respeta movimiento reducido.
+
+## Primera fase del tablero 3D
+- Visor opcional con mesa en relieve, 40 casillas e ilustraciones originales.
+- Giro, zoom, vista general y cenital; selección de casillas y consulta de detalles.
+- Colores de propietarios y estado de barrera sincronizados con la sala.
+- Carga local de Three.js bajo demanda, CSP compatible y retorno al tablero habitual.
+- Esta fase no incorpora aún fichas, construcciones ni dados al escenario 3D.
+
+## Fichas en el tablero 3D
+- Carrito, sombrero, bota y balsa modelados con volumen y color de jugador.
+- Aro de turno, enfoque desde el nombre y distribución al compartir casilla.
+- Recorrido animado según la tirada del servidor; sin repetir al reconectar o abrir el visor.
+- Pausa al cerrar u ocultar la pestaña y compatibilidad con movimiento reducido.
+
+## Decorados 3D en todas las casillas
+- Miniaturas temáticas para las 40 casillas, diferenciando materias primas, productos y eventos.
+- Franja exterior para el decorado y recorrido interior para las fichas.
+- Selección sobre los modelos, acercamiento a la casilla y opción de ocultar decorados.
+- Geometría agrupada y material compartido; pruebas de cobertura, dimensiones y separación.
+
+## Dados en el tablero 3D
+- Dados biselados con seis caras, caída, giro y rebote para tiradas de 2, 3 o 4 dados.
+- Resultado del servidor orientado hacia arriba y desglose accesible.
+- Botón de tirar dentro del visor con los mismos bloqueos de turno y conexión.
+- Sin repetir animaciones al reconectar; pausa y movimiento reducido respetados.
+
+## Industrias y barrera en 3D
+- Fábricas nacionales y torres multinacionales con niveles 1–3 y color de propietario.
+- Persiana animada para cada casilla del Norte al activar o levantar la barrera.
+- Sin repeticiones al actualizar, reconectar o reabrir; compatible con movimiento reducido.
+- Distribución separada de decorados, industrias y fichas; selección de edificios y barreras.
+
+## Partida integrada en la mesa 3D
+- Controles completos, decisiones, jugadores, registro y chat compartidos entre 2D y 3D.
+- Avisos centrados sobre la escena; cartas y formularios por delante, última carta accesible.
+- Acceso rápido al turno en móvil y utilidades de sala dentro de la mesa.
+- Restauración de controles y retorno a 2D ante fallos del visor.
+
+## Vista 3D predeterminada
+- La mesa 3D se abre automáticamente al entrar o recuperar una sala.
+- Botones para cambiar entre 3D y 2D sin abandonar la partida.
+- Elegir 2D o caer al modo alternativo no provoca reaperturas en cada actualización.
+- Las decisiones de partida siguen apareciendo por delante de la mesa al reconectar.

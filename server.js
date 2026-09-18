@@ -9,7 +9,7 @@ const { Game, GameError } = require('./lib/game');
 const { Store } = require('./lib/store');
 const ACTIONS = ['proponerComercio', 'responderComercio', 'iniciarPartida', 'tirarDado', 'terminarTurno', 'decidirCompraPropiedad', 'responderDecisionPago', 'resolverEleccion', 'pedirPrestamo', 'pagarDeuda', 'construirIndustria', 'expropiarPropiedad', 'subastarPropiedad', 'levantarBarrera', 'responderVotoAlianza', 'pujarSubasta'];
 function createServer(options = {}) {
-  const structuredDataHashes = [...readFileSync(path.join(__dirname, 'public/index.html'), 'utf8').matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+  const structuredDataHashes = [...readFileSync(path.join(__dirname, 'public/index.html'), 'utf8').matchAll(/<script type="(?:application\/ld\+json|importmap)">([\s\S]*?)<\/script>/g)]
     .map(match => "'sha256-" + createHash('sha256').update(match[1]).digest('base64') + "'").join(' ');
   const app = express();
   app.disable('x-powered-by');
@@ -51,6 +51,9 @@ function createServer(options = {}) {
     const art = require('./public/assets/cartas/manifest.json');
     res.json(require('./cartas').CARTAS_PROPIEDADES.map(p => ({ ...p, ...art.propiedades[p.nombre] })));
   });
+  // Only the browser modules needed by the 3D view are public, not all node_modules.
+  for (const file of ['three.module.js', 'three.core.js']) app.get('/vendor/three/' + file, (_req, res) => res.sendFile(path.join(__dirname, 'node_modules/three/build', file)));
+  app.get('/vendor/three/OrbitControls.js', (_req, res) => res.sendFile(path.join(__dirname, 'node_modules/three/examples/jsm/controls/OrbitControls.js')));
   app.use(express.static(path.join(__dirname, 'public')));
   const connectionsByAddress = new Map();
   io.use((socket, next) => {

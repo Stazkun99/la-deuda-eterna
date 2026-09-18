@@ -78,3 +78,15 @@ test('SEO: portada rastreable, JSON-LD permitido por CSP, recursos y canonical c
  assert.equal((await fetch(url+'/api/catalogo')).headers.get('x-robots-tag'),'noindex');
  assert.equal((await fetch(url+'/missing-page-test')).status,404);
 });
+
+test('3D: módulos locales y mapa de importación permitido por CSP',async t=>{
+ const {url}=await setup(t),response=await fetch(url),html=await response.text();
+ const map=html.match(/<script type="importmap">([\s\S]*?)<\/script>/)[1];
+ const hash=require('node:crypto').createHash('sha256').update(map).digest('base64');
+ assert.ok(response.headers.get('content-security-policy').includes("'sha256-"+hash+"'"));
+ assert.equal(JSON.parse(map).imports.three,'/vendor/three/three.module.js');
+ for(const file of ['/vendor/three/three.module.js','/vendor/three/three.core.js','/vendor/three/OrbitControls.js','/board3d.mjs','/board3d-layout.mjs']){
+   const res=await fetch(url+file);assert.equal(res.status,200,file);assert.match(res.headers.get('content-type'),/javascript/);
+ }
+ assert.equal((await fetch(url+'/vendor/three/package.json')).status,404);
+});

@@ -373,3 +373,39 @@ Al caer suena una escena breve sintetizada: mugido en Ganado, saltos y salpicadu
 ## Barrera visual del Norte
 
 Al activar la barrera proteccionista, bajan persianas con franjas de advertencia sobre las doce casillas del Norte. Permanecen hasta levantar la barrera y señalan que las exportaciones no generan cobros. Se conservan visibles las fichas y los niveles. La animación no se repite al actualizar el turno y respeta movimiento reducido.
+
+## Mesa de juego 3D
+
+Al entrar o recuperar una sala, se abre el tablero 3D automáticamente. Usa **Cambiar a 2D** para la vista clásica y **Cambiar a 3D** para volver. La mesa tiene relieve, marco de madera, ilustraciones originales y las cuarenta casillas en su orden habitual. Puedes girar arrastrando, acercar con la rueda o dos dedos, usar los botones de cámara y seleccionar una casilla para abrir sus detalles. El selector permite hacerlo también con teclado.
+
+El visor muestra las fichas tridimensionales (carrito, sombrero, bota y balsa) con el color de cada jugador, un aro para el turno activo y movimiento por cada casilla. Al coincidir, se distribuyen dentro de la casilla; pulsa el nombre de un jugador para acercarte. Al reabrir o reconectar se muestra la posición actual sin repetir tiradas antiguas. Se respeta la preferencia de movimiento reducido. Las industrias y la barrera también se representan en 3D. El panel de partida permite iniciar, tirar, terminar turno, pedir y amortizar préstamos, levantar la barrera, construir y comerciar. Pulsa **Cambiar a 2D** para volver a la vista clásica. La partida y su temporizador siguen activos en ambas vistas. Los colores de propiedad y las barreras se actualizan con el estado de la sala.
+
+El visor necesita WebGL 2. Si el navegador no lo admite, la partida habitual sigue disponible. Three.js se sirve desde el propio servidor, se carga al abrir el visor y solo dibuja cuando cambia la vista; al cerrar se detiene el renderizado. No requiere un servicio externo adicional. Al instalar el proyecto, ejecuta `npm ci` para incluir la dependencia fijada en el archivo de bloqueo.
+
+### Miniaturas de las casillas
+
+Las 40 casillas del visor incluyen decorados 3D de estilo maqueta: cultivos, ganado, pesca y minas en el Sur; caramelos, chocolate, ropa, conservas, electrónica y otros productos en el Norte; regalos, documentos del FMI, barrera, carabela y escenas para los eventos. Son decorativos y no representan industrias compradas ni cambian las reglas.
+
+Los modelos ocupan una franja exterior y las fichas recorren el lado interior. Puedes ocultarlos con **Decorados 3D**. Selecciona una casilla y pulsa **Acercar a la casilla** para verla de cerca. Las ilustraciones originales y los detalles siguen disponibles.
+
+Los decorados usan un material compartido y una sola malla por casilla (19.224 triángulos en total), sin descargas de modelos ni animación continua. El rendimiento real depende del dispositivo.
+
+### Dados sobre la mesa 3D
+
+El visor permite tirar en tu turno con el botón **Tirar los dados**. Los dos, tres o cuatro dados caen con giro y rebote en el centro y quedan con el resultado real del servidor en la cara superior. Se muestra también el desglose y el total. El movimiento de la ficha comienza después de la caída. Se reutiliza el sonido de tirada, sin duplicarlo.
+
+Al reabrir el visor, reconectar o activar movimiento reducido se muestra la última tirada sin repetir la caída. Al cerrar u ocultar la pestaña se detiene la animación. La animación es visual; no calcula ni cambia el resultado del juego.
+
+### Industrias y barrera 3D
+
+Las industrias nacionales aparecen como fábricas de una a tres naves con chimeneas. Las multinacionales son torres de uno a tres pisos. La base identifica al propietario y los indicadores muestran el nivel; los edificios se actualizan al construir, comerciar o perder una propiedad. Un cierre o bloqueo cambia su color a gris. Los decorados ocupan una zona distinta a los edificios y las fichas.
+
+La barrera baja doce persianas metálicas con franjas de advertencia sobre las casillas del Norte y se recoge al levantarla. Afecta visualmente también a las casillas sin industrias. La animación solo se reproduce cuando cambia el estado, dura 750 ms y se omite al recuperar la partida, cerrar el visor o activar movimiento reducido. No altera las reglas de cobro.
+
+### Controles, cartas y avisos en 3D
+
+El panel, el registro y el chat son los mismos controles en ambas vistas: se trasladan conservando formularios y decisiones, sin duplicar acciones. Las cartas originales y los diálogos de propiedades, financiación, comercio e industrialización se abren delante de la mesa. La última carta queda disponible debajo del tablero.
+
+Los avisos de pagos, préstamos e intercambios aparecen en el centro de la escena y avanzan normalmente; su temporizador se pausa mientras una carta u otro diálogo requiere atención. En móvil, **Ver mi turno** lleva al panel de acciones. Sonido, reglas, conexión, copiar código y abandonar sala están accesibles en la cabecera.
+
+Si falla la carga del visor o se pierde el contexto gráfico, la interfaz vuelve a 2D y permite continuar la partida. El 3D es la vista inicial al entrar o recargar. Si eliges 2D o falla el visor, las actualizaciones y reconexiones de esa sesión no fuerzan el regreso al 3D.
