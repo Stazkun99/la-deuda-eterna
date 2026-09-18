@@ -409,3 +409,9 @@ El panel, el registro y el chat son los mismos controles en ambas vistas: se tra
 Los avisos de pagos, préstamos e intercambios aparecen en el centro de la escena y avanzan normalmente; su temporizador se pausa mientras una carta u otro diálogo requiere atención. En móvil, **Ver mi turno** lleva al panel de acciones. Sonido, reglas, conexión, copiar código y abandonar sala están accesibles en la cabecera.
 
 Si falla la carga del visor o se pierde el contexto gráfico, la interfaz vuelve a 2D y permite continuar la partida. El 3D es la vista inicial al entrar o recargar. Si eliges 2D o falla el visor, las actualizaciones y reconexiones de esa sesión no fuerzan el regreso al 3D.
+
+### Cámara e iluminación
+
+**Seguir ficha** está activado inicialmente: encuadra la tirada y después acompaña el recorrido hasta asentarse en la casilla de llegada. Arrastrar, hacer zoom o pulsar una vista manual interrumpe ese seguimiento; la siguiente tirada vuelve a seguirse si la opción continúa marcada. Desmárcala para mantener siempre la cámara manual. Vista general, vista cenital y enfoque de jugador o casilla usan transiciones suaves. Se respeta movimiento reducido y se detiene la cámara al ocultar o cerrar el visor.
+
+La mesa usa iluminación cálida con relleno frío, ajuste de tonos y sombras de fichas, edificios, decorados y dados. **Sombras suaves** permite desactivar las sombras conservando la iluminación. Se utiliza un mapa de sombras de 1024 píxeles y solo se actualiza al cambiar la escena o durante sus animaciones, no por mover únicamente la cámara.

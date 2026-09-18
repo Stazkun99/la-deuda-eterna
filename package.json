@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js && node --check public/audio.js && node --check public/board3d.mjs && node --check public/board3d-layout.mjs && node --check public/board3d-pieces.mjs && node --check public/board3d-scenery.mjs && node --check public/board3d-dice.mjs && node --check public/board3d-industries.mjs && node --check public/board3d-ui.js"
+    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js && node --check public/audio.js && node --check public/board3d.mjs && node --check public/board3d-layout.mjs && node --check public/board3d-pieces.mjs && node --check public/board3d-scenery.mjs && node --check public/board3d-dice.mjs && node --check public/board3d-industries.mjs && node --check public/board3d-ui.js && node --check public/board3d-camera.mjs"
   },
   "keywords": [],
   "author": "",

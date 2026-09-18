@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createBoardCamera} from './board3d-camera.mjs';
 import {createIndustryLayer} from './board3d-industries.mjs';
 import {createDiceTray} from './board3d-dice.mjs';
 import { OrbitControls } from '/vendor/three/OrbitControls.js';
@@ -11,6 +12,8 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
   renderer.setClearColor('#142c2b');
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label','Tablero tridimensional. Usa los controles y el selector de casillas.');
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(42,1,.1,100);
@@ -18,8 +21,14 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   controls.enablePan=false; controls.enableDamping=false;
   controls.minDistance=4; controls.maxDistance=42;
   controls.minPolarAngle=.01; controls.maxPolarAngle=1.15;
-  scene.add(new THREE.HemisphereLight(0xfff4dd,0x344a48,2.6));
-  const light=new THREE.DirectionalLight(0xffffff,3);light.position.set(-6,12,8);scene.add(light);
+  scene.add(new THREE.HemisphereLight(0xfff2db,0x426765,1.65));
+  const light=new THREE.DirectionalLight(0xffe8c6,3.2);light.position.set(-5,13,6);light.castShadow=true;
+  light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:1,far:35});light.shadow.camera.updateProjectionMatrix();light.shadow.normalBias=.025;light.shadow.bias=-.00015;light.shadow.radius=2;scene.add(light);
+  const fill=new THREE.DirectionalLight(0xb8dbe7,.85);fill.position.set(8,7,-5);scene.add(fill);
+  const cameraRig=createBoardCamera(camera,controls,{reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,aspect:()=>camera.aspect});
+  let followEnabled=true;
+  controls.addEventListener('start',cameraRig.cancel);
+  function shadowObjects(group){group.traverse(object=>{if(object.isMesh){object.castShadow=!object.isInstancedMesh;object.receiveShadow=true;}});renderer.shadowMap.needsUpdate=true;}
   const resources=[], tiles=[], scenery=[], images=new Map();
   const pieces=new Map();
   const industries=createIndustryLayer(scene,getState().tablero);
@@ -31,6 +40,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     const m=new THREE.Mesh(own(new THREE.BoxGeometry(w,h,d)),own(new THREE.MeshStandardMaterial({color,roughness:.72})));
     m.position.set(x,y,z);scene.add(m);return m;
   }
+  const table=box(18,.18,18,'#173b36',0,-.64);table.receiveShadow=true;
   box(12.1,.36,12.1,'#533b2c',0,-.32);
   box(11.75,.12,11.75,'#c5a362',0,-.09);
   box(11.5,.1,11.5,'#193f3a');
@@ -45,7 +55,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   const mat=own(new THREE.MeshStandardMaterial({map:felt,roughness:1}));
   const surface=new THREE.Mesh(own(new THREE.PlaneGeometry(8.92,8.92)),mat);surface.rotation.x=-Math.PI/2;surface.position.y=.07;scene.add(surface);
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
-  function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now);renderer.render(scene,camera);if(moving||rolling||barrierMoving)schedule();});}
+  function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now);if(moving||rolling||barrierMoving)renderer.shadowMap.needsUpdate=true;renderer.render(scene,camera);if(moving||rolling||barrierMoving||cameraMoving)schedule();});}
   function settle(piece){piece.motion=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
     const motion=piece.motion;if(!motion)continue;
@@ -61,12 +71,12 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     for(const [id,piece] of pieces)if(!visible.some(p=>p.id===id)){scene.remove(piece.root);piece.dispose();pieces.delete(id);}
     for(const player of visible){
       let piece=pieces.get(player.id);
-      if(!piece){piece=createPlayerPiece(pieceKind(player.color),player.color);pieces.set(player.id,piece);scene.add(piece.root);piece.target=new THREE.Vector3();}
+      if(!piece){piece=createPlayerPiece(pieceKind(player.color),player.color);pieces.set(player.id,piece);scene.add(piece.root);shadowObjects(piece.root);piece.target=new THREE.Vector3();}
       const slot=sceneryPlayerSlot(visible,player),position=tileAnchor(player.posicion,slot.x,slot.z);
       piece.offset=slot;piece.scale=slot.scale;piece.target.set(position.x,.225,position.z);
       piece.root.userData.id=player.posicion;piece.ring.visible=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       const previous=previousPlayers.find(p=>p.id===player.id),path=rollPath(previous,player,state.ultimaTirada,lastRoll);
-      if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,start:performance.now()+900};piece.root.scale.setScalar(slot.scale);}
+      if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,start:performance.now()+900};piece.root.scale.setScalar(slot.scale);if(followEnabled)cameraRig.follow(()=>pieces.has(player.id)?{point:piece.root.position,moving:!!piece.motion}:null,piece.motion.start);}
       else if(!piece.motion||previous?.posicion!==player.posicion||!active||document.hidden||!state.enJuego||!animate)settle(piece);
     }
     previousPlayers=state.jugadores.map(p=>({...p}));lastRoll=state.ultimaTirada?.id;
@@ -74,10 +84,10 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
       const b=document.createElement('button');b.type='button';b.className='secondary';
       const current=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       b.textContent=player.nombre+' · '+pieceKind(player.color)+(current?' · En turno':'');b.style.borderLeft='5px solid '+player.color;
-      b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;controls.target.copy(piece.root.position);camera.position.copy(piece.root.position).add(new THREE.Vector3(0,6,7));controls.update();select(player.posicion);};legend.append(b);
+      b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;cameraRig.focus(piece.root.position);select(player.posicion);schedule();};legend.append(b);
     }}
   }
-  function visibility(){if(document.hidden){industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
+  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){cameraRig.cancel();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
   function wrap(ctx,text,y){const words=text.split(' ');let line='';for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>222&&line){ctx.fillText(line,128,y);y+=23;line=word;}else line=next;}ctx.fillText(line,128,y);}
   function paint(tile){
     if(disposed)return;
@@ -117,10 +127,10 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
       paint(tile);
     }const rollAnimation=animate&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
     industries.sync(state,rollAnimation);
-    if(diceTray.sync(state.ultimaTirada,rollAnimation))reset();
-    syncPieces(state,animate);if(selection!==null)onSelect(selection);schedule();
+    if(diceTray.sync(state.ultimaTirada,rollAnimation)&&followEnabled)reset();
+    syncPieces(state,animate);renderer.shadowMap.needsUpdate=true;if(selection!==null)onSelect(selection);schedule();
   }
-  function reset(){const aspect=host.clientWidth/Math.max(1,host.clientHeight);const distance=Math.min(40,Math.max(16,6.5/(Math.tan(Math.PI*21/180)*aspect)+4));camera.position.set(0,distance*.72,distance*.78);controls.target.set(0,0,0);controls.update();schedule();}
+  function reset(immediate=false){const aspect=host.clientWidth/Math.max(1,host.clientHeight);const distance=Math.min(40,Math.max(16,6.5/(Math.tan(Math.PI*21/180)*aspect)+4));cameraRig.move(new THREE.Vector3(0,distance*.72,distance*.78),new THREE.Vector3(),performance.now(),immediate?0:650);schedule();}
   function resize(){if(disposed||!host.clientWidth||!host.clientHeight)return;renderer.setSize(host.clientWidth,host.clientHeight,false);camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();schedule();}
   function select(id){const tile=tiles.find(t=>t.cell.id===id);if(!tile)return;selection=id;for(const t of tiles){t.top.emissive.set(t.cell.id===selection?'#9d762b':'#000000');t.top.emissiveIntensity=.35;}onSelect(id);schedule();}
   const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
@@ -129,15 +139,17 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   function lost(e){e.preventDefault();active=false;onError();}
   renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointerup',pointerUp);renderer.domElement.addEventListener('webglcontextlost',lost);
   controls.addEventListener('change',schedule);document.addEventListener('visibilitychange',visibility);
-  const observer=new ResizeObserver(resize);observer.observe(host);resize();reset();update();
+  const observer=new ResizeObserver(resize);observer.observe(host);shadowObjects(scene);table.castShadow=false;surface.castShadow=false;resize();reset(true);update();
   return {
     update,select,reset,
-    focus(){if(selection===null)return;const p=tilePosition(selection);controls.target.set(p.x,.2,p.z);camera.position.set(p.x,3.6,p.z+4);controls.update();schedule();},
-    showScenery(value){for(const mesh of scenery)mesh.visible=value;schedule();},
-    rotate(){controls.rotateLeft(Math.PI/4);controls.update();schedule();},
-    zoom(factor){camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
-    overhead(){const distance=camera.position.distanceTo(controls.target);camera.position.set(0,distance,.01);controls.update();schedule();},
-    setActive(value){active=value;if(value){resize();schedule();}else{industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    setFollow(value){followEnabled=value;if(!value)cameraRig.cancel();},
+    setShadows(value){renderer.shadowMap.enabled=value;renderer.shadowMap.needsUpdate=true;schedule();},
+    focus(){if(selection===null)return;const p=tilePosition(selection);cameraRig.focus(p);schedule();},
+    showScenery(value){for(const mesh of scenery)mesh.visible=value;renderer.shadowMap.needsUpdate=true;schedule();},
+    rotate(){cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
+    zoom(factor){cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
+    overhead(){const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
+    setActive(value){renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
+    dispose(){cameraRig.cancel();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }

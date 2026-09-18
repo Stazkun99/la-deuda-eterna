@@ -82,10 +82,12 @@ $('abrir-3d').onclick = async () => {
     $('casilla-3d').replaceChildren(element('option','Elige una casilla…'));
     $('casilla-3d').firstElementChild.value='';
     for(const c of state.tablero){const option=element('option',c.id+' · '+c.nombre);option.value=c.id;$('casilla-3d').append(option);}
-    board3d.showScenery($('decorados-3d').checked); board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
+    board3d.setFollow($('seguir-3d').checked);board3d.setShadows($('sombras-3d').checked);board3d.showScenery($('decorados-3d').checked); board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
   } catch { board3d?.dispose();board3d=null;$('escena-3d').replaceChildren(); controls3d.restore();dialog3d.close();notice('No se pudo cargar el 3D en este navegador. Puedes seguir jugando en 2D.'); }
   finally { board3dLoading=false; }
 };
+$('seguir-3d').onchange=()=>board3d?.setFollow($('seguir-3d').checked);
+$('sombras-3d').onchange=()=>board3d?.setShadows($('sombras-3d').checked);
 $('enfocar-3d').onclick=()=>board3d?.focus();
 $('decorados-3d').onchange=()=>board3d?.showScenery($('decorados-3d').checked);
 $('girar-3d').onclick=()=>board3d?.rotate();

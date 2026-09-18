@@ -149,3 +149,9 @@ Al activar la barrera proteccionista, bajan persianas con franjas de advertencia
 - Botones para cambiar entre 3D y 2D sin abandonar la partida.
 - Elegir 2D o caer al modo alternativo no provoca reaperturas en cada actualización.
 - Las decisiones de partida siguen apareciendo por delante de la mesa al reconectar.
+
+## Cámara e iluminación de la mesa
+- Seguimiento opcional del recorrido y llegada de las fichas, interrumpible manualmente.
+- Transiciones de cámara suaves, compatibles con movimiento reducido.
+- Luz principal cálida, relleno frío y sombras ajustables sobre una base de mesa.
+- Sin animación de cámara permanente y con actualización de sombras bajo demanda.
