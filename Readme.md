@@ -384,7 +384,7 @@ El visor necesita WebGL 2. Si el navegador no lo admite, la partida habitual sig
 
 ### Miniaturas de las casillas
 
-El visor utiliza modelos GLB seleccionados de cinco kits de Kenney (CC0). Hay modelos en 20 casillas: salida, banano, pesca, minas, solidaridad, varias industrias, BID y sede FMI. Todas las casillas tienen escenografía: los modelos descargados se combinan con cultivos y miniaturas propias, terrenos, muelles y detalles de fábrica. El inventario y la lista de búsquedas están en [MODELOS-3D.md](MODELOS-3D.md). Son decorativos y no representan industrias compradas ni cambian las reglas.
+El visor utiliza 35 modelos GLB de Kenney y Quaternius (CC0), y Poly by Google (CC-BY 3.0), en 25 casillas. Incluye vaca, tanque, velero, bomba petrolera y tractor, además de salida, banano, pesca, minas, solidaridad, varias industrias, BID y sede FMI. Todas las casillas tienen escenografía: los modelos descargados se combinan con cultivos y miniaturas propias, terrenos, muelles y detalles de fábrica. El inventario y la lista de búsquedas están en [MODELOS-3D.md](MODELOS-3D.md). Son decorativos y no representan industrias compradas ni cambian las reglas.
 
 Los modelos ocupan una franja exterior y las fichas recorren el lado interior. Puedes ocultarlos con **Decorados 3D**. Selecciona una casilla y pulsa **Acercar a la casilla** para verla de cerca. Las ilustraciones originales y los detalles siguen disponibles.
 
@@ -419,3 +419,5 @@ La mesa usa iluminación cálida con relleno frío, ajuste de tonos y sombras de
 ### Decisiones y pagos corregidos
 
 Pagar una renta con oro transfiere un lingote al propietario. En 12 de Octubre entrega un lingote únicamente quien cae (o su caja compartida). Fuga de Capitales solicita una tirada de un dado y muestra el importe en 2D/3D; al agotarse el turno se resuelve automáticamente. Despido sindical traslada al compañero izquierdo al FMI y registra sus intereses, respetando No Pagar y la tasa especial.
+
+Las atribuciones de Oil pump y Tractor están disponibles en [Créditos 3D](public/creditos-modelos.html), enlazados desde el pie de la web. Las licencias y procedencia de cada modelo se conservan en `public/assets/modelos-3d/`.

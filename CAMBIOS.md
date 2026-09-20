@@ -165,3 +165,5 @@ Al activar la barrera proteccionista, bajan persianas con franjas de advertencia
 - Despido sindical identifica el cobro de intereses del compañero trasladado al FMI; pruebas de deuda, exención y destinatario.
 
 - Amortización configurable mediante formulario, validada contra deuda y efectivo disponible; admite importes menores y mayores de $5.000.
+
+- Incorporados cinco modelos descargados: vaca, tanque, velero, bomba petrolera y tractor. Conversión a GLB, texturas locales, créditos CC-BY públicos y archivo verificado de los packs originales fuera de public.

@@ -21,7 +21,7 @@ test('GLB: catalogue covers forty spaces, real assets fit lots and every texture
   const THREE=await import('three'),{GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
   const {BOARD_MODELS,MISSING_MODELS}=await import('../public/board3d-model-catalog.mjs');
   const {fitModel}=await import('../public/board3d-models.mjs');
-  assert.equal(Object.keys(BOARD_MODELS).length,20);
+  assert.equal(Object.keys(BOARD_MODELS).length,25);
   for(let id=0;id<40;id++)assert.notEqual(!!BOARD_MODELS[id],!!MISSING_MODELS[id],'one state per space '+id);
   const files=new Set(Object.values(BOARD_MODELS).flat().map(s=>s.file));
   const manifest=JSON.parse(fs.readFileSync(path.join(assetRoot,'origenes.json'),'utf8'));
@@ -32,11 +32,13 @@ test('GLB: catalogue covers forty spaces, real assets fit lots and every texture
     assert.equal(crypto.createHash('sha256').update(data).digest('hex'),entry.sha256);
     assert.equal(data.readUInt32LE(8),data.length);
     for(const image of json.images||[]){
+      if(image.bufferView!==undefined){assert.equal(image.mimeType,'image/png');assert.ok(json.bufferViews[image.bufferView]);continue;}
       const texture=path.resolve(path.dirname(filename),image.uri);
       assert.ok(texture.startsWith(assetRoot+path.sep));assert.ok(fs.existsSync(texture));
       assert.equal(fs.readFileSync(texture).subarray(1,4).toString(),'PNG');
     }
-    assert.equal(entry.licencia,'CC0');
+    assert.ok(['CC0','CC-BY-3.0'].includes(entry.licencia));
+    if(entry.licencia==='CC-BY-3.0')assert.ok(entry.fuente.startsWith('https://poly.pizza/m/'));
     templates.set(entry.archivo,(await loader.parseAsync(withoutTextures(data),'' )).scene);
   }
   for(const [id,specs] of Object.entries(BOARD_MODELS))for(const spec of specs){
@@ -81,3 +83,5 @@ test('GLB: a failed download reports the missing model without blocking other sp
 });
 
 test('hybrid scenes: all forty lots stay outside the playing lane and have finite colored geometry',async()=>{const {createLotScene}=await import('../public/board3d-scenes.mjs');const {BOARD_MODELS}=await import('../public/board3d-model-catalog.mjs');for(let id=0;id<40;id++){const geo=createLotScene(id,!!BOARD_MODELS[id]?.length);geo.computeBoundingBox();const b=geo.boundingBox;assert.ok(b.min.x>=-.49&&b.max.x<=.49,'width '+id);assert.ok(b.min.z>=-1.55&&b.max.z<=-.48,'lane '+id);assert.ok(b.max.y<.8,'height '+id);assert.equal(geo.attributes.position.count,geo.attributes.color.count);assert.ok(Array.from(geo.attributes.position.array).every(Number.isFinite));geo.dispose();}});
+
+test('credits: both CC-BY models have public attribution, source and license links',()=>{const html=fs.readFileSync(path.join(__dirname,'../public/creditos-modelos.html'),'utf8');const index=fs.readFileSync(path.join(__dirname,'../public/index.html'),'utf8');assert.match(index,/href="\/creditos-modelos.html"/);for(const id of ['fZykGFywa5D','eiXGnD1wN5q'])assert.ok(html.includes('https://poly.pizza/m/'+id));assert.ok(html.includes('https://creativecommons.org/licenses/by/3.0/'));assert.ok(html.includes('https://poly.pizza/u/Poly%20by%20Google'));assert.ok(html.includes('via Poly Pizza'));assert.equal(fs.existsSync(path.join(assetRoot,'Nueva carpeta')),false);});

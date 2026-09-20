@@ -298,5 +298,65 @@
     "bytes": 27652,
     "sha256": "6ce68475ad1321eace6a70b5e536593b26dc4acee4ce840dd089d1a04a60ecf8",
     "sha256Original": "34d10d5620179b8a211a01eea837caa828c0782422f0b408e1a5838788888436"
+  },
+  {
+    "archivo": "maquinaria/bomba-petrolera.glb",
+    "original": "Oil pump by Poly by Google - fZykGFywa5D.glb",
+    "paquete": "Poly Pizza",
+    "autor": "Poly by Google",
+    "licencia": "CC-BY-3.0",
+    "fuente": "https://poly.pizza/m/fZykGFywa5D",
+    "cambios": "Archivo sin modificar; ajuste de escala y orientación en la escena.",
+    "bytes": 41692,
+    "sha256": "2e10cf3d7b6d93b7b04017fe598cc262dacb40ed6cbc2921316e84508154c6a9",
+    "sha256Original": "2e10cf3d7b6d93b7b04017fe598cc262dacb40ed6cbc2921316e84508154c6a9"
+  },
+  {
+    "archivo": "maquinaria/tractor.glb",
+    "original": "Tractor by Poly by Google - eiXGnD1wN5q.glb",
+    "paquete": "Poly Pizza",
+    "autor": "Poly by Google",
+    "licencia": "CC-BY-3.0",
+    "fuente": "https://poly.pizza/m/eiXGnD1wN5q",
+    "cambios": "Textura PNG extraída sin recomprimir a archivo local; geometría y materiales conservados. Ajuste de escala y orientación en la escena.",
+    "bytes": 198976,
+    "sha256": "a92ca0d4f718d9f451841ba1ccde22d0259610bc24c3f98c3322b449acef158b",
+    "sha256Original": "49833685f8f4e5ba626d746114316327d4d6888cec062767d90c8152fe4154fe"
+  },
+  {
+    "archivo": "naturaleza/vaca.glb",
+    "original": "Cow.obj",
+    "paquete": "Farm Animals Pack",
+    "autor": "Quaternius",
+    "licencia": "CC0",
+    "fuente": "https://quaternius.com/packs/farmanimal.html",
+    "cambios": "Conversión OBJ/MTL a GLB estático, materiales adaptados a iluminación PBR.",
+    "bytes": 64080,
+    "sha256": "eedc1f728cefebdcc7b9851e4720d36e87c1c06d846dcd02a0225f9912b82cea",
+    "sha256Original": "da9081eadc4d7c7f4c5c869d863e0681ad28dc81a4037f88bd1ea48259bb0d20"
+  },
+  {
+    "archivo": "maquinaria/tanque.glb",
+    "original": "Tank.obj",
+    "paquete": "Animated Tanks Pack",
+    "autor": "Quaternius",
+    "licencia": "CC0",
+    "fuente": "https://quaternius.com/packs/animatedtanks.html",
+    "cambios": "Conversión OBJ/MTL a GLB estático, materiales adaptados a iluminación PBR.",
+    "bytes": 469300,
+    "sha256": "ed52d50b195c57adcaaaf75b3dd7dbe8a85a53ce524f30a7bcc1b0a08bec5b8b",
+    "sha256Original": "47452f39b10b4e6c107b66a186af78715bf40ad7f3cb173f1eab0490bfaf1df4"
+  },
+  {
+    "archivo": "naturaleza/velero.glb",
+    "original": "ship-medium.glb",
+    "paquete": "Pirate Kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "fuente": "https://kenney.nl/assets/pirate-kit",
+    "cambios": "Ruta de textura local renombrada; escala ajustada en la escena.",
+    "bytes": 144900,
+    "sha256": "65195182404c160b2a30b35caf3cea80f1fe98b433f70c57f92da2e5a212a12c",
+    "sha256Original": "279ea019268f855240c3cebf7616644c8141c20bee617da72eae4733b8e310af"
   }
 ]

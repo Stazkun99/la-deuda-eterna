@@ -1,6 +1,6 @@
 # Modelos gratuitos para próximas mejoras
 
-Revisión de las páginas originales: 20 de septiembre de 2026. Son recomendaciones de descarga; aún no se han incorporado estos nuevos modelos. La selección Kenney que ya estaba en la carpeta sí está integrada.
+Revisión de las páginas originales: 20 de septiembre de 2026. Los cinco recursos ya fueron descargados por el usuario e incorporados al tablero: vaca, tanque, bomba petrolera, tractor y velero. Los originales y variantes se conservaron fuera de la carpeta pública.
 
 | Uso propuesto | Página exacta de descarga | Licencia y formato |
 | --- | --- | --- |
