@@ -116,7 +116,7 @@ Esta sección describe la implementación web. No reproduce todas las variantes 
 ### Deuda, oro y FMI
 
 - Puedes elegir el importe entero del préstamo, desde $1 hasta completar $30.000 de deuda personal. Si un aliado ya alcanzó su límite, puede solicitarse a cargo de otro miembro con capacidad.
-- La amortización es de hasta $5.000 por acción, antes de tirar o en gestión final, sin visitar el FMI.
+- La amortización permite elegir cualquier importe entero positivo hasta el menor de tu deuda y efectivo disponible, antes de tirar o en gestión final, sin visitar el FMI.
 - Se tiran dos dados; tres desde $10.000 de deuda personal y cuatro desde $20.000.
 - Los intereses ordinarios se cobran al pasar o llegar a la sede del FMI. Alcanzar un umbral de deuda cambia los dados, sin trasladar automáticamente la ficha al FMI.
 - El oro puede pagar manufacturas e intereses, pero no cartas, industrias, fuga de capitales o monopolios.
@@ -384,11 +384,11 @@ El visor necesita WebGL 2. Si el navegador no lo admite, la partida habitual sig
 
 ### Miniaturas de las casillas
 
-Las 40 casillas del visor incluyen decorados 3D de estilo maqueta: cultivos, ganado, pesca y minas en el Sur; caramelos, chocolate, ropa, conservas, electrónica y otros productos en el Norte; regalos, documentos del FMI, barrera, carabela y escenas para los eventos. Son decorativos y no representan industrias compradas ni cambian las reglas.
+El visor utiliza modelos GLB seleccionados de cinco kits de Kenney (CC0). Hay modelos en 20 casillas: salida, banano, pesca, minas, solidaridad, varias industrias, BID y sede FMI. Todas las casillas tienen escenografía: los modelos descargados se combinan con cultivos y miniaturas propias, terrenos, muelles y detalles de fábrica. El inventario y la lista de búsquedas están en [MODELOS-3D.md](MODELOS-3D.md). Son decorativos y no representan industrias compradas ni cambian las reglas.
 
 Los modelos ocupan una franja exterior y las fichas recorren el lado interior. Puedes ocultarlos con **Decorados 3D**. Selecciona una casilla y pulsa **Acercar a la casilla** para verla de cerca. Las ilustraciones originales y los detalles siguen disponibles.
 
-Los decorados usan un material compartido y una sola malla por casilla (19.224 triángulos en total), sin descargas de modelos ni animación continua. El rendimiento real depende del dispositivo.
+Los 30 archivos GLB seleccionados ocupan aproximadamente 1,65 MB, más cuatro pequeñas paletas de textura. Se sirven desde `public/assets/modelos-3d/`, con nombres en español, procedencia y licencias. El visor descarga como máximo cuatro modelos simultáneamente, reutiliza recursos entre copias y muestra el progreso. Una descarga fallida deja el espacio libre y permite continuar la partida. La geometría se ajusta automáticamente a cada parcela sin deformar las proporciones; cerrar el visor libera también las cargas que terminan tarde. El rendimiento real depende del dispositivo.
 
 ### Dados sobre la mesa 3D
 
@@ -415,3 +415,7 @@ Si falla la carga del visor o se pierde el contexto gráfico, la interfaz vuelve
 **Seguir ficha** está activado inicialmente: encuadra la tirada y después acompaña el recorrido hasta asentarse en la casilla de llegada. Arrastrar, hacer zoom o pulsar una vista manual interrumpe ese seguimiento; la siguiente tirada vuelve a seguirse si la opción continúa marcada. Desmárcala para mantener siempre la cámara manual. Vista general, vista cenital y enfoque de jugador o casilla usan transiciones suaves. Se respeta movimiento reducido y se detiene la cámara al ocultar o cerrar el visor.
 
 La mesa usa iluminación cálida con relleno frío, ajuste de tonos y sombras de fichas, edificios, decorados y dados. **Sombras suaves** permite desactivar las sombras conservando la iluminación. Se utiliza un mapa de sombras de 1024 píxeles y solo se actualiza al cambiar la escena o durante sus animaciones, no por mover únicamente la cámara.
+
+### Decisiones y pagos corregidos
+
+Pagar una renta con oro transfiere un lingote al propietario. En 12 de Octubre entrega un lingote únicamente quien cae (o su caja compartida). Fuga de Capitales solicita una tirada de un dado y muestra el importe en 2D/3D; al agotarse el turno se resuelve automáticamente. Despido sindical traslada al compañero izquierdo al FMI y registra sus intereses, respetando No Pagar y la tasa especial.

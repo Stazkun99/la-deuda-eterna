@@ -127,7 +127,22 @@ $('prestamo-form').onsubmit = e => {
   if (!input.reportValidity()) return;
   action('pedirPrestamo', { monto: Number(input.value) }); $('prestamo-dialog').close();
 };
-$('amortizar').onclick = () => action('pagarDeuda');
+$('amortizar').onclick = () => {
+  const p = me(); if (!p || $('amortizar').disabled) return;
+  const max = Math.min(p.deudaPersonal, p.dinero), input = $('amortizar-importe');
+  input.max = max; input.value = Math.min(5000, max);
+  $('amortizar-capacidad').textContent = 'Tu deuda: ' + amount(p.deudaPersonal) + '. Puedes devolver hasta ' + amount(max) + ' con tu efectivo disponible.';
+  $('amortizar-dialog').showModal(); input.focus(); input.select();
+};
+$('cerrar-amortizar').onclick = () => $('amortizar-dialog').close();
+$('amortizar-form').onsubmit = e => {
+  e.preventDefault();
+  const p = me(), input = $('amortizar-importe');
+  if (!p || $('amortizar').disabled) { $('amortizar-dialog').close(); return; }
+  input.max = Math.min(p.deudaPersonal, p.dinero);
+  if (!input.reportValidity()) return;
+  action('pagarDeuda', { monto: Number(input.value) }); $('amortizar-dialog').close();
+};
 $('levantar').onclick = () => action('levantarBarrera');
 $('propiedades').onclick = showProperties;
 $('comerciar').onclick = showTradeForm;
@@ -156,7 +171,7 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); $('amortizar-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
@@ -375,7 +390,7 @@ function updateControls() {
   const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !!movement || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
   $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';
-  const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: 30 segundos para pujar.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
+  const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', fuga:'Fuga de Capitales: tira un dado para conocer el pago.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: 30 segundos para pujar.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
   $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
   $('inicio').hidden = state.enJuego || !p?.esLider;
   $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2;
@@ -386,7 +401,7 @@ function updateControls() {
   $('terminar').hidden = state.fase !== 'gestion'; $('terminar').disabled = locked || !mine;
   const collective = ['subasta','votacion'].includes(state.fase);
   $('prestamo').disabled = locked || !mine || collective || !state.jugadores.some(q => (q.id === p.id || p.alianzaId && q.alianzaId === p.alianzaId) && q.deudaPersonal < 30000);
-  $('amortizar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.deudaPersonal <= 0 || p.dinero < Math.min(5000,p.deudaPersonal);
+  $('amortizar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.deudaPersonal <= 0 || p.dinero < 1;
   $('levantar').hidden = !state.barreraProteccionista;
   $('levantar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.dinero < 2000;
 }
@@ -455,7 +470,7 @@ function renderDice(roll, animate) {
   });
   const finish = () => {
     panel.classList.remove('rolling');
-    label.textContent = roll.jugador + ': ' + roll.dados.join(' + ') + ' = ' + roll.total;
+    label.textContent = roll.tipo === 'fuga' ? roll.jugador + ' · Fuga de Capitales: ' + roll.total + ' → ' + amount(roll.total * 1000) : roll.jugador + ': ' + roll.dados.join(' + ') + ' = ' + roll.total;
     diceTimer = setTimeout(() => { panel.hidden = true; }, 2600);
   };
   if (!animate || matchMedia('(prefers-reduced-motion: reduce)').matches) { finish(); return; }
@@ -506,6 +521,9 @@ function renderDecision(force = false) {
       const c=state.tablero.find(c=>c.nombre===d.nombrePropiedad);
       container.append(element('h3',d.nombrePropiedad),element('p','Compra el terreno por '+amount(c.precio)+' o cobra la materia prima.'));
       add('Comprar · '+amount(c.precio),'decidirCompraPropiedad',{comprar:true},p.dinero<c.precio,true);add('Cobrar materia prima · '+amount(c.precio),'decidirCompraPropiedad',{comprar:false});
+    } else if (d.tipo === 'fuga') {
+      container.append(element('h3','Fuga de Capitales'),element('p','Tira un dado: pagarás $1.000 por punto. No admite oro.'));
+      add('Tirar dado de Fuga de Capitales','tirarDadoFuga',{},false,true);
     } else if (d.tipo === 'pago') {
       container.append(element('h3','Pago pendiente · '+amount(d.monto)),element('p',d.motivo));
       add('Pagar con efectivo','responderDecisionPago',{usarOro:false},false,true);
@@ -634,7 +652,7 @@ function showProperties(){
   for(const c of properties)list.append(button(c.nombre+' ↗',()=>showProperty(c.id),'secondary'));
   box.append(list);openDialog();
 }
-function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $1.500 de ayuda al desarrollo del BID, sin generar deuda. Importe de esta edición web.',32:'Cada jugador entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
+function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $1.500 de ayuda al desarrollo del BID, sin generar deuda. Importe de esta edición web.',32:'Quien cae entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
 function renderLastCard(data) {
   currentCard = data || null;
   const box = $('ultima-carta');
@@ -674,7 +692,7 @@ $('reglas').onclick=()=>{
     ['Tu turno','Gestiona tus industrias antes de tirar. Después resuelve la casilla y pulsa Terminar turno. Tienes tres minutos; una desconexión conserva tu turno durante un minuto.'],
     ['Construcción','Compra materias primas en el Sur. Puedes construir hasta tres industrias nacionales y tres multinacionales; cada nivel de exportación necesita el mismo nivel nacional. Ayuda Solidaria permite construir después de tirar al 50%.'],
     ['Dinero y oro','Las rentas son el precio de casilla por las industrias. Las cadenas suman sus rentas. El oro paga manufacturas e intereses, pero no cartas, industrias, fuga de capitales ni monopolios.'],
-    ['Deudas','Préstamos por el importe que elijas, hasta $30.000 de deuda por jugador. Puedes amortizar hasta $5.000 en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
+    ['Deudas','Préstamos por el importe que elijas, hasta $30.000 de deuda por jugador. Puedes amortizar el importe que elijas, limitado por tu deuda y efectivo, en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
     ['Comercio','En tu turno, antes de tirar o tras resolver la casilla, puedes proponer propiedades y dinero a otro grupo. Cada terreno incluye sus industrias. El destinatario acepta o rechaza; la oferta caduca en 60 segundos como máximo. Cerrar la ventana no cancela la oferta.'],
     ['Alianzas y subastas','La alianza comparte efectivo, oro y propiedades, conservando las deudas individuales. En embargo y sin efectivo, subasta una propiedad durante 30 segundos; sin ofertas, el FMI paga el 50% y libera el terreno.'],
     ['Final','Gana el último jugador activo o el grupo que alcance las doce propiedades con tres industrias nacionales y tres multinacionales en cada una. Unirse en alianza no da una victoria automática.'],

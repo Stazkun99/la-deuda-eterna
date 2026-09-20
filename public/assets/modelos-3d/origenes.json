@@ -1,0 +1,302 @@
+[
+  {
+    "archivo": "alimentos/banano.glb",
+    "original": "banana.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 12332,
+    "sha256": "e077d8c258d1870f5884ff0ba9f7b2fe392b6c34938f5bb2a353a9d30c6dc7c0",
+    "sha256Original": "67c90aa8bef35b8886d6b67c0c4c3249556e28176c893d451b95cd83a156908c"
+  },
+  {
+    "archivo": "alimentos/pescado.glb",
+    "original": "fish.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 31660,
+    "sha256": "23de1d1e365b90f655d7e7a6ee58ed0516c412ce2f104d264b55ca119bb06300",
+    "sha256Original": "5bb8109f83f7ec4609427c6d6de76572c4fc4d055dfc16d47f2c397290c0e29d"
+  },
+  {
+    "archivo": "alimentos/caramelo.glb",
+    "original": "lollypop.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 8536,
+    "sha256": "e64cb818051d8709d6d0a27420eb30a5e4cae52d58793bdc1b62ac254242285e",
+    "sha256Original": "b7bc189eca2aedcfe24445de9ec01a2fd4812caafcbe2f718b6b7f10e031a1a3"
+  },
+  {
+    "archivo": "alimentos/chocolate.glb",
+    "original": "chocolate.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 12640,
+    "sha256": "edac6b139e547734689e18b36e266a5d7b78d0deb58f38983c2b7fd053cb118c",
+    "sha256Original": "40087c3e876830cfcc0a2fbd47f97d3727a4bef450689834f49d971406e4e80e"
+  },
+  {
+    "archivo": "alimentos/cafe-elaborado.glb",
+    "original": "cup-coffee.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 7868,
+    "sha256": "a55dbdd91659ff7a9920f359d13c3b1161fbaa1695a08ecb2c1c3655e3e9f27a",
+    "sha256Original": "d74652ad1821bc5dedf1b2e1deb4e0ca0c498aa73880e7df5b91e5e729af6f81"
+  },
+  {
+    "archivo": "alimentos/lata-conserva.glb",
+    "original": "can.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 13704,
+    "sha256": "2328215ce3932e6de6906a507e09c6897371c04ecff3f1cf931942da0cde238e",
+    "sha256Original": "f3ee6aad23adb6251adbc988652dff430abc781506759a53a8cc7aca6a87db48"
+  },
+  {
+    "archivo": "alimentos/bolsa-alimentos.glb",
+    "original": "bag.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 6396,
+    "sha256": "2fad7d7cfcb9631e5ed714b71ea8c44bc9b157202c55f6d5b709f259a2c31fe9",
+    "sha256Original": "17803bb1e467d5cfd5ca9479a206870e60d160548c884b07ea294f1265334a06"
+  },
+  {
+    "archivo": "alimentos/pan.glb",
+    "original": "bread.glb",
+    "paquete": "kenney_food-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 9460,
+    "sha256": "7435f38cb6b5a3ec45fb7fbaedd3a71bd5de57bec12a0dd8988e2cf67259dadd",
+    "sha256Original": "9bd9db117db654cf1157439d1257a8fc5915ea77a94fb876a5056522b9e49f46"
+  },
+  {
+    "archivo": "maquinaria/caja-suministros.glb",
+    "original": "box-large.glb",
+    "paquete": "kenney_factory-kit_3.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 7488,
+    "sha256": "4fa73967c63e10101b08a67eec628b2fb4b2f117d269fb9797f3a08b8354f30e",
+    "sha256Original": "f5c7a7b4d7ec48c2695dc5241d62a38dbb54b487e6be0f089548582c91bacdfd"
+  },
+  {
+    "archivo": "maquinaria/grua-industrial.glb",
+    "original": "crane.glb",
+    "paquete": "kenney_factory-kit_3.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 53384,
+    "sha256": "b36df3038cba284653a701c374aae34d89eb8bae1b3539b236d88df365f00171",
+    "sha256Original": "ceaf20fb976ce0415d2b3d40e723b6ad377845818fa4fa68b55434108b1a6880"
+  },
+  {
+    "archivo": "maquinaria/pantalla-electronica.glb",
+    "original": "screen-wide.glb",
+    "paquete": "kenney_factory-kit_3.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 13896,
+    "sha256": "a0ad9fc6b45cd3ccf940a029edf454c07d2cfeebe6a5551cbe9fec122668ecdf",
+    "sha256Original": "220211ee38d51a521475caec06bb27aa231f5b1d43fd74cb93393cca47edfda3"
+  },
+  {
+    "archivo": "maquinaria/brazo-robotico.glb",
+    "original": "robot-arm-a.glb",
+    "paquete": "kenney_factory-kit_3.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 50556,
+    "sha256": "4c8a4f62845dbf7bc9eaeb139db3d310a965841e0eabfa380534baced8743910",
+    "sha256Original": "ad3f766791adadd1cfb5ccc27d2b2ac8787848282f2a15b3c407f350dc281b68"
+  },
+  {
+    "archivo": "maquinaria/tuberia-valvula.glb",
+    "original": "pipe-large-valve.glb",
+    "paquete": "kenney_factory-kit_3.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 42596,
+    "sha256": "5756fb8491d5c35b5e736a190f5676b7b600ef01806be9ef25a3802aa9da0330",
+    "sha256Original": "57126374dce5b172e06d5d6f8cbaab97c9cffe3e5e726060eb14c50a5bd519b6"
+  },
+  {
+    "archivo": "industrial/fabrica-caramelos.glb",
+    "original": "building-q.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 181240,
+    "sha256": "b6292df8eb7c2a773d245474d9b989fdf35df1ce9d47b9db176e36aa4aadb4d3",
+    "sha256Original": "19e65a2547db017af11dedc00a772e0421e580eb31815d8788ab11db232f89d2"
+  },
+  {
+    "archivo": "industrial/fabrica-chocolate.glb",
+    "original": "building-e.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 129388,
+    "sha256": "e38fdbd8a3bd9dbcf6b9e7f22a4967f397ae21c1b94a8c2923437e0529a3320a",
+    "sha256Original": "d61fed5e9502af9c698367ab69d5bc50b673375929e51c22af247dfb1db6cd16"
+  },
+  {
+    "archivo": "industrial/tostadero-cafe.glb",
+    "original": "building-f.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 134908,
+    "sha256": "50fdab5d5defa995b0af8a29ae3d376e4268e338eeb7dce15a9203cfa6b62420",
+    "sha256Original": "05a91ab02f424ca4f4819c1749e014bc4404cdf2a75242190c066bb24b59cde7"
+  },
+  {
+    "archivo": "industrial/planta-conservas.glb",
+    "original": "building-c.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 175840,
+    "sha256": "b738df9d7200cc42398de92ec7f810b56d3edf5c02955b7a5393cea47e507426",
+    "sha256Original": "94eb05acef8d8e4c1d817eb12e1c2a1287ffed625879170663a8c4f48786b465"
+  },
+  {
+    "archivo": "industrial/planta-electronica.glb",
+    "original": "building-p.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 103748,
+    "sha256": "6cf0c8cda939f28e45683d485f5c5d66abc3ec25ea842609417a35a1ab2f1ae6",
+    "sha256Original": "d3e701ba7bf548519731d9c68d5a47d09654bccef6f93be759eaafb55cdb2f78"
+  },
+  {
+    "archivo": "industrial/refineria.glb",
+    "original": "building-m.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 138912,
+    "sha256": "36ed9c53465712df909a620e7b9e5b0a5671bcb4d203180ce7538dcbf8b2a47d",
+    "sha256Original": "526881cb1851120a60195f76bd4d8c1963653cdda66e4d1d53f085b3395fb8a9"
+  },
+  {
+    "archivo": "industrial/deposito-industrial.glb",
+    "original": "detail-tank.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 31428,
+    "sha256": "76bfc3043bd963f8864f0a86157dfa74c2976ad13a76d3d8b730ba52f97030ab",
+    "sha256Original": "9e955732e4ef9ccff4a4d6967d29d8a7d2f9ed16c903923f2568216d9f0b50d2"
+  },
+  {
+    "archivo": "comercial/oficinas-fmi.glb",
+    "original": "building-k.glb",
+    "paquete": "kenney_city-kit-commercial_2.1",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 246972,
+    "sha256": "ae925f63b7f794d96d326f431b786dd79bb424310c157796dfbca95b6e9dad68",
+    "sha256Original": "afd36f573b9d6a6a890675aa0fbe762b29efb6258f322990752d79d9f0da42c6"
+  },
+  {
+    "archivo": "comercial/oficinas-bid.glb",
+    "original": "building-e.glb",
+    "paquete": "kenney_city-kit-commercial_2.1",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 128200,
+    "sha256": "8cdcae7133315febecc1a21b935c00d8daeec2cb2535b5a840e7aba429a73d67",
+    "sha256Original": "edbe5b49858a3c83e72d3cf496129c06082ef3a3d6005769f8883138e275b456"
+  },
+  {
+    "archivo": "naturaleza/obelisco.glb",
+    "original": "statue_obelisk.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 4416,
+    "sha256": "e18013044ad6453a1850226be29f63c37d67e0002141f5f6a4d14a46bde69e00",
+    "sha256Original": "e18013044ad6453a1850226be29f63c37d67e0002141f5f6a4d14a46bde69e00"
+  },
+  {
+    "archivo": "naturaleza/palmera.glb",
+    "original": "tree_palmDetailedShort.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 28212,
+    "sha256": "8874f7bdbe45f373d0bbe321cf3ae10714e9c4f91551ccdb74a8edbbb1ca2138",
+    "sha256Original": "bc1013aaacca3bdd116ad1cded4f9499f008fe3056e760f3238be05aa21ff9f2"
+  },
+  {
+    "archivo": "naturaleza/entrada-mina.glb",
+    "original": "cliff_cave_rock.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 5480,
+    "sha256": "2d83296b0166ad0e980152ad4f45b4e45349e932a6b6c2adbe7eb606a6472d8d",
+    "sha256Original": "2d83296b0166ad0e980152ad4f45b4e45349e932a6b6c2adbe7eb606a6472d8d"
+  },
+  {
+    "archivo": "naturaleza/roca-cobre.glb",
+    "original": "rock_largeA.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 7552,
+    "sha256": "0c6ac729729acdf9d6e4245f0cc65648a90f4c1bc6b59753bd3271c69d587d21",
+    "sha256Original": "6dd15390fd96501dcd1454765a17ba61dbbd8d47705dfe5149c8dd92b353ce25"
+  },
+  {
+    "archivo": "naturaleza/roca-estano.glb",
+    "original": "rock_largeB.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 8560,
+    "sha256": "a12f8c3affa550fe46a262d34c802cc8999f611097097788f9ae4dc1c9e1cb83",
+    "sha256Original": "caa8b025833d4dabf6d98fe2e96cf2fbd886693ac990df0db75f9d827194374b"
+  },
+  {
+    "archivo": "naturaleza/roca-hierro.glb",
+    "original": "stone_largeC.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 6580,
+    "sha256": "3ae9e7a48367936d407ab83bafa6708e1779d2cb9d58318dce53de2ba272b185",
+    "sha256Original": "f78e984f04f2c9d3a242d42b1c8f65b8a095b9ccf9f74ac55a97b7cdd1c4668c"
+  },
+  {
+    "archivo": "naturaleza/canoa.glb",
+    "original": "canoe.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 15780,
+    "sha256": "ad9c7a315f55accbce8d1ee3dc853f919f01f97ab4e3096bb235d1815aed6941",
+    "sha256Original": "ad9c7a315f55accbce8d1ee3dc853f919f01f97ab4e3096bb235d1815aed6941"
+  },
+  {
+    "archivo": "naturaleza/porton.glb",
+    "original": "fence_gate.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 27652,
+    "sha256": "6ce68475ad1321eace6a70b5e536593b26dc4acee4ce840dd089d1a04a60ecf8",
+    "sha256Original": "34d10d5620179b8a211a01eea837caa828c0782422f0b408e1a5838788888436"
+  }
+]

@@ -85,8 +85,9 @@ test('3D: módulos locales y mapa de importación permitido por CSP',async t=>{
  const hash=require('node:crypto').createHash('sha256').update(map).digest('base64');
  assert.ok(response.headers.get('content-security-policy').includes("'sha256-"+hash+"'"));
  assert.equal(JSON.parse(map).imports.three,'/vendor/three/three.module.js');
- for(const file of ['/vendor/three/three.module.js','/vendor/three/three.core.js','/vendor/three/OrbitControls.js','/board3d.mjs','/board3d-layout.mjs']){
+ for(const file of ['/vendor/three/three.module.js','/vendor/three/three.core.js','/vendor/three/OrbitControls.js','/vendor/three/loaders/GLTFLoader.js','/vendor/three/utils/BufferGeometryUtils.js','/vendor/three/utils/SkeletonUtils.js','/board3d.mjs','/board3d-layout.mjs','/board3d-models.mjs','/board3d-model-catalog.mjs']){
    const res=await fetch(url+file);assert.equal(res.status,200,file);assert.match(res.headers.get('content-type'),/javascript/);
  }
  assert.equal((await fetch(url+'/vendor/three/package.json')).status,404);
+ for(const file of ['/assets/modelos-3d/alimentos/banano.glb','/assets/modelos-3d/alimentos/texturas/paleta.png','/assets/modelos-3d/naturaleza/canoa.glb'])assert.equal((await fetch(url+file)).status,200,file);
 });

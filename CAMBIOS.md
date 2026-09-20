@@ -2,6 +2,10 @@
 
 ## Tablero e interfaz
 
+- Integración de 30 modelos GLB de los kits Kenney Food, Factory, City Commercial, City Industrial y Nature en 20 casillas. Las otras 20 recuperan decorados propios; cultivos detallados y terrenos combinan los dos estilos. Catálogo de asignaciones, texturas locales, créditos CC0, carga con concurrencia limitada, ajuste de escala y limpieza de recursos. Lista de modelos pendientes en MODELOS-3D.md.
+
+
+
 - Se sustituye el tablero de imagen por una cuadrícula HTML de 40 casillas.
 - Fichas e industrias se añaden dentro de su casilla. Se elimina la tabla de coordenadas manuales.
 - Nueva vista de escritorio y móvil, detalles de propiedad al pulsar, estados de conexión y decisiones pendientes visibles.
@@ -155,3 +159,9 @@ Al activar la barrera proteccionista, bajan persianas con franjas de advertencia
 - Transiciones de cámara suaves, compatibles con movimiento reducido.
 - Luz principal cálida, relleno frío y sombras ajustables sobre una base de mesa.
 - Sin animación de cámara permanente y con actualización de sombras bajo demanda.
+
+- Corregida transferencia de oro al propietario y cobro individual de 12 de Octubre.
+- Fuga de Capitales tiene decisión explícita y tirada visible de un dado en 2D/3D, con resolución por inactividad.
+- Despido sindical identifica el cobro de intereses del compañero trasladado al FMI; pruebas de deuda, exención y destinatario.
+
+- Amortización configurable mediante formulario, validada contra deuda y efectivo disponible; admite importes menores y mayores de $5.000.

@@ -5,7 +5,7 @@ export function diceOrientation(value,index=0){
  const face=DICE_FACES.find(f=>f.value===value);if(!face)throw new RangeError('Dado inválido');
  return new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),index*.38-.25).multiply(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(...face.normal),new THREE.Vector3(0,1,0)));
 }
-export function validRoll(roll){return !!roll&&typeof roll.id==='string'&&Array.isArray(roll.dados)&&[2,3,4].includes(roll.dados.length)&&roll.dados.every(v=>Number.isInteger(v)&&v>=1&&v<=6)&&roll.total===roll.dados.reduce((a,b)=>a+b,0);}
+export function validRoll(roll){return !!roll&&typeof roll.id==='string'&&Array.isArray(roll.dados)&&(roll.tipo==='fuga'?roll.dados.length===1:[2,3,4].includes(roll.dados.length))&&roll.dados.every(v=>Number.isInteger(v)&&v>=1&&v<=6)&&roll.total===roll.dados.reduce((a,b)=>a+b,0);}
 export function createDiceTray(scene,onLabel=()=>{}){
  const resources=[],dice=[],root=new THREE.Group();scene.add(root);root.visible=false;
  const own=r=>(resources.push(r),r);
@@ -21,7 +21,7 @@ export function createDiceTray(scene,onLabel=()=>{}){
   }group.add(pips);root.add(group);dice.push({group,end:new THREE.Quaternion()});
  }
  let seen=null,current=null,start=null;
- function label(){if(current)onLabel((current.jugador||'Jugador')+': '+current.dados.join(' + ')+' = '+current.total);else onLabel('');}
+ function label(){if(current)onLabel((current.jugador||'Jugador')+(current.tipo==='fuga'?' · Fuga de Capitales: '+current.total+' → $'+(current.total*1000):': '+current.dados.join(' + ')+' = '+current.total));else onLabel('');}
  function finish(){start=null;if(!current){label();return;}for(let i=0;i<dice.length;i++){const die=dice[i];if(!die.group.visible)continue;die.group.position.set(die.x,.435,die.z);die.group.quaternion.copy(die.end);}label();}
  function sync(roll,animate,now=performance.now()){
   if(!validRoll(roll)){seen=null;current=null;start=null;root.visible=false;onLabel('');return false;}
