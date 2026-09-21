@@ -43,3 +43,5 @@ test('cancelar movimiento elimina ficha flotante y no continúa un recorrido ant
   assert.ok(nodes[0].removed); assert.equal(context.flushed,0);
 });
 
+
+test('movimiento 3D: no espera animaciones DOM ocultas antes de abrir las cartas',async()=>{const f=fixture();f.context.dialog3d={open:true};await f.context.movePiece(f.run);assert.equal(f.animations.length,0);assert.equal(f.context.movement,null);assert.equal(f.context.flushed,1);assert.ok(f.steps.includes(39));assert.ok(f.steps.includes(0));assert.ok(f.steps.includes(2));});

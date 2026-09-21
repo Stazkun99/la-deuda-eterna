@@ -82,13 +82,14 @@ $('abrir-3d').onclick = async () => {
     $('casilla-3d').replaceChildren(element('option','Elige una casilla…'));
     $('casilla-3d').firstElementChild.value='';
     for(const c of state.tablero){const option=element('option',c.id+' · '+c.nombre);option.value=c.id;$('casilla-3d').append(option);}
-    board3d.setFollow($('seguir-3d').checked);board3d.setShadows($('sombras-3d').checked);board3d.showScenery($('decorados-3d').checked); board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
+    board3d.setAmbient($('ambiente-3d').checked);board3d.setFollow($('seguir-3d').checked);board3d.setShadows($('sombras-3d').checked);board3d.showScenery($('decorados-3d').checked); board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
   } catch { board3d?.dispose();board3d=null;$('escena-3d').replaceChildren(); controls3d.restore();dialog3d.close();notice('No se pudo cargar el 3D en este navegador. Puedes seguir jugando en 2D.'); }
   finally { board3dLoading=false; }
 };
 $('seguir-3d').onchange=()=>board3d?.setFollow($('seguir-3d').checked);
 $('sombras-3d').onchange=()=>board3d?.setShadows($('sombras-3d').checked);
 $('enfocar-3d').onclick=()=>board3d?.focus();
+$('ambiente-3d').onchange=()=>board3d?.setAmbient($('ambiente-3d').checked);
 $('decorados-3d').onchange=()=>board3d?.showScenery($('decorados-3d').checked);
 $('girar-3d').onclick=()=>board3d?.rotate();
 $('acercar-3d').onclick=()=>board3d?.zoom(.8);
@@ -269,8 +270,13 @@ async function movePiece(run) {
       if (movement !== run) return;
       const next = (run.position + 1) % 40, from = point(run.position), to = point(next);
       node.style.transform = to;
-      run.animation = node.animate([{ transform: from }, { transform: to }], { duration: 170, easing: 'ease-in-out' });
-      await run.animation.finished;
+      if(typeof dialog3d !== 'undefined' && dialog3d.open){
+        // The WebGL piece is visible; a background DOM animation can be suspended by the browser.
+        await new Promise(resolve => setTimeout(resolve,170));
+      }else{
+        run.animation = node.animate([{ transform: from }, { transform: to }], { duration: 170, easing: 'ease-in-out' });
+        await run.animation.finished;
+      }
       if (movement !== run) return;
       run.position = next; globalThis.GameAudio?.play('step'); renderBoard();
     }
@@ -664,11 +670,16 @@ function renderLastCard(data) {
   if (data.imagen) { const thumb = element('img'); thumb.src = data.imagen; thumb.alt = ''; thumb.className = 'last-card-thumb'; thumb.width = 42; thumb.height = 63; box.append(thumb); }
   box.append(content);
 }
-function showCard(data, automatic = false) {
+async function showCard(data, automatic = false) {
   if (!data) return;
   if (automatic && data.roboId && data.roboId === lastCardShown) return;
   if (automatic) globalThis.GameAudio?.play(data.tipo === 'solidaridad' ? 'solidarity' : 'fmi');
   lastCardShown = data.roboId || null;
+  if(automatic){
+    const room=state?.codigo,id=lastCardShown;
+    try{if(dialog3d.open&&board3d)await board3d.drawCard(data);else await globalThis.GameCenter?.drawCard(data);}catch{/* A visual failure must never hide the card or block a decision. */}
+    if(!state||state.codigo!==room||lastCardShown!==id)return;
+  }
   $('carta-tipo').textContent = data.tipo === 'solidaridad' ? 'SOLIDARIDAD' : 'CONDICIONES FMI';
   $('carta-titulo').textContent = data.titulo;
   $('carta-jugador').textContent = data.jugador ? data.jugador + ' ha sacado esta carta.' : '';

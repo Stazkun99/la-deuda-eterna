@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {createDeckLayer} from './board3d-decks.mjs';
+import {createAmbientLayer} from './board3d-ambient.mjs';
 import {createBoardCamera} from './board3d-camera.mjs';
 import {createIndustryLayer} from './board3d-industries.mjs';
 import {createDiceTray} from './board3d-dice.mjs';
@@ -45,18 +47,23 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   box(12.1,.36,12.1,'#533b2c',0,-.32);
   box(11.75,.12,11.75,'#c5a362',0,-.09);
   box(11.5,.1,11.5,'#193f3a');
-  const center=document.createElement('canvas');center.width=center.height=1024;
-  const cc=center.getContext('2d');cc.fillStyle='#214d44';cc.fillRect(0,0,1024,1024);
-  cc.strokeStyle='#bfab72';cc.lineWidth=3;cc.strokeRect(38,38,948,948);cc.strokeRect(52,52,920,920);
-  cc.beginPath();cc.arc(512,510,315,0,Math.PI*2);cc.stroke();
-  cc.textAlign='center';cc.fillStyle='#dfd3ab';cc.font='24px Georgia';cc.fillText('UNA MESA · UN MUNDO · UNA DEUDA',512,290);
-  cc.font='bold 102px Georgia';cc.fillText('LA DEUDA',512,474);cc.fillText('ETERNA',512,585);
-  cc.font='25px Georgia';cc.fillText('Adaptación web creada por Staz',512,720);
-  const felt=own(new THREE.CanvasTexture(center));felt.colorSpace=THREE.SRGBColorSpace;
-  const mat=own(new THREE.MeshStandardMaterial({map:felt,roughness:1}));
+  const center=document.createElement('canvas');
+  const felt=own(new THREE.CanvasTexture(center));felt.colorSpace=THREE.SRGBColorSpace;felt.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
+  const stopCenter=globalThis.GameCenter.paint(center,()=>{felt.needsUpdate=true;schedule();});felt.needsUpdate=true;
+  const mat=own(new THREE.MeshBasicMaterial({map:felt,toneMapped:false}));
   const surface=new THREE.Mesh(own(new THREE.PlaneGeometry(8.92,8.92)),mat);surface.rotation.x=-Math.PI/2;surface.position.y=.07;scene.add(surface);
+  const textureLoader=new THREE.TextureLoader();
+  const decks=createDeckLayer({scene,loadTexture:(url,done)=>textureLoader.load(url,done),onChange:schedule});
+  let ambient,lastPaint=0,lastAmbientShadow=0;
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
-  function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now);if(moving||rolling||barrierMoving)renderer.shadowMap.needsUpdate=true;renderer.render(scene,camera);if(moving||rolling||barrierMoving||cameraMoving)schedule();});}
+  function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{
+    frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
+    const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
+    if(moving||rolling||barrierMoving||drawing||(ambientMoving&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
+    if(fast||!ambientMoving||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
+    if(fast||ambientMoving)schedule();
+  });}
   function settle(piece){piece.motion=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
     const motion=piece.motion;if(!motion)continue;
@@ -88,7 +95,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
       b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;cameraRig.focus(piece.root.position);select(player.posicion);schedule();};legend.append(b);
     }}
   }
-  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){cameraRig.cancel();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
+  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
   function wrap(ctx,text,y){const words=text.split(' ');let line='';for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>222&&line){ctx.fillText(line,128,y);y+=23;line=word;}else line=next;}ctx.fillText(line,128,y);}
   function paint(tile){
     if(disposed)return;
@@ -116,6 +123,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     onChange(){renderer.shadowMap.needsUpdate=true;schedule();},
     onStatus({loaded,failed,total}){modelStatus.hidden=loaded+failed===total&&!failed;modelStatus.textContent=loaded+failed<total?'Preparando los decorados…':failed?'Algunos decorados no se pudieron cargar. Puedes seguir jugando o recargar la página para reintentar.':'';}
   });
+  ambient=createAmbientLayer(models.lots);
   function update({animate=true}={}){
     const state=getState();if(!state||disposed)return;
     const {catalog,specialCatalog}=getArt();
@@ -146,6 +154,8 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   const observer=new ResizeObserver(resize);observer.observe(host);shadowObjects(scene);table.castShadow=false;surface.castShadow=false;resize();reset(true);update();
   return {
     update,select,reset,
+    drawCard(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return Promise.resolve();reset();const result=decks.draw(data);schedule();return result;},
+    setAmbient(value){ambient.setEnabled(value);schedule();},
     setFollow(value){followEnabled=value;if(!value)cameraRig.cancel();},
     setShadows(value){renderer.shadowMap.enabled=value;renderer.shadowMap.needsUpdate=true;schedule();},
     focus(){if(selection===null)return;const p=tilePosition(selection);cameraRig.focus(p);schedule();},
@@ -153,7 +163,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     rotate(){cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
     zoom(factor){cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
     overhead(){const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
-    setActive(value){renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){cameraRig.cancel();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    setActive(value){renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
+    dispose(){cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }

@@ -167,3 +167,7 @@ Al activar la barrera proteccionista, bajan persianas con franjas de advertencia
 - Amortización configurable mediante formulario, validada contra deuda y efectivo disponible; admite importes menores y mayores de $5.000.
 
 - Incorporados cinco modelos descargados: vaca, tanque, velero, bomba petrolera y tractor. Conversión a GLB, texturas locales, créditos CC-BY públicos y archivo verificado de los packs originales fuera de public.
+
+- Centro original con mapa tipográfico Norte/Sur en 2D y 3D, mazos físicos y animación de robo por mazo antes de abrir la carta.
+- Ambiente temático de las 40 casillas, con pausa, movimiento reducido y límite de render ambiental.
+- Sincronización de llegada en 3D independiente de animaciones DOM que el navegador puede suspender detrás del diálogo.

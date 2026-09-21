@@ -56,7 +56,7 @@ export function createModelLayer({scene,board,load,onChange=()=>{},onStatus=()=>
         if(!template)throw new Error('GLB sin escena');
         release(template);if(disposed)break;
         templates.set(file,template);
-        for(const {lot,spec} of uses){const model=fitModel(template,spec);model.position.y+=.042;lot.add(model);}
+        for(const {lot,spec} of uses){const model=fitModel(template,spec);model.position.y+=.042;model.userData.assetFile=spec.file;lot.add(model);}
         loaded++;onChange();
       } catch(error) {if(!disposed){failed++;console.warn('No se pudo cargar el modelo '+file,error);}}
       status();

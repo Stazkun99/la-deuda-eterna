@@ -421,3 +421,11 @@ La mesa usa iluminación cálida con relleno frío, ajuste de tonos y sombras de
 Pagar una renta con oro transfiere un lingote al propietario. En 12 de Octubre entrega un lingote únicamente quien cae (o su caja compartida). Fuga de Capitales solicita una tirada de un dado y muestra el importe en 2D/3D; al agotarse el turno se resuelve automáticamente. Despido sindical traslada al compañero izquierdo al FMI y registra sus intereses, respetando No Pagar y la tasa especial.
 
 Las atribuciones de Oil pump y Tractor están disponibles en [Créditos 3D](public/creditos-modelos.html), enlazados desde el pie de la web. Las licencias y procedencia de cada modelo se conservan en `public/assets/modelos-3d/`.
+
+### Centro original, mazos y ambiente
+
+El centro utiliza el mapa tipográfico Norte/Sur de `public/tablero.jpg`, recortado y orientado en el navegador, tanto en 2D como en 3D. Los mazos de Solidaridad y Condiciones FMI muestran sus reversos originales. Al recibir un robo nuevo, la carta sale del mazo correspondiente y después se abre la imagen completa; volver a consultar la última carta no repite la animación. Los efectos y pagos siguen siendo autoritativos del servidor.
+
+Las 40 casillas tienen ambiente 3D: cultivos con viento, ondas en el agua y balanceo de embarcaciones, respiración suave del ganado, vagonetas en minas, vapor en industrias, rueda de maquinaria y señales en casillas especiales. Se puede desactivar con «Ambiente animado»; también se respeta movimiento reducido. El render ambiental se limita aproximadamente a 30 fps, con sombras actualizadas a menor frecuencia, y se detiene al ocultar la pestaña o cerrar la vista. Son animaciones decorativas; no sustituyen indicadores de propiedad o barrera.
+
+Módulos: `board-center.js` (arte original y salida 2D), `board3d-decks.mjs` (mazos y salida 3D), `board3d-ambient.mjs` (ambiente de casillas).

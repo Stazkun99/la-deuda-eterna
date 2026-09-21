@@ -191,3 +191,15 @@
 @media(max-width:760px){.view3d-layout{grid-template-columns:1fr}.view3d-board{position:static}#tablero-3d-dialog{padding:10px}#escena-3d{height:46vh;min-height:260px}#panel-3d .sidebar{display:flex}#avisos-3d .interaction-card{padding:12px;font-size:12px}.view3d-heading{position:sticky;top:-10px;background:#f4f1e8;z-index:5;padding:8px 0}#utilidades-3d{gap:5px}#utilidades-3d button{font-size:11px}}
 
 #panel-3d{scroll-margin-top:110px}
+
+/* Original printed centre, with physical piles above the artwork. */
+.board-center{position:relative;background:#addefe;isolation:isolate;overflow:hidden}
+#centro-original{position:absolute;inset:0;width:100%;height:100%;z-index:-1}
+.board-center .center-title{visibility:hidden;pointer-events:none}
+.board-center .center-top,.board-center .center-bottom,.board-center .center-stats{position:relative;background:#f9fcffd9;padding:8px;border-radius:5px;color:#183854}
+.board-center .last-card{position:relative;background:#fffdf5ed;border-radius:6px;max-width:85%;align-self:center}
+.printed-deck{position:absolute;width:23%;height:14%;background:#fff9ee;border:1px solid #a4a7a7;border-radius:3px;box-shadow:2px 3px #eee4ce,3px 5px #b7ae98,4px 7px #eee4ce;display:grid;place-items:center;pointer-events:none}
+.solidarity-deck{left:9.5%;top:28%}.fmi-deck{left:67%;top:58%}
+.printed-deck img{position:absolute;width:58%;height:164%;object-fit:fill;transform:rotate(90deg)}
+.drawing-card{position:absolute;z-index:8;pointer-events:none;box-shadow:0 12px 30px #183a5066;border-radius:5px}
+.board-center::before{display:none}
