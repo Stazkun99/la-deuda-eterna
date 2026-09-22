@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test",
-    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js && node --check public/audio.js && node --check public/board3d.mjs && node --check public/board3d-layout.mjs && node --check public/board3d-pieces.mjs && node --check public/board3d-scenery.mjs && node --check public/board3d-dice.mjs && node --check public/board3d-industries.mjs && node --check public/board3d-ui.js && node --check public/board3d-camera.mjs && node --check public/board3d-models.mjs && node --check public/board3d-model-catalog.mjs && node --check public/board3d-scenes.mjs && node --check public/board3d-decks.mjs && node --check public/board3d-ambient.mjs && node --check public/board-center.js"
+    "check": "node --check server.js && node --check lib/game.js && node --check public/app.js && node --check public/audio.js && node --check public/board3d.mjs && node --check public/board3d-layout.mjs && node --check public/board3d-pieces.mjs && node --check public/board3d-scenery.mjs && node --check public/board3d-dice.mjs && node --check public/board3d-industries.mjs && node --check public/board3d-ui.js && node --check public/board3d-camera.mjs && node --check public/board3d-models.mjs && node --check public/board3d-model-catalog.mjs && node --check public/board3d-scenes.mjs && node --check public/board3d-decks.mjs && node --check public/board3d-ambient.mjs && node --check public/board-center.js && node --check public/characters.js && node --check public/character-piece.mjs && node --check public/character-portraits.mjs"
   },
   "keywords": [],
   "author": "",

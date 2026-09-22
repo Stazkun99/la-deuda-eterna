@@ -7,7 +7,7 @@ const { createHash } = require('node:crypto');
 const { Server } = require('socket.io');
 const { Game, GameError } = require('./lib/game');
 const { Store } = require('./lib/store');
-const ACTIONS = ['proponerComercio', 'responderComercio', 'iniciarPartida', 'tirarDado', 'terminarTurno', 'decidirCompraPropiedad', 'responderDecisionPago', 'tirarDadoFuga', 'resolverEleccion', 'pedirPrestamo', 'pagarDeuda', 'construirIndustria', 'expropiarPropiedad', 'subastarPropiedad', 'levantarBarrera', 'responderVotoAlianza', 'pujarSubasta'];
+const ACTIONS = ['seleccionarPersonaje', 'proponerComercio', 'responderComercio', 'iniciarPartida', 'tirarDado', 'terminarTurno', 'decidirCompraPropiedad', 'responderDecisionPago', 'tirarDadoFuga', 'resolverEleccion', 'pedirPrestamo', 'pagarDeuda', 'construirIndustria', 'expropiarPropiedad', 'subastarPropiedad', 'levantarBarrera', 'responderVotoAlianza', 'pujarSubasta'];
 function createServer(options = {}) {
   const structuredDataHashes = [...readFileSync(path.join(__dirname, 'public/index.html'), 'utf8').matchAll(/<script type="(?:application\/ld\+json|importmap)">([\s\S]*?)<\/script>/g)]
     .map(match => "'sha256-" + createHash('sha256').update(match[1]).digest('base64') + "'").join(' ');

@@ -5,6 +5,7 @@ import {createBoardCamera} from './board3d-camera.mjs';
 import {createIndustryLayer} from './board3d-industries.mjs';
 import {createDiceTray} from './board3d-dice.mjs';
 import { OrbitControls } from '/vendor/three/OrbitControls.js';
+import { createCharacterPiece } from './character-piece.mjs';
 import { createPlayerPiece } from './board3d-pieces.mjs';
 import { GLTFLoader } from '/vendor/three/loaders/GLTFLoader.js';
 import { createModelLayer } from './board3d-models.mjs';
@@ -58,13 +59,15 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
   function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{
     frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
+    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,!!piece.motion&&now>=piece.motion.start,reduced))charactersMoving=true;}
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
-    if(moving||rolling||barrierMoving||drawing||(ambientMoving&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    if(moving||rolling||barrierMoving||drawing||((ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
     const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
-    if(fast||!ambientMoving||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
-    if(fast||ambientMoving)schedule();
+    if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
+    if(fast||ambientMoving||charactersMoving)schedule();
   });}
-  function settle(piece){piece.motion=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
+  function settle(piece){piece.finish?.();piece.motion=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
     const motion=piece.motion;if(!motion)continue;
     const elapsed=Math.max(0,now-motion.start),step=elapsed/170,index=Math.floor(step);
@@ -73,25 +76,29 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     const end=index===motion.path.length-2;if(end){b.x=piece.target.x;b.z=piece.target.z;}
     piece.root.position.set(THREE.MathUtils.lerp(a.x,b.x,ease),.225+Math.sin(t*Math.PI)*.15,THREE.MathUtils.lerp(a.z,b.z,ease));
     piece.model.rotation.z=Math.sin(t*Math.PI)*.07;
+    piece.lookAhead=tileAnchor(motion.path[Math.min(index+2,motion.path.length-1)]);
   }return moving;}
   function syncPieces(state,animate){
     const visible=state.jugadores.filter(p=>!p.enQuiebra&&Number.isInteger(p.posicion));
     for(const [id,piece] of pieces)if(!visible.some(p=>p.id===id)){scene.remove(piece.root);piece.dispose();pieces.delete(id);}
     for(const player of visible){
       let piece=pieces.get(player.id);
-      if(!piece){piece=createPlayerPiece(pieceKind(player.color),player.color);pieces.set(player.id,piece);scene.add(piece.root);shadowObjects(piece.root);piece.target=new THREE.Vector3();}
+      const character=globalThis.GameCharacters.find(c=>c.id===player.personaje);
+      const kind=character?.id||pieceKind(player.color);
+      if(piece&&piece.kind!==kind){scene.remove(piece.root);piece.dispose();pieces.delete(player.id);piece=null;}
+      if(!piece){piece=character?createCharacterPiece(kind,player.color,url=>new GLTFLoader().loadAsync(url),()=>{renderer.shadowMap.needsUpdate=true;schedule();}):createPlayerPiece(kind,player.color);piece.kind=kind;pieces.set(player.id,piece);scene.add(piece.root);shadowObjects(piece.root);piece.target=new THREE.Vector3();}
       const slot=sceneryPlayerSlot(visible,player),position=tileAnchor(player.posicion,slot.x,slot.z);
       piece.offset=slot;piece.scale=slot.scale;piece.target.set(position.x,.225,position.z);
       piece.root.userData.id=player.posicion;piece.ring.visible=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       const previous=previousPlayers.find(p=>p.id===player.id),path=rollPath(previous,player,state.ultimaTirada,lastRoll);
-      if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,start:performance.now()+900};piece.root.scale.setScalar(slot.scale);if(followEnabled)cameraRig.follow(()=>pieces.has(player.id)?{point:piece.root.position,moving:!!piece.motion}:null,piece.motion.start);}
+      if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,start:performance.now()+900};piece.root.scale.setScalar(slot.scale);if(followEnabled)cameraRig.follow(()=>pieces.has(player.id)?{point:piece.root.position,moving:!!piece.motion,ahead:piece.lookAhead}:null,piece.motion.start);}
       else if(!piece.motion||previous?.posicion!==player.posicion||!active||document.hidden||!state.enJuego||!animate)settle(piece);
     }
     previousPlayers=state.jugadores.map(p=>({...p}));lastRoll=state.ultimaTirada?.id;
     if(legend){legend.replaceChildren();for(const player of visible){
       const b=document.createElement('button');b.type='button';b.className='secondary';
       const current=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
-      b.textContent=player.nombre+' · '+pieceKind(player.color)+(current?' · En turno':'');b.style.borderLeft='5px solid '+player.color;
+      b.textContent=player.nombre+' · '+(globalThis.GameCharacters.find(c=>c.id===player.personaje)?.name||pieceKind(player.color))+(current?' · En turno':'');b.style.borderLeft='5px solid '+player.color;
       b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;cameraRig.focus(piece.root.position);select(player.posicion);schedule();};legend.append(b);
     }}
   }

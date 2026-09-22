@@ -24,4 +24,11 @@ export function rollPath(previous, next, roll, seenRoll) {
 // Local negative Z is the outer strip; positive Z is the player lane.
 export function tileAngle(id){return id<=10?Math.PI:id<=20?Math.PI/2:id<=30?0:-Math.PI/2;}
 export function tileAnchor(id,x=0,z=.22){const p=tilePosition(id),a=tileAngle(id);return {x:p.x+x*Math.cos(a)+z*Math.sin(a),z:p.z-x*Math.sin(a)+z*Math.cos(a)};}
-export function sceneryPlayerSlot(players,player){const slot=playerSlot(players,player);return {x:slot.x,z:.22+slot.z*.47,scale:slot.scale===1?.7:.43};}
+export function sceneryPlayerSlot(players,player){
+  const occupants=players.filter(p=>!p.enQuiebra&&p.posicion===player.posicion).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
+  const index=Math.max(0,occupants.findIndex(p=>p.id===player.id));
+  if(occupants.length<=1)return {x:0,z:.20,scale:.76};
+  if(occupants.length===2)return {x:index===0?-.24:.24,z:.22,scale:.56};
+  if(occupants.length===3)return {x:[-.24,.24,0][index],z:index===2?.34:.08,scale:.42};
+  return {x:index%2? .24:-.24,z:index<2?.065:.355,scale:.39};
+}

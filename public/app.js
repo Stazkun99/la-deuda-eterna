@@ -228,7 +228,38 @@ function renderStart() {
   }
   content.append(element('p', '$5.000 + dado × $200. ' + (initial.empate ? 'Primer turno sorteado entre quienes empataron con el dado más alto.' : 'Empieza el dado más alto.'), 'muted'));
 }
+let portraitsStarted = false;
+globalThis.CharacterPortraits = Object.create(null);
+function renderCharacters() {
+  const panel = $('personajes'); panel.hidden = !state || state.enJuego;
+  if (!portraitsStarted) {
+    portraitsStarted = true;
+    import('/character-portraits.mjs').then(m => m.renderPortraits()).catch(() => {});
+  }
+  if (panel.hidden) return;
+  const mine = me();
+  for (const c of GameCharacters) {
+    let b = $('personaje-' + c.id);
+    if (!b) {
+      b = button('', () => action('seleccionarPersonaje', {personaje:c.id}), 'character-option');
+      b.id = 'personaje-' + c.id;
+      const img = element('img'); img.src='/assets/fichas/'+c.id+'.svg';img.alt='';img.width=120;img.height=100;
+      img.dataset.character = c.id;
+      b.append(img, element('strong',c.name), element('small','Disponible'));
+      $('personajes-opciones').append(b);
+    }
+    const owner = state.jugadores.find(p => p.personaje === c.id), selected = mine?.personaje === c.id;
+    b.disabled = busy || !socket.connected || !!owner && !selected;
+    b.setAttribute('aria-pressed', String(selected));
+    b.setAttribute('aria-label', c.name + (selected ? ', tu personaje' : owner ? ', elegido por '+owner.nombre : ', disponible'));
+    b.querySelector('small').textContent = selected ? 'Tu personaje ✓' : owner ? owner.nombre : 'Disponible';
+    b.style.setProperty('--character-color', owner?.color || c.color);
+  }
+  $('personaje-elegido').textContent = mine?.personaje ? 'Tu ficha: ' + pieceFor(mine).name : 'Sin elegir: al iniciar recibirás un personaje libre.';
+}
 function pieceFor(player) {
+  const character = GameCharacters.find(c => c.id === player.personaje);
+  if (character) return {asset:character.id,name:character.name};
   // Colors belong to the player and remain stable if another player leaves the room.
   const pieces = { '#e74c3c':['carrito','Carrito'], '#2ecc71':['sombrero','Sombrero'], '#3498db':['bota','Bota'], '#f1c40f':['balsa','Balsa'] };
   const [asset,name] = pieces[player.color?.toLowerCase()] || pieces['#e74c3c'];
@@ -236,7 +267,7 @@ function pieceFor(player) {
 }
 function decoratePiece(node, player) {
   const piece = pieceFor(player), img = element('img');
-  img.src = '/assets/fichas/' + piece.asset + '.svg'; img.alt = ''; img.draggable = false;
+  img.dataset.character = piece.asset; img.src = globalThis.CharacterPortraits[piece.asset] || '/assets/fichas/' + piece.asset + '.svg'; img.alt = ''; img.draggable = false;
   node.replaceChildren(img); node.title = player.nombre + ' · ' + piece.name;
 }
 function displayPosition(p) { return p?.id === movement?.playerId ? movement.position : p?.posicion; }
@@ -393,6 +424,7 @@ function updateControls() {
   $('crear').disabled = $('unirse').disabled = !socket.connected;
   $('tirar-3d').disabled = true;
   if (!state) return;
+  renderCharacters();
   const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !!movement || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
   $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';

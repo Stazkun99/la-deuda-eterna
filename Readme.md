@@ -429,3 +429,29 @@ El centro utiliza el mapa tipográfico Norte/Sur de `public/tablero.jpg`, recort
 Las 40 casillas tienen ambiente 3D: cultivos con viento, ondas en el agua y balanceo de embarcaciones, respiración suave del ganado, vagonetas en minas, vapor en industrias, rueda de maquinaria y señales en casillas especiales. Se puede desactivar con «Ambiente animado»; también se respeta movimiento reducido. El render ambiental se limita aproximadamente a 30 fps, con sombras actualizadas a menor frecuencia, y se detiene al ocultar la pestaña o cerrar la vista. Son animaciones decorativas; no sustituyen indicadores de propiedad o barrera.
 
 Módulos: `board-center.js` (arte original y salida 2D), `board3d-decks.mjs` (mazos y salida 3D), `board3d-ambient.mjs` (ambiente de casillas).
+
+### Industrias por nivel
+
+Las industrias nacionales crecen como un taller con tejado y chimenea (nivel 1), almacén anexo (nivel 2) y silo con escalera (nivel 3). Las multinacionales tienen nave de carga (nivel 1), oficinas acristaladas (nivel 2) y depósitos y servicio técnico en cubierta (nivel 3). Se conservan la franja del propietario, los tres indicadores de nivel, el estado de cierre y la persiana de barrera.
+
+Al aumentar el nivel, solo la ampliación nueva se incorpora mediante una animación de 700 ms. No se repite con actualizaciones del mismo estado; al recuperar la partida, cerrar la vista o usar movimiento reducido, se presenta el nivel final. Las piezas quedan dentro del espacio reservado a construcciones y no invaden la zona de fichas. La vista 2D mantiene sus indicadores actuales.
+
+
+### Personajes de los jugadores
+
+- Selector en la sala para Kirby, Link, Yoshi y Scyther, disponible para todos antes de iniciar. Cada elección es exclusiva y se conserva al reconectar; si alguien no elige, recibe un personaje libre al empezar.
+- Fichas 3D con base del color del jugador y retratos del modelo en el selector y la vista 2D. Iconos de respaldo si no está disponible WebGL. Las partidas antiguas en curso mantienen sus fichas.
+- Modelos en `public/assets/modelos-3d/personajes/`, con texturas locales, origen y atribuciones. Materiales de Yoshi adaptados; decoración de Kirby retirada y brazos de Link/Scyther ajustados al cargar.
+- Comprobaciones de exclusividad, reconexión, bloqueo durante la partida, compatibilidad de archivos y liberación de recursos tras cargas canceladas.
+
+
+### Animaciones de las fichas
+
+Kirby tiene un pequeño salto y respiración elástica; Link se balancea y mueve brazos/piernas al avanzar; Yoshi rebota y mueve la cabeza; Scyther aletea y mueve suavemente las cuchillas. Solo reposo y desplazamiento, sin reacciones a compras o pagos. La base y la posición de juego permanecen independientes. Las animaciones se pausan al ocultar la pestaña o pasar a 2D, y respetan la preferencia de movimiento reducido.
+
+
+### Cámara y legibilidad de personajes
+
+Encuadre más cercano desde el interior del tablero y seguimiento con anticipación de las siguientes casillas; la orientación permanece estable en cada tirada y el usuario puede cancelarlo al mover la cámara. Compensación del encuadre en pantallas estrechas. Distribuciones diferentes para una, dos, tres y cuatro fichas, con bases separadas. Tamaños por personaje y relleno de luz mediante sus propios materiales, especialmente Scyther, conservando las texturas.
+
+Los personajes se orientan hacia la cámara para mantener reconocible su silueta al explorar el tablero.

@@ -171,3 +171,25 @@ Al activar la barrera proteccionista, bajan persianas con franjas de advertencia
 - Centro original con mapa tipográfico Norte/Sur en 2D y 3D, mazos físicos y animación de robo por mazo antes de abrir la carta.
 - Ambiente temático de las 40 casillas, con pausa, movimiento reducido y límite de render ambiental.
 - Sincronización de llegada en 3D independiente de animaciones DOM que el navegador puede suspender detrás del diálogo.
+
+- Industrias 3D con siluetas progresivas: taller, almacén y silo nacionales; nave, oficinas y depósitos multinacionales. Animación exclusiva de la ampliación nueva, conservación de dueño/cierre/barrera y pruebas de límites y recuperación.
+
+
+### Personajes de los jugadores
+
+- Selector en la sala para Kirby, Link, Yoshi y Scyther, disponible para todos antes de iniciar. Cada elección es exclusiva y se conserva al reconectar; si alguien no elige, recibe un personaje libre al empezar.
+- Fichas 3D con base del color del jugador y retratos del modelo en el selector y la vista 2D. Iconos de respaldo si no está disponible WebGL. Las partidas antiguas en curso mantienen sus fichas.
+- Modelos en `public/assets/modelos-3d/personajes/`, con texturas locales, origen y atribuciones. Materiales de Yoshi adaptados; decoración de Kirby retirada y brazos de Link/Scyther ajustados al cargar.
+- Comprobaciones de exclusividad, reconexión, bloqueo durante la partida, compatibilidad de archivos y liberación de recursos tras cargas canceladas.
+
+
+### Animaciones de las fichas
+
+Kirby tiene un pequeño salto y respiración elástica; Link se balancea y mueve brazos/piernas al avanzar; Yoshi rebota y mueve la cabeza; Scyther aletea y mueve suavemente las cuchillas. Solo reposo y desplazamiento, sin reacciones a compras o pagos. La base y la posición de juego permanecen independientes. Las animaciones se pausan al ocultar la pestaña o pasar a 2D, y respetan la preferencia de movimiento reducido.
+
+
+### Cámara y legibilidad de personajes
+
+Encuadre más cercano desde el interior del tablero y seguimiento con anticipación de las siguientes casillas; la orientación permanece estable en cada tirada y el usuario puede cancelarlo al mover la cámara. Compensación del encuadre en pantallas estrechas. Distribuciones diferentes para una, dos, tres y cuatro fichas, con bases separadas. Tamaños por personaje y relleno de luz mediante sus propios materiales, especialmente Scyther, conservando las texturas.
+
+Los personajes se orientan hacia la cámara para mantener reconocible su silueta al explorar el tablero.
