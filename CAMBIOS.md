@@ -193,3 +193,11 @@ Kirby tiene un pequeño salto y respiración elástica; Link se balancea y mueve
 Encuadre más cercano desde el interior del tablero y seguimiento con anticipación de las siguientes casillas; la orientación permanece estable en cada tirada y el usuario puede cancelarlo al mover la cámara. Compensación del encuadre en pantallas estrechas. Distribuciones diferentes para una, dos, tres y cuatro fichas, con bases separadas. Tamaños por personaje y relleno de luz mediante sus propios materiales, especialmente Scyther, conservando las texturas.
 
 Los personajes se orientan hacia la cámara para mantener reconocible su silueta al explorar el tablero.
+
+
+### Pantalla 3D principal y módulos
+
+- Vista 3D a toda la ventana, botón de pantalla completa, 2D secundario y encuadre completo adaptable.
+- Panel central verde/dorado, ocultación durante animaciones y controles de cámara, jugadores, chat y última carta en desplegables.
+- Separación de rutas HTTP, eventos Socket.IO, pantalla, controlador de vista, comercio, propiedades y estilos 3D. Sin cambios en reglas ni partidas guardadas.
+- Verificadas transiciones 2D/3D, comercio, propiedades, cartas y tamaños de escritorio/móvil; 125 pruebas automatizadas pasan.

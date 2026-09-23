@@ -58,12 +58,18 @@
   ]
 }</script>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="screen3d.css">
   <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
   <script defer src="/socket.io/socket.io.js"></script>
   <script defer src="characters.js"></script>
+  <script defer src="movement-timing.js"></script>
   <script defer src="audio.js"></script>
   <script defer src="board3d-ui.js"></script>
   <script defer src="board-center.js"></script>
+  <script defer src="ui/screen.js"></script>
+  <script defer src="ui/board-view.js"></script>
+  <script defer src="ui/trade.js"></script>
+  <script defer src="ui/property.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -100,15 +106,22 @@
     </section>
     <p id="aviso" role="alert" hidden></p>
   </main>
-  <dialog id="tablero-3d-dialog" aria-labelledby="titulo-3d">
-    <div class="view3d-heading"><div><p class="eyebrow">LA DEUDA ETERNA · MESA 3D</p><h2 id="titulo-3d">Tu mesa, en 3D</h2></div><button id="ir-turno-3d" class="ghost" type="button">Ver mi turno ↓</button><button id="cerrar-3d" class="secondary" type="button">Cambiar a 2D</button></div>
-    <div id="utilidades-3d" class="view3d-tools" aria-label="Opciones de la sala"></div><div class="view3d-layout"><section class="view3d-board">
-    <p id="estado-3d" class="muted" role="status">Preparando la mesa…</p>
-    <div class="view3d-tools"><button id="tirar-3d" class="primary" type="button" disabled>Tirar los dados ⚄</button><p id="resultado-dados-3d" role="status" aria-live="polite"></p></div><div id="jugadores-3d" class="board3d-players" aria-label="Fichas de los jugadores"></div><div class="view3d-stage"><div id="escena-3d" tabindex="0" aria-label="Tablero 3D. Arrastra para girar, usa la rueda o dos dedos para acercar. Selecciona una casilla para ver sus detalles."></div><div id="avisos-3d"></div></div><div id="ultima-carta-3d"></div>
-    <div class="view3d-tools"><button id="girar-3d" class="ghost" type="button">Girar ↻</button><button id="acercar-3d" class="ghost" type="button" aria-label="Acercar tablero">＋</button><button id="alejar-3d" class="ghost" type="button" aria-label="Alejar tablero">−</button><button id="reset-3d" class="ghost" type="button">Vista general</button><button id="cenital-3d" class="ghost" type="button">Desde arriba</button><select id="casilla-3d" aria-label="Seleccionar casilla"></select><button id="enfocar-3d" type="button" class="secondary">Acercar a la casilla</button><label><input id="seguir-3d" type="checkbox" checked> Seguir ficha</label><label><input id="sombras-3d" type="checkbox" checked> Sombras suaves</label><label><input id="decorados-3d" type="checkbox" checked> Decorados 3D</label><label><input id="ambiente-3d" type="checkbox" checked> Ambiente animado</label><button id="detalle-3d" class="secondary" type="button" disabled>Ver casilla</button></div>
-    <p class="muted">Arrastra para girar · rueda o dos dedos para acercar. Pulsa un jugador para acercarte a su ficha; gestiona tu turno desde el panel de partida. Puedes cambiar a 2D en cualquier momento.</p>
-</section><div id="panel-3d"></div></div><div id="notificaciones-3d"></div>
-  </dialog>
+  <section id="tablero-3d-dialog" class="game-screen" aria-labelledby="titulo-3d" hidden>
+    <div id="escena-3d" tabindex="0" aria-label="Tablero 3D. Arrastra para girar y usa la rueda para acercar."></div>
+    <header class="screen-header"><div class="screen-brand"><span class="eyebrow">LA DEUDA ETERNA</span><h2 id="titulo-3d">Una mesa. Cuatro destinos.</h2></div><nav aria-label="Opciones del tablero"><button id="ir-turno-3d" class="ghost" aria-controls="panel-3d" aria-expanded="true">Ocultar acciones</button><button id="reset-3d" class="ghost">Vista general</button><button id="pantalla-completa-3d" class="ghost">Pantalla completa</button><button id="cerrar-3d" class="ghost">Vista 2D</button></nav></header>
+    <div class="screen-status"><p id="estado-3d" role="status">Preparando la mesa…</p><p id="resultado-dados-3d" role="status" aria-live="polite"></p><button id="tirar-3d" hidden disabled>Tirar los dados ⚄</button></div>
+    <section id="panel-3d" aria-label="Acciones de la partida"></section>
+    <div id="avisos-3d"></div><div id="notificaciones-3d"></div>
+    <div class="screen-bottom"><div id="jugadores-3d" class="board3d-players" aria-label="Fichas de los jugadores"></div>
+      <nav class="screen-drawers" aria-label="Información y ajustes">
+        <details class="screen-drawer"><summary>Jugadores</summary><div id="mesa-jugadores-3d" class="drawer-body"></div></details>
+        <details class="screen-drawer"><summary>Registro / chat</summary><div id="actividad-3d" class="drawer-body"></div></details>
+        <details class="screen-drawer"><summary>Última carta</summary><div id="ultima-carta-3d" class="drawer-body"></div></details>
+        <details class="screen-drawer"><summary>Cámara</summary><div class="drawer-body camera-tools"><button id="girar-3d" class="ghost">Girar ↻</button><button id="acercar-3d" class="ghost" aria-label="Acercar tablero">＋</button><button id="alejar-3d" class="ghost" aria-label="Alejar tablero">−</button><button id="cenital-3d" class="ghost">Desde arriba</button><select id="casilla-3d" aria-label="Seleccionar casilla"></select><button id="enfocar-3d" class="secondary">Acercar a la casilla</button><button id="detalle-3d" class="secondary" disabled>Ver casilla</button><label><input id="seguir-3d" type="checkbox" checked> Seguir ficha</label><label><input id="sombras-3d" type="checkbox" checked> Sombras suaves</label><label><input id="decorados-3d" type="checkbox" checked> Decorados 3D</label><label><input id="ambiente-3d" type="checkbox" checked> Ambiente animado</label></div></details>
+        <details class="screen-drawer"><summary>Sala</summary><div id="utilidades-3d" class="drawer-body view3d-tools" aria-label="Opciones de la sala"></div></details>
+      </nav>
+    </div>
+  </section>
   <dialog id="amortizar-dialog" aria-labelledby="amortizar-titulo"><button id="cerrar-amortizar" class="dialog-close" aria-label="Cerrar">×</button><form id="amortizar-form"><p class="eyebrow">DEVOLUCIÓN AL FMI</p><h2 id="amortizar-titulo">Amortizar deuda</h2><p id="amortizar-capacidad"></p><label for="amortizar-importe">¿Cuánto quieres devolver?</label><input id="amortizar-importe" type="number" min="1" step="1" required inputmode="numeric" aria-describedby="amortizar-capacidad"><p class="muted">El importe reduce tu deuda personal y se descuenta del efectivo disponible.</p><button class="primary" type="submit">Amortizar deuda →</button></form></dialog>
   <dialog id="prestamo-dialog" aria-labelledby="prestamo-titulo"><button id="cerrar-prestamo" class="dialog-close" aria-label="Cerrar">×</button><form id="prestamo-form"><p class="eyebrow">FINANCIACIÓN DEL FMI</p><h2 id="prestamo-titulo">Pedir un préstamo</h2><p id="prestamo-capacidad"></p><label for="prestamo-importe">¿Cuánto quieres pedir?</label><input id="prestamo-importe" type="number" min="1" step="1" required inputmode="numeric" aria-describedby="prestamo-capacidad"><p class="muted">La deuda personal no puede superar $30.000. Una deuda mayor puede aumentar tus intereses y dados.</p><button class="primary" type="submit">Solicitar préstamo →</button></form></dialog>
   <dialog id="detalle"><button id="cerrar-detalle" class="dialog-close" aria-label="Cerrar">×</button><div id="detalle-contenido"></div></dialog>

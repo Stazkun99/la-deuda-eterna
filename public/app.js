@@ -23,6 +23,12 @@ const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pes
 const me = () => state?.jugadores.find(p => p.userId === userId);
 const myTurn = () => !!state?.enJuego && state.jugadores[state.turnoActual]?.id === me()?.id && !me()?.enQuiebra;
 const myProperty = c => !!me() && (c.dueño === me().id || !!me().alianzaId && state.jugadores.some(p => p.id === c.dueño && p.alianzaId === me().alianzaId));
+const uiContext={$,element,button,amount,me,myTurn,myProperty,action,notice,socket,openDialog,
+ get state(){return state;},get busy(){return busy;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
+ get selectedProperty(){return selectedProperty;},set selectedProperty(value){selectedProperty=value;},
+ get tradeShown(){return tradeShown;},set tradeShown(value){tradeShown=value;}};
+const {showTradeForm,showTradeOffer}=GameTrade.create(uiContext);
+const {showProperty}=GameProperty.create(uiContext);
 function notice(text) { clearTimeout(noticeTimer); $('aviso').textContent = text; $('aviso').hidden = false; noticeTimer = setTimeout(() => $('aviso').hidden = true, 7000); }
 function remember(key, value) { if (storageAvailable) { try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { storageAvailable = false; } } }
 function action(event, data = {}) {
@@ -55,49 +61,9 @@ function join(crear) {
   });
 }
 let board3d = null, board3dLoading = false, selected3d = null;
-const dialog3d = $('tablero-3d-dialog');
-$('cerrar-3d').onclick = () => dialog3d.close();
-$('ir-turno-3d').onclick = () => {$('panel-3d').scrollIntoView({block:'start'});$('turno').setAttribute('tabindex','-1');$('turno').focus({preventScroll:true});};
-const controls3d = Game3DUI.createMount([
-  [document.querySelector('.sidebar'), $('panel-3d')],
-  [$('interaccion'), $('avisos-3d')], [$('ultima-carta'), $('ultima-carta-3d')],
-  [$('aviso'), $('notificaciones-3d')],
-  ...['conexion','sonido','reglas','copiar','salir'].map(id=>[$(id),$('utilidades-3d')])
-]);
-dialog3d.addEventListener('close', () => { if(dialog3d.open)return; board3d?.setActive(false); controls3d.restore(); });
-$('abrir-3d').onclick = async () => {
-  if (!state) return;
-  dialog3d.showModal(); controls3d.mount(); updateControls();
-  if (board3d) { board3d.setActive(true); board3d.update(); return; }
-  if (board3dLoading) return;
-  board3dLoading = true; $('estado-3d').textContent = 'Preparando la mesa…';
-  try {
-    const room=state.codigo;
-    const module = await import('/board3d.mjs');
-    if(!state||state.codigo!==room||!dialog3d.open)return;
-    board3d = module.createBoard3D({ host:$('escena-3d'), legend:$('jugadores-3d'), onDiceLabel:text=>{$('resultado-dados-3d').textContent=text;}, getState:()=>state, getArt:()=>({catalog,specialCatalog}), onSelect:id=>{
-      selected3d=id; $('casilla-3d').value=String(id); $('detalle-3d').disabled=false;
-      const cell=state?.tablero.find(c=>c.id===id); if(cell)$('estado-3d').textContent=cell.nombre + (cell.precio?' · '+amount(cell.precio):'') + (cell.region?' · '+(cell.region==='sur'?'Nacionales: '+(cell.industriasNac||0):'Multinacionales: '+(cell.industriasExp||0))+'/3':'') + (cell.region==='norte'&&state.barreraProteccionista?' · Barrera activa':'');
-    }, onError:()=>{board3d?.dispose();board3d=null;controls3d.restore();dialog3d.close();notice('Se ha perdido la vista 3D. Puedes continuar en 2D sin salir de la partida.');} });
-    $('casilla-3d').replaceChildren(element('option','Elige una casilla…'));
-    $('casilla-3d').firstElementChild.value='';
-    for(const c of state.tablero){const option=element('option',c.id+' · '+c.nombre);option.value=c.id;$('casilla-3d').append(option);}
-    board3d.setAmbient($('ambiente-3d').checked);board3d.setFollow($('seguir-3d').checked);board3d.setShadows($('sombras-3d').checked);board3d.showScenery($('decorados-3d').checked); board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
-  } catch { board3d?.dispose();board3d=null;$('escena-3d').replaceChildren(); controls3d.restore();dialog3d.close();notice('No se pudo cargar el 3D en este navegador. Puedes seguir jugando en 2D.'); }
-  finally { board3dLoading=false; }
-};
-$('seguir-3d').onchange=()=>board3d?.setFollow($('seguir-3d').checked);
-$('sombras-3d').onchange=()=>board3d?.setShadows($('sombras-3d').checked);
-$('enfocar-3d').onclick=()=>board3d?.focus();
-$('ambiente-3d').onchange=()=>board3d?.setAmbient($('ambiente-3d').checked);
-$('decorados-3d').onchange=()=>board3d?.showScenery($('decorados-3d').checked);
-$('girar-3d').onclick=()=>board3d?.rotate();
-$('acercar-3d').onclick=()=>board3d?.zoom(.8);
-$('alejar-3d').onclick=()=>board3d?.zoom(1.25);
-$('reset-3d').onclick=()=>board3d?.reset();
-$('cenital-3d').onclick=()=>board3d?.overhead();
-$('casilla-3d').onchange=()=>{if($('casilla-3d').value!=='')board3d?.select(Number($('casilla-3d').value));};
-$('detalle-3d').onclick=()=>{if(selected3d!==null&&state)showProperty(selected3d);};
+const {dialog3d,controls3d}=GameBoardView.create({$,element,amount,updateControls,showProperty,notice,
+ get state(){return state;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
+ get board3d(){return board3d;},set board3d(v){board3d=v;},get board3dLoading(){return board3dLoading;},set board3dLoading(v){board3dLoading=v;},get selected3d(){return selected3d;},set selected3d(v){selected3d=v;}});
 $('interaccion-siguiente').onclick = nextInteraction;
 $('crear').onclick = () => join(true);
 $('acceso').onsubmit = e => { e.preventDefault(); join(false); };
@@ -285,7 +251,7 @@ function cancelMovement() {
 }
 async function movePiece(run) {
   // Positions come from the rendered cells, so the route follows every responsive layout.
-  await new Promise(resolve => setTimeout(resolve, 900));
+  await new Promise(resolve => setTimeout(resolve, globalThis.GameMovement?.startDelayMs || 900));
   if (movement !== run) return;
   const player = state.jugadores.find(p => p.id === run.playerId);
   const node = element('span', String(state.jugadores.indexOf(player) + 1), 'token token-current moving-token');
@@ -303,9 +269,9 @@ async function movePiece(run) {
       node.style.transform = to;
       if(typeof dialog3d !== 'undefined' && dialog3d.open){
         // The WebGL piece is visible; a background DOM animation can be suspended by the browser.
-        await new Promise(resolve => setTimeout(resolve,170));
+        await new Promise(resolve => setTimeout(resolve,globalThis.GameMovement?.stepMs || 320));
       }else{
-        run.animation = node.animate([{ transform: from }, { transform: to }], { duration: 170, easing: 'ease-in-out' });
+        run.animation = node.animate([{ transform: from }, { transform: to }], { duration: globalThis.GameMovement?.stepMs || 320, easing: 'ease-in-out' });
         await run.animation.finished;
       }
       if (movement !== run) return;
@@ -424,6 +390,7 @@ function updateControls() {
   $('crear').disabled = $('unirse').disabled = !socket.connected;
   $('tirar-3d').disabled = true;
   if (!state) return;
+  dialog3d.setWaiting(!state.enJuego);
   renderCharacters();
   const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !!movement || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
@@ -588,101 +555,6 @@ function renderDecision(force = false) {
   } else container.append(element('p','Esperando la decisión de '+(state.jugadores.find(j=>j.id===d.jugadorId)?.nombre||'otro jugador')+'.'));
 }
 function openDialog() { if (!$('detalle').open) $('detalle').showModal(); }
-function showProperty(id) {
-  const original=state.tablero[id],c=original.region==='norte'?state.tablero.find(s=>s.nombre===original.baseSur):original;
-  selectedProperty=c.nombre;
-  const box=$('detalle-contenido');box.replaceChildren(element('p',(original.region||'CASILLA ESPECIAL').toUpperCase(),'eyebrow'),element('h2',original.nombre));
-  if(c.tipo!=='propiedad'){
-      const art=specialCatalog[c.id];
-      if(art){const img=element('img');img.src=art.imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
-      box.append(element('p',specialText(c.id)));
-      if(art?.rotuloOriginal)box.append(element('p','En el tablero impreso figura como «'+art.rotuloOriginal+'». Esta edición conserva el nombre y el efecto indicados arriba.','card-note'));
-      openDialog();return;
-    }
-  const owner=state.jugadores.find(j=>j.id===c.dueño),n=state.tablero.find(s=>s.baseSur===c.nombre),info=catalog.find(i=>i.nombre===c.nombre);
-  box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
-  if(original.region==='norte' && specialCatalog[original.id]){const img=element('img');img.src=specialCatalog[original.id].imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
-    if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img);}
-  const actions=element('div',undefined,'detail-actions');
-  if(myProperty(c)&&myTurn()){
-    for(const [label,type]of [['Construir industria nacional','nacional'],['Construir multinacional','exportacion']]){
-      const national=type==='nacional',level=national?(c.industriasNac||0):(n?.industriasExp||0);
-      const price=info?.[national?'nac':'exp']?.[level];
-      const cost=price===undefined?null:Math.floor(price*(state.descuento?0.5:1));
-      const text=level>=3?label+' · Máximo alcanzado':label+(cost===null?'':' · '+amount(cost));
-      const b=button(text,()=>action('construirIndustria',{nombrePropiedad:c.nombre,tipo:type}),'secondary');
-      b.disabled=!socket.connected||busy||level>=3||(!national&&c.industriasNac<=level)||!(state.fase==='tirada'||state.fase==='gestion'&&state.descuento);
-      actions.append(b);
-    }
-    if(me().dinero<0||state.pendiente?.tipo==='pago'&&me().dinero<state.pendiente.monto)actions.append(button('Subastar terreno e industrias',()=>action('subastarPropiedad',{nombrePropiedad:c.nombre})));
-  }
-  if(myTurn()&&state.monopolio&&c.id===me().posicion&&owner&&!myProperty(c))actions.append(button('Monopolizar terreno e industrias',()=>action('expropiarPropiedad',{nombrePropiedad:c.nombre})));
-  box.append(actions);openDialog();
-}
-function tradeOwns(player, property) {
-  return property.dueño === player.id || !!player.alianzaId && state.jugadores.some(q=>q.id===property.dueño && q.alianzaId===player.alianzaId);
-}
-function showTradeForm() {
-  if(!myTurn() || !['tirada','gestion'].includes(state.fase) || busy || !socket.connected)return;
-  const box=$('comercio-contenido'),p=me();box.replaceChildren();
-  $('comercio-titulo').textContent='Proponer un trato';
-  const rivals=state.jugadores.filter(q=>q.id!==p.id&&q.conectado&&!q.enQuiebra&&!(p.alianzaId&&q.alianzaId===p.alianzaId));
-  if(!rivals.length){box.append(element('p','No hay jugadores conectados de otro grupo para comerciar.'));$('comercio-dialog').showModal();return;}
-  box.append(element('p','Selecciona lo que entregas y lo que recibes. Cada propiedad incluye todas sus industrias nacionales y multinacionales. El trato solo se realiza si la otra persona acepta.'));
-  const form=element('form'),label=element('label','Negociar con'),select=element('select');select.id='comercio-rival';label.htmlFor=select.id;
-  for(const q of rivals){const opt=element('option',q.nombre);opt.value=q.id;select.append(opt);}
-  form.append(label,select);
-  const sides=element('div',undefined,'trade-columns');form.append(sides);
-  let giveList,receiveList,payInput,chargeInput;
-  const side=(title,owner,key)=>{
-    const area=element('section',undefined,'trade-side');area.append(element('h3',title));
-    const list=element('div',undefined,'trade-properties');
-    const props=state.tablero.filter(c=>c.region==='sur'&&tradeOwns(owner,c));
-    for(const c of props){
-      const row=element('label',undefined,'trade-property'),input=element('input');input.type='checkbox';input.value=c.nombre;
-      const img=element('img');img.src=catalog.find(x=>x.nombre===c.nombre)?.icono||'';img.alt='';
-      const north=state.tablero.find(n=>n.baseSur===c.nombre);
-      row.append(input,img,element('span',c.nombre+' · '+c.industriasNac+' nac. / '+(north?.industriasExp||0)+' mult.'));list.append(row);
-    }
-    if(!props.length)list.append(element('p','Sin propiedades. Puedes ofrecer dinero.'));
-    const moneyLabel=element('label','Dinero ($)'),input=element('input');input.type='number';input.min='0';input.max=String(Math.min(1_000_000_000,Math.max(0,owner.dinero)));input.step='1';input.value='0';input.required=true;input.id='trade-'+key;moneyLabel.htmlFor=input.id;
-    area.append(list,moneyLabel,input);sides.append(area);return [list,input];
-  };
-  const fill=()=>{sides.replaceChildren();[giveList,payInput]=side('Tú entregas',p,'pago');[receiveList,chargeInput]=side('Tú recibes',rivals.find(q=>q.id===select.value),'cobro');};
-  select.onchange=fill;fill();
-  form.append(element('p','Para comprar: ofrece dinero y selecciona la propiedad que recibes. Para vender: selecciona la que entregas e indica cuánto cobras. También puedes intercambiar varias propiedades.','card-note'));
-  const send=element('button','Enviar oferta · esperar aceptación','primary');send.type='submit';form.append(send);
-  form.onsubmit=e=>{
-    e.preventDefault();
-    if(!myTurn()||!['tirada','gestion'].includes(state.fase))return notice('Tu turno cambió. Cierra y vuelve a abrir el comercio.');
-    const entrego=[...giveList.querySelectorAll('input:checked')].map(i=>i.value),recibo=[...receiveList.querySelectorAll('input:checked')].map(i=>i.value);
-    if(!entrego.length&&!recibo.length)return notice('Selecciona al menos una propiedad.');
-    const pago=Number(payInput.value),cobro=Number(chargeInput.value);
-    if(pago&&cobro)return notice('Indica dinero solo en una dirección.');
-    action('proponerComercio',{destinatarioId:select.value,entrego,recibo,pago,cobro});
-  };
-  box.append(form);if(!$('comercio-dialog').open)$('comercio-dialog').showModal();
-}
-function showTradeOffer(d, force=false) {
-  const p=me(),mine=p.id===d.jugadorId,first=tradeShown!==d.id;
-  const dialog=$('comercio-dialog'),box=$('comercio-contenido');
-  tradeShown=d.id;box.replaceChildren();
-  const sender=state.jugadores.find(q=>q.id===d.jugadorId),receiver=state.jugadores.find(q=>q.id===d.destinatarioId);
-  $('comercio-titulo').textContent=mine?'Tu oferta a '+receiver?.nombre:'Oferta de '+sender?.nombre;
-  const terms=(title,names,cash)=>{
-    const area=element('section',undefined,'trade-side');area.append(element('h3',title));
-    for(const name of names){const snap=d.propiedades.find(c=>c.nombre===name);area.append(element('p',name+' · '+snap.nacionales+' nacionales / '+snap.multinacionales+' multinacionales'));}
-    if(!names.length)area.append(element('p','Sin propiedades'));
-    area.append(element('strong',amount(cash)));return area;
-  };
-  const cols=element('div',undefined,'trade-columns');
-  cols.append(terms(sender?.nombre+' entrega',d.entrego,d.pago),terms(receiver?.nombre+' entrega',d.recibo,d.cobro));box.append(cols);
-  box.append(element('p','Incluye todas las industrias indicadas. No se transfieren deudas ni oro. La oferta caduca en un máximo de 60 segundos.','card-note'));
-  const answer=(label,accept,style)=>{const b=button(label,()=>action('responderComercio',{decisionId:d.id,aceptar:accept}),style);b.disabled=busy||!socket.connected;box.append(b);};
-  if(mine)answer('Cancelar oferta',false,'secondary');
-  else {answer('Aceptar este trato',true,'primary');answer('Rechazar',false,'secondary');}
-  if((first||force)&&!dialog.open)dialog.showModal();
-}
 function showProperties(){
   selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','PATRIMONIO','eyebrow'),element('h2','Mis propiedades'));
   const list=element('div',undefined,'detail-list'),properties=state.tablero.filter(c=>c.region==='sur'&&myProperty(c));
@@ -690,7 +562,6 @@ function showProperties(){
   for(const c of properties)list.append(button(c.nombre+' ↗',()=>showProperty(c.id),'secondary'));
   box.append(list);openDialog();
 }
-function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Tira un dado y paga $1.000 por punto. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas tu efectivo, salvo que tengas resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $1.500 de ayuda al desarrollo del BID, sin generar deuda. Importe de esta edición web.',32:'Quien cae entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}
 function renderLastCard(data) {
   currentCard = data || null;
   const box = $('ultima-carta');

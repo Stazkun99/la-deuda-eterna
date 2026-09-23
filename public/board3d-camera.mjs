@@ -35,3 +35,14 @@ export function createBoardCamera(camera,controls,{reduced=()=>false,aspect=()=>
  }
  return {move,focus,follow,tick,cancel};
 }
+
+// Fit every corner of the board/scenery envelope, allowing for the viewport aspect.
+export function overviewPose(aspect){
+ const direction=new THREE.Vector3(0,.86,.51).normalize(),up=new THREE.Vector3(0,direction.z,-direction.y),target=new THREE.Vector3(0,.25,0),tan=Math.tan(Math.PI*21/180);
+ let distance=0;
+ for(const x of [-6.4,6.4])for(const y of [-.7,1.8])for(const z of [-6.4,6.4]){
+  const p=new THREE.Vector3(x,y,z).sub(target);
+  distance=Math.max(distance,p.dot(direction)+Math.max(Math.abs(x)/(tan*Math.max(.15,aspect)*.88),Math.abs(p.dot(up))/(tan*.88)));
+ }
+ return {position:target.clone().addScaledVector(direction,distance),target};
+}

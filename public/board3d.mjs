@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import {createDeckLayer} from './board3d-decks.mjs';
 import {createAmbientLayer} from './board3d-ambient.mjs';
-import {createBoardCamera} from './board3d-camera.mjs';
+import {createBoardCamera,overviewPose} from './board3d-camera.mjs';
 import {createIndustryLayer} from './board3d-industries.mjs';
 import {createDiceTray} from './board3d-dice.mjs';
 import { OrbitControls } from '/vendor/three/OrbitControls.js';
@@ -11,7 +11,7 @@ import { GLTFLoader } from '/vendor/three/loaders/GLTFLoader.js';
 import { createModelLayer } from './board3d-models.mjs';
 import { tilePosition, tileAnchor, pieceKind, sceneryPlayerSlot, rollPath } from './board3d-layout.mjs';
 
-export function createBoard3D({host, getState, getArt, onSelect, onError, legend, onDiceLabel}) {
+export function createBoard3D({host, getState, getArt, onSelect, onError, legend, onDiceLabel, onCinematic=()=>{}}) {
   const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
   renderer.setClearColor('#142c2b');
@@ -20,18 +20,18 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label','Tablero tridimensional. Usa los controles y el selector de casillas.');
-  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(42,1,.1,100);
+  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(42,1,.1,200);
   const controls = new OrbitControls(camera,renderer.domElement);
   controls.enablePan=false; controls.enableDamping=false;
-  controls.minDistance=4; controls.maxDistance=42;
+  controls.minDistance=4; controls.maxDistance=100;
   controls.minPolarAngle=.01; controls.maxPolarAngle=1.15;
   scene.add(new THREE.HemisphereLight(0xfff2db,0x426765,1.65));
   const light=new THREE.DirectionalLight(0xffe8c6,3.2);light.position.set(-5,13,6);light.castShadow=true;
   light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:1,far:35});light.shadow.camera.updateProjectionMatrix();light.shadow.normalBias=.025;light.shadow.bias=-.00015;light.shadow.radius=2;scene.add(light);
   const fill=new THREE.DirectionalLight(0xb8dbe7,.85);fill.position.set(8,7,-5);scene.add(fill);
   const cameraRig=createBoardCamera(camera,controls,{reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,aspect:()=>camera.aspect});
-  let followEnabled=true;
-  controls.addEventListener('start',cameraRig.cancel);
+  let followEnabled=true,overview=true;
+  controls.addEventListener('start',()=>{overview=false;cameraRig.cancel();});
   function shadowObjects(group){group.traverse(object=>{if(object.isMesh){object.castShadow=!object.isInstancedMesh;object.receiveShadow=true;}});renderer.shadowMap.needsUpdate=true;}
   const resources=[], tiles=[], images=new Map();
   const pieces=new Map();
@@ -60,22 +60,27 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{
     frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,!!piece.motion&&now>=piece.motion.start,reduced))charactersMoving=true;}
+    let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick&&!piece.travel)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,piece.travel||false,reduced))charactersMoving=true;}
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
     if(moving||rolling||barrierMoving||drawing||((ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    onCinematic(moving||rolling||drawing);
     const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
     if(fast||ambientMoving||charactersMoving)schedule();
   });}
-  function settle(piece){piece.finish?.();piece.motion=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
+  function settle(piece){piece.finish?.();piece.motion=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
     const motion=piece.motion;if(!motion)continue;
-    const elapsed=Math.max(0,now-motion.start),step=elapsed/170,index=Math.floor(step);
+    const elapsed=Math.max(0,now-motion.start),step=elapsed/(globalThis.GameMovement?.stepMs||320),index=Math.floor(step);
     if(index>=motion.path.length-1){settle(piece);continue;}
-    moving=true;const t=step-index,ease=t*t*(3-2*t),a=tileAnchor(motion.path[index]),b=tileAnchor(motion.path[index+1]);
+    moving=true;const t=step-index,ease=piece.tick?t:t*t*(3-2*t),a=index===0?motion.origin:tileAnchor(motion.path[index]),b=tileAnchor(motion.path[index+1]);
     const end=index===motion.path.length-2;if(end){b.x=piece.target.x;b.z=piece.target.z;}
-    piece.root.position.set(THREE.MathUtils.lerp(a.x,b.x,ease),.225+Math.sin(t*Math.PI)*.15,THREE.MathUtils.lerp(a.z,b.z,ease));
-    piece.model.rotation.z=Math.sin(t*Math.PI)*.07;
+    piece.root.position.set(THREE.MathUtils.lerp(a.x,b.x,ease),.225+(piece.tick?0:Math.sin(t*Math.PI)*.15),THREE.MathUtils.lerp(a.z,b.z,ease));
+    piece.model.rotation.z=piece.tick?0:Math.sin(t*Math.PI)*.07;
+    if(piece.tick&&now>=motion.start){
+      piece.travel={phase:t,step:index,elapsed,duration:(motion.path.length-1)*(globalThis.GameMovement?.stepMs||320)};
+      piece.model.rotation.y=Math.atan2(b.x-a.x,b.z-a.z);
+    }
     piece.lookAhead=tileAnchor(motion.path[Math.min(index+2,motion.path.length-1)]);
   }return moving;}
   function syncPieces(state,animate){
@@ -91,7 +96,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
       piece.offset=slot;piece.scale=slot.scale;piece.target.set(position.x,.225,position.z);
       piece.root.userData.id=player.posicion;piece.ring.visible=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       const previous=previousPlayers.find(p=>p.id===player.id),path=rollPath(previous,player,state.ultimaTirada,lastRoll);
-      if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,start:performance.now()+900};piece.root.scale.setScalar(slot.scale);if(followEnabled)cameraRig.follow(()=>pieces.has(player.id)?{point:piece.root.position,moving:!!piece.motion,ahead:piece.lookAhead}:null,piece.motion.start);}
+      if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,origin:piece.root.position.clone(),start:performance.now()+(globalThis.GameMovement?.startDelayMs||900)};piece.root.scale.setScalar(slot.scale);if(followEnabled){overview=false;cameraRig.follow(()=>pieces.has(player.id)?{point:piece.root.position,moving:!!piece.motion,ahead:piece.lookAhead}:null,piece.motion.start);}}
       else if(!piece.motion||previous?.posicion!==player.posicion||!active||document.hidden||!state.enJuego||!animate)settle(piece);
     }
     previousPlayers=state.jugadores.map(p=>({...p}));lastRoll=state.ultimaTirada?.id;
@@ -99,7 +104,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
       const b=document.createElement('button');b.type='button';b.className='secondary';
       const current=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       b.textContent=player.nombre+' · '+(globalThis.GameCharacters.find(c=>c.id===player.personaje)?.name||pieceKind(player.color))+(current?' · En turno':'');b.style.borderLeft='5px solid '+player.color;
-      b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;cameraRig.focus(piece.root.position);select(player.posicion);schedule();};legend.append(b);
+      b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;overview=false;cameraRig.focus(piece.root.position);select(player.posicion);schedule();};legend.append(b);
     }}
   }
   function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
@@ -149,8 +154,8 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     if(diceTray.sync(state.ultimaTirada,rollAnimation)&&followEnabled)reset();
     syncPieces(state,animate);renderer.shadowMap.needsUpdate=true;if(selection!==null)onSelect(selection);schedule();
   }
-  function reset(immediate=false){const aspect=host.clientWidth/Math.max(1,host.clientHeight);const distance=Math.min(40,Math.max(16,6.5/(Math.tan(Math.PI*21/180)*aspect)+4));cameraRig.move(new THREE.Vector3(0,distance*.72,distance*.78),new THREE.Vector3(),performance.now(),immediate?0:650);schedule();}
-  function resize(){if(disposed||!host.clientWidth||!host.clientHeight)return;renderer.setSize(host.clientWidth,host.clientHeight,false);camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();schedule();}
+  function reset(immediate=false){overview=true;const {position,target}=overviewPose(host.clientWidth/Math.max(1,host.clientHeight));cameraRig.move(position,target,performance.now(),immediate?0:650);schedule();}
+  function resize(){if(disposed||!host.clientWidth||!host.clientHeight)return;renderer.setSize(host.clientWidth,host.clientHeight,false);camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();if(overview)reset(true);schedule();}
   function select(id){const tile=tiles.find(t=>t.cell.id===id);if(!tile)return;selection=id;for(const t of tiles){t.top.emissive.set(t.cell.id===selection?'#9d762b':'#000000');t.top.emissiveIntensity=.35;}onSelect(id);schedule();}
   const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
   function pointerDown(e){down={x:e.clientX,y:e.clientY};}
@@ -165,11 +170,11 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     setAmbient(value){ambient.setEnabled(value);schedule();},
     setFollow(value){followEnabled=value;if(!value)cameraRig.cancel();},
     setShadows(value){renderer.shadowMap.enabled=value;renderer.shadowMap.needsUpdate=true;schedule();},
-    focus(){if(selection===null)return;const p=tilePosition(selection);cameraRig.focus(p);schedule();},
+    focus(){overview=false;if(selection===null)return;const p=tilePosition(selection);cameraRig.focus(p);schedule();},
     showScenery(value){models.setVisible(value);},
-    rotate(){cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
-    zoom(factor){cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
-    overhead(){const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
+    rotate(){overview=false;cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
+    zoom(factor){overview=false;cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
+    overhead(){overview=false;const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
     setActive(value){renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
     dispose(){cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };

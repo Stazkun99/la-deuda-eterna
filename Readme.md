@@ -269,7 +269,7 @@ npm run check
 
 `npm test` usa el ejecutor de Node. Las pruebas cubren reglas, propiedad y pagos, turnos, alianzas, Industrialización, comercio, repetición de acciones, desconexión, recuperación, guardado fallido y correspondencia de imágenes. Las pruebas de integración abren puertos locales y no contactan con producción. Algunas provocan errores de disco deliberados: hay que comprobar el resultado final de la suite.
 
-`npm run check` verifica la sintaxis de `server.js`, `lib/game.js` y `public/app.js`.
+`npm run check` verifica la sintaxis del servidor, las reglas, el cliente y sus módulos de interfaz y 3D.
 
 ```text
 .
@@ -376,9 +376,9 @@ Al activar la barrera proteccionista, bajan persianas con franjas de advertencia
 
 ## Mesa de juego 3D
 
-Al entrar o recuperar una sala, se abre el tablero 3D automáticamente. Usa **Cambiar a 2D** para la vista clásica y **Cambiar a 3D** para volver. La mesa tiene relieve, marco de madera, ilustraciones originales y las cuarenta casillas en su orden habitual. Puedes girar arrastrando, acercar con la rueda o dos dedos, usar los botones de cámara y seleccionar una casilla para abrir sus detalles. El selector permite hacerlo también con teclado.
+Al entrar o recuperar una sala, el tablero 3D ocupa la pantalla principal, sin ventana modal. Usa **Vista 2D** para la vista clásica y **Cambiar a 3D** para volver. La mesa tiene relieve, marco de madera, ilustraciones originales y las cuarenta casillas en su orden habitual. Puedes girar arrastrando, acercar con la rueda o dos dedos, usar los botones de cámara y seleccionar una casilla para abrir sus detalles. El selector permite hacerlo también con teclado.
 
-El visor muestra las fichas tridimensionales (carrito, sombrero, bota y balsa) con el color de cada jugador, un aro para el turno activo y movimiento por cada casilla. Al coincidir, se distribuyen dentro de la casilla; pulsa el nombre de un jugador para acercarte. Al reabrir o reconectar se muestra la posición actual sin repetir tiradas antiguas. Se respeta la preferencia de movimiento reducido. Las industrias y la barrera también se representan en 3D. El panel de partida permite iniciar, tirar, terminar turno, pedir y amortizar préstamos, levantar la barrera, construir y comerciar. Pulsa **Cambiar a 2D** para volver a la vista clásica. La partida y su temporizador siguen activos en ambas vistas. Los colores de propiedad y las barreras se actualizan con el estado de la sala.
+El visor muestra las fichas tridimensionales (carrito, sombrero, bota y balsa) con el color de cada jugador, un aro para el turno activo y movimiento por cada casilla. Al coincidir, se distribuyen dentro de la casilla; pulsa el nombre de un jugador para acercarte. Al reabrir o reconectar se muestra la posición actual sin repetir tiradas antiguas. Se respeta la preferencia de movimiento reducido. Las industrias y la barrera también se representan en 3D. El panel de partida permite iniciar, tirar, terminar turno, pedir y amortizar préstamos, levantar la barrera, construir y comerciar. Pulsa **Vista 2D** para volver a la vista clásica. La partida y su temporizador siguen activos en ambas vistas. Los colores de propiedad y las barreras se actualizan con el estado de la sala.
 
 El visor necesita WebGL 2. Si el navegador no lo admite, la partida habitual sigue disponible. Three.js se sirve desde el propio servidor, se carga al abrir el visor y solo dibuja cuando cambia la vista; al cerrar se detiene el renderizado. No requiere un servicio externo adicional. Al instalar el proyecto, ejecuta `npm ci` para incluir la dependencia fijada en el archivo de bloqueo.
 
@@ -404,9 +404,9 @@ La barrera baja doce persianas metálicas con franjas de advertencia sobre las c
 
 ### Controles, cartas y avisos en 3D
 
-El panel, el registro y el chat son los mismos controles en ambas vistas: se trasladan conservando formularios y decisiones, sin duplicar acciones. Las cartas originales y los diálogos de propiedades, financiación, comercio e industrialización se abren delante de la mesa. La última carta queda disponible debajo del tablero.
+El panel, el registro y el chat son los mismos controles en ambas vistas: se trasladan conservando formularios y decisiones, sin duplicar acciones. Las cartas originales y los diálogos de propiedades, financiación, comercio e industrialización se abren delante de la mesa. La última carta queda disponible en el desplegable **Última carta** de la barra inferior.
 
-Los avisos de pagos, préstamos e intercambios aparecen en el centro de la escena y avanzan normalmente; su temporizador se pausa mientras una carta u otro diálogo requiere atención. En móvil, **Ver mi turno** lleva al panel de acciones. Sonido, reglas, conexión, copiar código y abandonar sala están accesibles en la cabecera.
+Los avisos de pagos, préstamos e intercambios aparecen en el centro de la escena y avanzan normalmente; su temporizador se pausa mientras una carta u otro diálogo requiere atención. El panel central se puede ocultar con **Ocultar acciones** y se retira temporalmente durante dados, movimiento y salida de cartas. Sonido, reglas, conexión, copiar código y abandonar están en **Sala**. Jugadores, registro/chat y cámara tienen desplegables independientes en la barra inferior.
 
 Si falla la carga del visor o se pierde el contexto gráfico, la interfaz vuelve a 2D y permite continuar la partida. El 3D es la vista inicial al entrar o recargar. Si eliges 2D o falla el visor, las actualizaciones y reconexiones de esa sesión no fuerzan el regreso al 3D.
 
@@ -455,3 +455,19 @@ Kirby tiene un pequeño salto y respiración elástica; Link se balancea y mueve
 Encuadre más cercano desde el interior del tablero y seguimiento con anticipación de las siguientes casillas; la orientación permanece estable en cada tirada y el usuario puede cancelarlo al mover la cámara. Compensación del encuadre en pantallas estrechas. Distribuciones diferentes para una, dos, tres y cuatro fichas, con bases separadas. Tamaños por personaje y relleno de luz mediante sus propios materiales, especialmente Scyther, conservando las texturas.
 
 Los personajes se orientan hacia la cámara para mantener reconocible su silueta al explorar el tablero.
+
+
+### Pantalla principal y organización del código
+
+El 3D usa toda la ventana disponible. **Pantalla completa** amplía el navegador cuando está disponible; F11 también sirve en escritorio. **Vista general** calcula el encuadre para que quepa el tablero y se reajusta al redimensionar, sin forzar el encuadre si el usuario está explorando. Los controles centrales son HTML accesible sobre la escena. No se duplican formularios, decisiones ni eventos al cambiar entre 3D y 2D.
+
+- `server.js`: arranque, estado de salud y transacciones de guardado antes de publicar.
+- `lib/http-routes.js`: cabeceras, CSP, catálogo, salud y recursos públicos.
+- `lib/socket-handlers.js`: sesiones, límites, acciones, chat y desconexiones.
+- `public/app.js`: coordinación de la sesión y representación del estado.
+- `public/ui/screen.js`: pantalla principal, ocultación de controles, desplegables y fullscreen.
+- `public/ui/board-view.js`: montaje de controles compartidos, carga del tablero y cambio 2D/3D.
+- `public/ui/trade.js` y `public/ui/property.js`: interfaces de comercio y detalle de propiedades, con dependencias explícitas y acceso al estado actual.
+- `public/screen3d.css`: presentación y adaptación de la pantalla 3D.
+
+No cambian los mensajes de red ni el formato de partidas guardadas. Los módulos clásicos de UI se cargan antes de `app.js`; el renderizador conserva sus módulos ES y carga diferida. Las reglas autoritativas permanecen en `lib/game.js`.

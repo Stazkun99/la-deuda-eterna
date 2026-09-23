@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {CHARACTER_RIGS,createCharacterAnimation} from './character-animation.mjs';
+export {createCharacterAnimation} from './character-animation.mjs';
 
 export function disposeCharacter(object) {
   const resources=new Set(), images=new Set();
@@ -20,11 +22,11 @@ export function poseCharacter(source,id) {
     for(const name of ['Object_6','Object_8']) {const prop=source.getObjectByName(name);if(prop){prop.removeFromParent();disposeCharacter(prop);}}
   }
   source.updateMatrixWorld(true);
-  const names=id==='link'?['LShoulderJ_37','RShoulderJ_66']:id==='scyther'?['left_shoulder_14','right_shoulder_18']:[];
+  const names=CHARACTER_RIGS[id]?.arms||[];
   for(const name of names){
     const bone=source.getObjectByName(name),child=bone?.children.find(c=>c.isBone);if(!child)continue;
     const origin=bone.getWorldPosition(new THREE.Vector3()),direction=child.getWorldPosition(new THREE.Vector3()).sub(origin).normalize();
-    const target=new THREE.Vector3(Math.sign(direction.x)*.36,-.86,.2).normalize();
+    const target=new THREE.Vector3(Math.sign(direction.x)*(id==='scyther'?.36:.20),-.94,.20).normalize();
     const turn=new THREE.Quaternion().setFromUnitVectors(direction,target);
     const world=bone.getWorldQuaternion(new THREE.Quaternion()).premultiply(turn);
     bone.quaternion.copy(bone.parent.getWorldQuaternion(new THREE.Quaternion()).invert().multiply(world));
@@ -63,53 +65,6 @@ export function fitCharacter(source,id) {
   return wrapper;
 }
 
-
-// Local poses only: never move the board anchor, base or turn indicator.
-export function createCharacterAnimation(pivot,source,id) {
-  const rest={position:pivot.position.clone(),scale:pivot.scale.clone(),quaternion:pivot.quaternion.clone()};
-  const names={
-    link:['LShoulderJ_37','RShoulderJ_66','LLegJ_5','RLegJ_9'],
-    yoshi:['head_05','L_thigh_052','R_thigh_056'],
-    scyther:['left_wing_a_7','left_wing_b_8','right_wing_a_9','right_wing_b_10','left_shoulder_14','right_shoulder_18']
-  };
-  const bones=new Map();
-  for(const name of names[id]||[]){const bone=source.getObjectByName(name);if(bone)bones.set(name,{bone,rest:bone.quaternion.clone()});}
-  const rotation=new THREE.Quaternion(),axis=new THREE.Vector3();
-  function turn(name,x,y,z){const item=bones.get(name);if(!item)return;axis.set(x,y,z);const angle=axis.length();if(!angle)return;rotation.setFromAxisAngle(axis.normalize(),angle);item.bone.quaternion.copy(item.rest).multiply(rotation);}
-  function reset(){pivot.position.copy(rest.position);pivot.scale.copy(rest.scale);pivot.quaternion.copy(rest.quaternion);for(const item of bones.values())item.bone.quaternion.copy(item.rest);}
-  return {
-    reset,
-    tick(now,moving=false,reduced=false){
-      reset();if(reduced)return false;
-      const t=now/1000,breath=Math.sin(t*2),stride=Math.sin(t*Math.PI*2/.34);
-      if(id==='kirby'){
-        // A small occasional idle hop; walking uses the existing tile-by-tile hop.
-        const phase=(t%4)/4,hop=phase<.2?Math.sin(phase/.2*Math.PI):0;
-        pivot.position.y+=moving?Math.abs(stride)*.022:hop*.045;
-        const squash=moving?stride*.035:breath*.014;
-        pivot.scale.multiply(new THREE.Vector3(1-squash*.5,1+squash,1-squash*.5));
-      }else if(id==='link'){
-        pivot.rotation.z=(moving?stride:breath)*(moving?.035:.012);
-        pivot.scale.y*=1+breath*.009;
-        const arms=moving?stride*.14:breath*.025;
-        turn('LShoulderJ_37',0,0,arms);turn('RShoulderJ_66',0,0,-arms);
-        if(moving){turn('LLegJ_5',0,0,stride*.09);turn('RLegJ_9',0,0,-stride*.09);}
-      }else if(id==='yoshi'){
-        pivot.position.y+=moving?Math.abs(stride)*.035:(breath+1)*.007;
-        pivot.rotation.z=(moving?stride:breath)*(moving?.03:.012);
-        turn('head_05',Math.sin(t*2.3)*.035,0,0);
-        if(moving){turn('L_thigh_052',stride*.12,0,0);turn('R_thigh_056',-stride*.12,0,0);}
-      }else if(id==='scyther'){
-        const flutter=Math.sin(t*(moving?20:9))*(moving?.15:.08);
-        for(const name of ['left_wing_a_7','left_wing_b_8'])turn(name,0,0,flutter);
-        for(const name of ['right_wing_a_9','right_wing_b_10'])turn(name,0,0,-flutter);
-        turn('left_shoulder_14',breath*.025,0,0);turn('right_shoulder_18',-breath*.025,0,0);
-        pivot.position.y+=(breath+1)*.008;
-      }
-      return true;
-    }
-  };
-}
 
 // Each piece owns its loaded scene, including bones, so replacement/disposal is safe.
 export function createCharacterPiece(id,color,load,onChange=()=>{}) {
