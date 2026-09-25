@@ -13,10 +13,11 @@ export function createCharacterAnimation(pivot,source,id) {
  const rest={position:pivot.position.clone(),scale:pivot.scale.clone(),quaternion:pivot.quaternion.clone()};
  const rig=CHARACTER_RIGS[id]||{},bones=new Map();
  source.updateWorldMatrix(true,true);
+ const frame=pivot.getWorldQuaternion(new THREE.Quaternion());
  for(const name of Object.values(rig).flat()){
   const bone=source.getObjectByName(name);if(!bone)continue;
   const inverse=bone.getWorldQuaternion(new THREE.Quaternion()).invert();
-  bones.set(name,{bone,rest:bone.quaternion.clone(),x:new THREE.Vector3(1,0,0).applyQuaternion(inverse),y:new THREE.Vector3(0,1,0).applyQuaternion(inverse),z:new THREE.Vector3(0,0,1).applyQuaternion(inverse)});
+  bones.set(name,{bone,rest:bone.quaternion.clone(),x:new THREE.Vector3(1,0,0).applyQuaternion(frame).applyQuaternion(inverse),y:new THREE.Vector3(0,1,0).applyQuaternion(frame).applyQuaternion(inverse),z:new THREE.Vector3(0,0,1).applyQuaternion(frame).applyQuaternion(inverse)});
  }
  const rotation=new THREE.Quaternion();
  function turn(name,angle,axis='x'){const item=bones.get(name);if(!item)return;rotation.setFromAxisAngle(item[axis],angle);item.bone.quaternion.copy(item.rest).multiply(rotation);}

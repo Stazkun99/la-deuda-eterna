@@ -45,9 +45,15 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     m.position.set(x,y,z);scene.add(m);return m;
   }
   const table=box(18,.18,18,'#173b36',0,-.64);table.receiveShadow=true;
-  box(12.1,.36,12.1,'#533b2c',0,-.32);
-  box(11.75,.12,11.75,'#c5a362',0,-.09);
-  box(11.5,.1,11.5,'#193f3a');
+  function roundedBase(size,radius,depth,y,color){
+    const s=new THREE.Shape(),a=size/2,k=a-radius;
+    s.moveTo(-k,-a);s.lineTo(k,-a);s.quadraticCurveTo(a,-a,a,-k);s.lineTo(a,k);s.quadraticCurveTo(a,a,k,a);s.lineTo(-k,a);s.quadraticCurveTo(-a,a,-a,k);s.lineTo(-a,-k);s.quadraticCurveTo(-a,-a,-k,-a);
+    const geo=own(new THREE.ExtrudeGeometry(s,{depth,bevelEnabled:false,curveSegments:16}));geo.rotateX(-Math.PI/2);
+    const mesh=new THREE.Mesh(geo,own(new THREE.MeshStandardMaterial({color,roughness:.7})));mesh.position.y=y;mesh.receiveShadow=true;scene.add(mesh);
+  }
+  roundedBase(13.18,1.7,.36,-.55,'#533b2c');
+  roundedBase(13.10,1.66,.08,-.19,'#c5a362');
+  roundedBase(13.02,1.62,.17,-.11,'#b5a17a');
   const center=document.createElement('canvas');
   const felt=own(new THREE.CanvasTexture(center));felt.colorSpace=THREE.SRGBColorSpace;felt.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
   const stopCenter=globalThis.GameCenter.paint(center,()=>{felt.needsUpdate=true;schedule();});felt.needsUpdate=true;
@@ -55,7 +61,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   const surface=new THREE.Mesh(own(new THREE.PlaneGeometry(8.92,8.92)),mat);surface.rotation.x=-Math.PI/2;surface.position.y=.07;scene.add(surface);
   const textureLoader=new THREE.TextureLoader();
   const decks=createDeckLayer({scene,loadTexture:(url,done)=>textureLoader.load(url,done),onChange:schedule});
-  let ambient,lastPaint=0,lastAmbientShadow=0;
+  let ambient,lastPaint=0,lastAmbientShadow=0,celebration=null;
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
   function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{
     frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
@@ -63,10 +69,11 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
     let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick&&!piece.travel)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,piece.travel||false,reduced))charactersMoving=true;}
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
     if(moving||rolling||barrierMoving||drawing||((ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    if(celebration){const t=(now-celebration.start)/2400;for(const tile of tiles)if(celebration.ids.includes(tile.cell.id)){tile.top.emissive.set(t>=1?'#000000':'#eaba42');tile.top.emissiveIntensity=t>=1?0:.25+.5*Math.abs(Math.sin(t*Math.PI*4));}if(t>=1)celebration=null;}
     onCinematic(moving||rolling||drawing);
     const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
-    if(fast||ambientMoving||charactersMoving)schedule();
+    if(fast||ambientMoving||charactersMoving||celebration)schedule();
   });}
   function settle(piece){piece.finish?.();piece.motion=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
@@ -166,6 +173,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onError, legend
   const observer=new ResizeObserver(resize);observer.observe(host);shadowObjects(scene);table.castShadow=false;surface.castShadow=false;resize();reset(true);update();
   return {
     update,select,reset,
+    celebrate(ids){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;celebration={ids,start:performance.now()};schedule();},
     drawCard(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return Promise.resolve();reset();const result=decks.draw(data);schedule();return result;},
     setAmbient(value){ambient.setEnabled(value);schedule();},
     setFollow(value){followEnabled=value;if(!value)cameraRig.cancel();},

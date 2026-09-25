@@ -89,7 +89,7 @@ test('Ecuador paga 2400 y las 17 condiciones tienen efectos ejecutables',()=>{
   for(let id=1;id<=17;id++){const f=fixture();f.r.mazos.condiciones=[id];f.r.jugadores[0].deudaPersonal=10000;assert.doesNotThrow(()=>f.game.card(f.r,f.r.jugadores[0],'condiciones'));}
 });
 test('cartas colectivas afectan a los jugadores indicados y el 15% depende de la deuda',()=>{
-  const {game,r}=fixture();const p=r.jugadores[0];p.deudaPersonal=20000;r.mazos.condiciones=[2];game.card(r,p,'condiciones');assert.equal(r.pendiente.monto,3000);assert.equal(r.pendiente.oroPermitido,false);
+  const {game,r}=fixture();const p=r.jugadores[0];p.deudaPersonal=20000;r.mazos.condiciones=[2];game.card(r,p,'condiciones');assert.equal(r.pendiente.monto,3000);assert.equal(r.pendiente.oroPermitido,true);
   r.mazos.condiciones=[5];r.jugadores[1].deudaPersonal=5000;game.card(r,p,'condiciones');assert.equal(p.dinero,500);assert.equal(r.jugadores[1].dinero,500);assert.equal(r.jugadores[2].dinero,1000);
 });
 test('barrera global cancela exportaciones, y el peaje la retira para todos',()=>{

@@ -58,8 +58,8 @@ Para probar tú solo una sala multijugador, usa una ventana normal y otra de inc
 
 1. Escribe tu nombre y crea una sala.
 2. Comparte el código con tus amigos; entran desde la misma web y eligen **Unirme a la sala**.
-3. El anfitrión inicia cuando haya al menos dos jugadores conectados. Puede activar los monopolios antes de empezar.
-Cada jugador recibe **$5.000 + un dado × $200** (entre $5.200 y $6.200), con deuda inicial cero. La tirada más alta decide quién empieza. Si hay empate en el valor más alto, se sortea el primer turno únicamente entre esos jugadores, sin prioridad para el anfitrión. Después se sigue el orden de la mesa. Los resultados quedan visibles en «Dados y dinero inicial» y en el registro. Esta regla se aplica al iniciar partidas nuevas.
+3. Cada jugador elige su personaje y pulsa **Tirar mi dado inicial**. El anfitrión inicia cuando haya al menos dos conectados y todos hayan tirado; puede activar los monopolios antes de empezar.
+Cada jugador recibe **$5.000 + un dado × $200** (entre $5.200 y $6.200), con deuda inicial cero. La tirada más alta decide quién empieza. Si hay empate en el valor más alto, se sortea el primer turno únicamente entre esos jugadores, sin prioridad para el anfitrión. Después se sigue el orden de la mesa. Cada dado se anima en la mesa; el saldo y el resultado quedan en la ventana de jugadores durante la preparación y en el registro. Esta regla se aplica al iniciar partidas nuevas.
 
 4. Durante tu turno, gestiona deuda, construcción o comercio y pulsa **Tirar los dados**.
 5. Resuelve la compra, pago, carta o elección que corresponda a la casilla.
@@ -119,14 +119,14 @@ Esta sección describe la implementación web. No reproduce todas las variantes 
 - La amortización permite elegir cualquier importe entero positivo hasta el menor de tu deuda y efectivo disponible, antes de tirar o en gestión final, sin visitar el FMI.
 - Se tiran dos dados; tres desde $10.000 de deuda personal y cuatro desde $20.000.
 - Los intereses ordinarios se cobran al pasar o llegar a la sede del FMI. Alcanzar un umbral de deuda cambia los dados, sin trasladar automáticamente la ficha al FMI.
-- El oro puede pagar manufacturas e intereses, pero no cartas, industrias, fuga de capitales o monopolios.
+- El oro puede pagar manufacturas e intereses, incluidos los intereses del 15 % de las cartas que envían al propio jugador al FMI. La deuda máxima no bloquea ese pago. No paga otros cargos de cartas, industrias, fuga de capitales o monopolios.
 - Un saldo negativo temporal debe resolverse antes de volver a tirar o terminar el turno.
 
 ### Alianzas, subastas y monopolio
 
 - Las alianzas comparten efectivo, oro y propiedades; cada jugador conserva su deuda personal.
 - Las votaciones incorporan a quienes aceptan. No existe una acción para disolver voluntariamente una alianza.
-- Las subastas duran 30 segundos. Sin ofertas, el FMI paga el 50 % de la inversión y libera la propiedad.
+- Las subastas se cierran tras **10 segundos sin una nueva puja**; cada puja válida reinicia el plazo. Todos, incluido el vendedor, ven el mejor postor, la cuenta atrás y el historial. Sin ofertas, el FMI paga el 50 % de la inversión y libera la propiedad.
 - La barrera afecta globalmente a las exportaciones; su peaje lo paga el jugador o su grupo, sin aportaciones voluntarias de otros grupos.
 - El monopolio es opcional. Permite adquirir una propiedad y su exportación, con impuesto de $2.000 o $4.000 si rompe una cadena; no compra de una vez toda la cadena.
 
@@ -406,7 +406,7 @@ La barrera baja doce persianas metálicas con franjas de advertencia sobre las c
 
 El panel, el registro y el chat son los mismos controles en ambas vistas: se trasladan conservando formularios y decisiones, sin duplicar acciones. Las cartas originales y los diálogos de propiedades, financiación, comercio e industrialización se abren delante de la mesa. La última carta queda disponible en el desplegable **Última carta** de la barra inferior.
 
-Los avisos de pagos, préstamos e intercambios aparecen en el centro de la escena y avanzan normalmente; su temporizador se pausa mientras una carta u otro diálogo requiere atención. El panel central se puede ocultar con **Ocultar acciones** y se retira temporalmente durante dados, movimiento y salida de cartas. Sonido, reglas, conexión, copiar código y abandonar están en **Sala**. Jugadores, registro/chat y cámara tienen desplegables independientes en la barra inferior.
+Los avisos de pagos, préstamos e intercambios aparecen en el centro de la escena y avanzan normalmente; su temporizador se pausa mientras una carta u otro diálogo requiere atención. El panel central se puede ocultar con **Ocultar acciones** y se retira temporalmente durante dados, movimiento y salida de cartas. Sonido, reglas, conexión, copiar código y abandonar están en **Sala**. Los jugadores permanecen visibles en la ventana izquierda; registro/chat y cámara conservan desplegables en la barra inferior.
 
 Si falla la carga del visor o se pierde el contexto gráfico, la interfaz vuelve a 2D y permite continuar la partida. El 3D es la vista inicial al entrar o recargar. Si eliges 2D o falla el visor, las actualizaciones y reconexiones de esa sesión no fuerzan el regreso al 3D.
 
@@ -439,7 +439,7 @@ Al aumentar el nivel, solo la ampliación nueva se incorpora mediante una animac
 
 ### Personajes de los jugadores
 
-- Selector en la sala para Kirby, Link, Yoshi y Scyther, disponible para todos antes de iniciar. Cada elección es exclusiva y se conserva al reconectar; si alguien no elige, recibe un personaje libre al empezar.
+- Selector en la sala para Kirby, Link, Yoshi y Scyther, disponible para todos antes de iniciar. Cada elección es exclusiva y se conserva al reconectar; el flujo de la web pide elegir personaje y tirar el dado inicial antes de empezar. El servidor conserva la asignación automática para clientes antiguos.
 - Fichas 3D con base del color del jugador y retratos del modelo en el selector y la vista 2D. Iconos de respaldo si no está disponible WebGL. Las partidas antiguas en curso mantienen sus fichas.
 - Modelos en `public/assets/modelos-3d/personajes/`, con texturas locales, origen y atribuciones. Materiales de Yoshi adaptados; decoración de Kirby retirada y brazos de Link/Scyther ajustados al cargar.
 - Comprobaciones de exclusividad, reconexión, bloqueo durante la partida, compatibilidad de archivos y liberación de recursos tras cargas canceladas.
@@ -447,19 +447,19 @@ Al aumentar el nivel, solo la ampliación nueva se incorpora mediante una animac
 
 ### Animaciones de las fichas
 
-Kirby tiene un pequeño salto y respiración elástica; Link se balancea y mueve brazos/piernas al avanzar; Yoshi rebota y mueve la cabeza; Scyther aletea y mueve suavemente las cuchillas. Solo reposo y desplazamiento, sin reacciones a compras o pagos. La base y la posición de juego permanecen independientes. Las animaciones se pausan al ocultar la pestaña o pasar a 2D, y respetan la preferencia de movimiento reducido.
+Link y Yoshi caminan articulando caderas, rodillas, pies y brazos; Yoshi descansa con los brazos bajos. Scyther despega una vez, aletea durante el recorrido y aterriza al final. Kirby salta y se comprime al llegar a cada casilla. Cada tramo dura 320 ms, con el mismo reloj visual para el cliente y el tablero. Solo reposo y desplazamiento, sin reacciones a compras o pagos. La base y la posición de juego permanecen independientes. Las animaciones se pausan al ocultar la pestaña o pasar a 2D, y respetan la preferencia de movimiento reducido.
 
 
 ### Cámara y legibilidad de personajes
 
 Encuadre más cercano desde el interior del tablero y seguimiento con anticipación de las siguientes casillas; la orientación permanece estable en cada tirada y el usuario puede cancelarlo al mover la cámara. Compensación del encuadre en pantallas estrechas. Distribuciones diferentes para una, dos, tres y cuatro fichas, con bases separadas. Tamaños por personaje y relleno de luz mediante sus propios materiales, especialmente Scyther, conservando las texturas.
 
-Los personajes se orientan hacia la cámara para mantener reconocible su silueta al explorar el tablero.
+En reposo los personajes miran hacia la cámara; al avanzar miran en la dirección del recorrido.
 
 
 ### Pantalla principal y organización del código
 
-El 3D usa toda la ventana disponible. **Pantalla completa** amplía el navegador cuando está disponible; F11 también sirve en escritorio. **Vista general** calcula el encuadre para que quepa el tablero y se reajusta al redimensionar, sin forzar el encuadre si el usuario está explorando. Los controles centrales son HTML accesible sobre la escena. No se duplican formularios, decisiones ni eventos al cambiar entre 3D y 2D.
+El 3D usa toda la ventana disponible. **Pantalla completa** amplía el navegador cuando está disponible; F11 también sirve en escritorio. **Vista general** calcula el encuadre para que quepa el tablero y se reajusta al redimensionar, sin forzar el encuadre si el usuario está explorando. Las acciones aparecen a la derecha y los saldos, lingotes y deudas a la izquierda, en ventanas HTML accesibles sobre la escena. Se pueden arrastrar por su cabecera o mover con las flechas del teclado al enfocar el asa. Sus posiciones se guardan en el navegador y «Ordenar ventanas» restablece la distribución. No se duplican formularios, decisiones ni eventos al cambiar entre 3D y 2D.
 
 - `server.js`: arranque, estado de salud y transacciones de guardado antes de publicar.
 - `lib/http-routes.js`: cabeceras, CSP, catálogo, salud y recursos públicos.
@@ -471,3 +471,14 @@ El 3D usa toda la ventana disponible. **Pantalla completa** amplía el navegador
 - `public/screen3d.css`: presentación y adaptación de la pantalla 3D.
 
 No cambian los mensajes de red ni el formato de partidas guardadas. Los módulos clásicos de UI se cargan antes de `app.js`; el renderizador conserva sus módulos ES y carga diferida. Las reglas autoritativas permanecen en `lib/game.js`.
+
+
+### Pausa, resultados y presentación de la mesa
+
+Cualquier participante activo puede pausar o reanudar la partida para toda la sala. Durante la pausa se rechazan las acciones de juego y se conservan los segundos restantes del turno y de las decisiones, incluidas subastas y comercio. La pausa se guarda con la sala y sobrevive a una reconexión.
+
+Las tiradas de Fuga y de inicio reservan 1,4 segundos para ver caer el dado antes de mostrar cobros, decisiones y nuevos saldos. El movimiento ordinario termina antes de las decisiones; una carta sale del mazo antes de abrirse y presentar sus avisos. Reconexión y movimiento reducido muestran el estado resuelto sin repetir animaciones.
+
+La base redondeada une las cuatro esquinas sin cambiar las 40 casillas ni sus reglas. «Mis propiedades» utiliza tarjetas con ilustraciones y niveles; comercio, préstamos y decisiones comparten la paleta verde y dorada del 3D. Completar la propiedad de una cadena genera una celebración y resalta sus casillas; esto no cambia el requisito de industrias para sumar rentas. Las rentas y los cobros de exportación muestran el factor efectivo sobre el precio de la casilla; Fuga muestra el dado como multiplicador de $1.000.
+
+Módulos nuevos: `public/character-animation.mjs` (esqueletos y locomoción), `public/movement-timing.js` (tiempos compartidos), `public/ui/windows.js` (ventanas móviles). Pruebas adicionales cubren los esqueletos GLB reales, oro con deuda máxima, pausa persistida, dados individuales, subastas y celebraciones sin duplicados.

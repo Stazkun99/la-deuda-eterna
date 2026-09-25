@@ -1,5 +1,17 @@
 # Cambios preparados para revisión
 
+## Mesa interactiva y animaciones — septiembre de 2026
+
+- Pasos articulados de Link/Yoshi, brazos bajos de Yoshi, vuelo de Scyther y saltos de Kirby; verificados con los modelos reales. Ejes de animación independientes del giro de la ficha.
+- Dados y salida de cartas anteriores a avisos y decisiones; Fuga conserva el saldo visible hasta terminar el dado.
+- Ventanas móviles de acciones a la derecha y finanzas a la izquierda, con posición guardada y restauración. Tarjetas de patrimonio y comercio con estética 3D.
+- Pausa compartida y persistida: congela turnos y decisiones y bloquea acciones hasta reanudar.
+- Oro permitido para intereses FMI del 15 % al trasladar al propio jugador, también con $30.000 de deuda. El cierre por inactividad usa oro si está permitido y falta efectivo.
+- Subastas: diez segundos sin nuevas pujas, reinicio del plazo al pujar, mejor postor e historial visibles también para el vendedor.
+- Tirada inicial individual después de elegir personaje, animada para toda la mesa; desaparece el desplegable de dados/dinero inicial.
+- Base con esquinas redondeadas y unidas, celebraciones de cadenas y multiplicadores en rentas, exportaciones y Fuga.
+
+
 ## Tablero e interfaz
 
 - Integración de 30 modelos GLB de los kits Kenney Food, Factory, City Commercial, City Industrial y Nature en 20 casillas. Las otras 20 recuperan decorados propios; cultivos detallados y terrenos combinan los dos estilos. Catálogo de asignaciones, texturas locales, créditos CC0, carga con concurrencia limitada, ajuste de escala y limpieza de recursos. Lista de modelos pendientes en MODELOS-3D.md.
