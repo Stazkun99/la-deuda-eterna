@@ -30,7 +30,8 @@ const uiContext={$,element,button,amount,me,myTurn,myProperty,action,notice,sock
  get tradeShown(){return tradeShown;},set tradeShown(value){tradeShown=value;}};
 const {showTradeForm,showTradeOffer}=GameTrade.create(uiContext);
 const {showProperty}=GameProperty.create(uiContext);
-function notice(text) { clearTimeout(noticeTimer); $('aviso').textContent = text; $('aviso').hidden = false; noticeTimer = setTimeout(() => $('aviso').hidden = true, 7000); }
+const results=GameResults.create(uiContext);
+function notice(text) { clearTimeout(noticeTimer); $('aviso').textContent = text; $('aviso').hidden = false; noticeTimer = setTimeout(() => $('aviso').hidden = true, 3000); }
 function remember(key, value) { if (storageAvailable) { try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { storageAvailable = false; } } }
 function action(event, data = {}) {
   if(state?.pausa && event!=='pausarPartida')return;
@@ -142,7 +143,7 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); $('amortizar-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { results.reset(); dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); $('amortizar-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
@@ -150,6 +151,7 @@ socket.on('finDeJuegoModal', () => {}); // The following state renders the resul
 socket.on('actualizarEstado', next => {
   const previousState = state, previousRoom = state?.codigo;
   state = next;
+  if(!state.resultado)results.reset();
   if (!me()) return;
   const roll = state.ultimaTirada;
   if (animateNextState && previousRoom === state.codigo && state.enJuego) {
@@ -190,7 +192,7 @@ socket.on('actualizarEstado', next => {
 let portraitsStarted = false;
 globalThis.CharacterPortraits = Object.create(null);
 function renderCharacters() {
-  const panel = $('personajes'); panel.hidden = !state || state.enJuego;
+  const panel = $('personajes'); panel.hidden = !state || state.enJuego || state.finalizada;
   if (!portraitsStarted) {
     portraitsStarted = true;
     import('/character-portraits.mjs').then(m => m.renderPortraits()).catch(() => {});
@@ -392,14 +394,16 @@ function updateControls() {
   if (!state) return;
   dialog3d.setWaiting(!state.enJuego);
   renderCharacters();
+  if(state.resultado && $('resultado-dialog').open)results.show(state.resultado,true);
   const p = me(), current = state.jugadores[state.turnoActual], mine = myTurn(), locked = busy || !!movement || presentationBusy || !!state.pausa || !socket.connected || state.fase === 'comercio';
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
   $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';
   const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', fuga:'Fuga de Capitales: tira un dado para conocer el pago.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: cierra tras 10 segundos sin nuevas pujas.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
-  $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
-  $('inicio').hidden = state.enJuego || !p?.esLider;
+  $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : state.finalizada ? 'Consulta el resultado o prepara la revancha.' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
+  $('ver-resultado').hidden=!state.resultado;
+  $('inicio').hidden = state.enJuego || state.finalizada || !p?.esLider;
   $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2 || !state.jugadores.filter(j=>j.conectado).every(j=>j.dadoInicial) || Date.now()<(state.inicioAnimacionHasta||0);
-  $('dado-inicial').hidden=state.enJuego||!p?.personaje||!!p?.dadoInicial;
+  $('dado-inicial').hidden=state.enJuego||state.finalizada||!p?.personaje||!!p?.dadoInicial;
   $('dado-inicial').disabled=locked||Date.now()<(state.inicioAnimacionHasta||0);
   $('pausar').hidden=!state.enJuego;
   $('pausar').disabled=busy||!socket.connected||p?.enQuiebra;
@@ -449,7 +453,7 @@ function nextInteraction() {
   if(item.multiplicador){const badge=element('span','×'+Number(item.multiplicador.toFixed(2)),'interaction-multiplier');box.prepend(badge);}
   if(item.casillas)board3d?.celebrate(item.casillas);
   $('interaccion-siguiente').textContent=interactionQueue.length?'Siguiente aviso ('+interactionQueue.length+')':'Cerrar aviso';
-  let remaining=item.detalle?.length>140?9000:6000,last=performance.now();
+  let remaining=3000,last=performance.now();
   const tick=()=>{
     const now=performance.now();
     if(!document.hidden&&!Game3DUI.hasBlockingDialog())remaining-=now-last;
@@ -618,9 +622,10 @@ async function showCard(data, automatic = false) {
   if (!$('carta-dialog').open) $('carta-dialog').showModal();
 }
 function showResult(result){
-  const key=JSON.stringify(result);if(key===lastResult)return;lastResult=key;selectedProperty=null;
-  $('detalle-contenido').replaceChildren(element('p','FIN DE PARTIDA','eyebrow'),element('h2',result.ganador),element('p',result.motivo));openDialog();
+  if(movement||presentationBusy||pendingCard||$('carta-dialog').open)return;
+  results.show(result);
 }
+$('carta-dialog').addEventListener('close',()=>{if(state?.resultado)showResult(state.resultado);});
 $('reglas').onclick=()=>{
   selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','EDICIÓN WEB','eyebrow'),element('h2','Cómo jugar'));
   for(const [title,text]of [

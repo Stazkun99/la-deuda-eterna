@@ -73,7 +73,7 @@ test('al abandonar, los dueños conservan identidad y no se saltan turnos', () =
 });
 test('reiniciar partida limpia propiedades, aliados, posición, oro y estado anterior', () => {
   const { r, act }=fixture();r.enJuego=false;r.finalizada=true;r.jugadores[0].posicion=33;r.jugadores[0].oro=0;r.jugadores[0].alianzaId='old';r.tablero[1].dueño=r.jugadores[0].id;r.tablero[1].industriasNac=3;
-  act(0,'iniciarPartida',{monopolio:false});assert.equal(r.jugadores[0].posicion,0);assert.equal(r.jugadores[0].oro,3);assert.equal(r.jugadores[0].alianzaId,null);assert.equal(r.tablero[1].dueño,null);
+  act(0,'prepararRevancha',{resultadoId:null});act(0,'iniciarPartida',{monopolio:false});assert.equal(r.jugadores[0].posicion,0);assert.equal(r.jugadores[0].oro,3);assert.equal(r.jugadores[0].alianzaId,null);assert.equal(r.tablero[1].dueño,null);
 });
 test('intereses al llegar al FMI, oro y continuación de la casilla tras el pago',()=>{
   const {r,act}=fixture();const p=r.jugadores[0];p.posicion=37;p.deudaPersonal=5000;

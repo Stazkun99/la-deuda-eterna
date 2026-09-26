@@ -482,3 +482,16 @@ Las tiradas de Fuga y de inicio reservan 1,4 segundos para ver caer el dado ante
 La base redondeada une las cuatro esquinas sin cambiar las 40 casillas ni sus reglas. «Mis propiedades» utiliza tarjetas con ilustraciones y niveles; comercio, préstamos y decisiones comparten la paleta verde y dorada del 3D. Completar la propiedad de una cadena genera una celebración y resalta sus casillas; esto no cambia el requisito de industrias para sumar rentas. Las rentas y los cobros de exportación muestran el factor efectivo sobre el precio de la casilla; Fuga muestra el dado como multiplicador de $1.000.
 
 Módulos nuevos: `public/character-animation.mjs` (esqueletos y locomoción), `public/movement-timing.js` (tiempos compartidos), `public/ui/windows.js` (ventanas móviles). Pruebas adicionales cubren los esqueletos GLB reales, oro con deuda máxima, pausa persistida, dados individuales, subastas y celebraciones sin duplicados.
+
+
+### Resultado final y revancha
+
+Al finalizar se abre un resumen verde y dorado con el ganador, motivo, duración sin pausas y turnos jugados. Para cada participante muestra patrimonio neto (efectivo + inversión de terrenos e industrias − deuda), lingotes aparte, propiedades, rentas cobradas/pagadas en efectivo y oro, préstamos recibidos, deuda final/máxima e intereses en efectivo. Las cajas y propiedades de alianzas se identifican como compartidas; las rentas se atribuyen al jugador que recibe o realiza el pago, sin duplicarlas entre aliados. Los participantes que abandonan conservan su última situación registrada. No es una clasificación adicional ni cambia las reglas de victoria.
+
+Los destacados incluyen la mayor renta, cadenas completadas, intercambios y mejoras gratuitas recientes. Las estadísticas acumulan la partida entera independientemente del registro limitado. En partidas existentes antes de esta versión se marca que el seguimiento es parcial; resultados antiguos sin estadísticas siguen siendo consultables. El resumen se conserva al reconectar y puede reabrirse mediante **Ver resultado y revancha**.
+
+El anfitrión pulsa **Preparar revancha**: conserva código, jugadores, conexiones y personajes; reinicia propiedades, deuda, dinero, alianzas, mazos, barrera y decisiones. Vuelve a la preparación, donde cada jugador tira un nuevo dado inicial. No comienza automáticamente. Se requiere el identificador del resultado actual para rechazar solicitudes antiguas o repetidas.
+
+La pausa se encuentra en la barra superior de ambas vistas. Los avisos informativos del tablero mantienen su cierre automático a los tres segundos; el resumen final permanece abierto hasta cerrarlo o preparar revancha.
+
+Módulos: `lib/match-summary.js` acumula y congela estadísticas; `public/ui/results.js` presenta el resumen; `public/results.css` contiene su diseño adaptable.

@@ -5,6 +5,7 @@ const dialog3d = GameScreen.create($('tablero-3d-dialog'));
 globalThis.GameWindows?.install($('tablero-3d-dialog')); 
 $('cerrar-3d').onclick = () => dialog3d.close();
 const controls3d = Game3DUI.createMount([
+  [$('pausar'),$('acciones-superiores-3d')],
   [document.querySelector('.turn-panel'), $('panel-3d')],
   [document.querySelector('#jugadores').closest('.panel'), $('mesa-jugadores-3d')],
   [document.querySelector('.activity'), $('actividad-3d')],

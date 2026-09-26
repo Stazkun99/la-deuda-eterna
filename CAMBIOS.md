@@ -1,5 +1,12 @@
 # Cambios preparados para revisión
 
+## Final y revancha
+
+- Resumen persistido con patrimonio, rentas en efectivo/oro, préstamos, deuda, intereses, duración, turnos y destacados; estadísticas parciales señaladas en partidas anteriores.
+- Revancha autorizada al anfitrión tras finalizar, con reinicio completo del juego y conservación de sala, sesiones y personajes. Nuevos dados iniciales.
+- Pausa trasladada a la barra superior en 2D y 3D. Avisos de tres segundos conservados.
+
+
 ## Mesa interactiva y animaciones — septiembre de 2026
 
 - Pasos articulados de Link/Yoshi, brazos bajos de Yoshi, vuelo de Scyther y saltos de Kirby; verificados con los modelos reales. Ejes de animación independientes del giro de la ficha.
