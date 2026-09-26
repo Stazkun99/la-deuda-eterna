@@ -1,0 +1,10 @@
+# La Deuda Eterna
+
+> Adaptación web gratuita de un juego de mesa económico, creada por Staz, para 2–4 jugadores en navegador.
+
+- [Portada y entrada al juego](__SITE_URL__/)
+- [Información y reglas resumidas](__SITE_URL__/index.md)
+- [Servidor de partidas](__GAME_URL__/)
+- [Créditos de modelos 3D](__GAME_URL__/creditos-modelos.html)
+
+La portada es estática. Las partidas necesitan conexión al servidor y JavaScript. No se requiere correo ni contraseña. No se garantiza conservar partidas tras reinicios del servidor gratuito.

@@ -495,3 +495,6 @@ El anfitrión pulsa **Preparar revancha**: conserva código, jugadores, conexion
 La pausa se encuentra en la barra superior de ambas vistas. Los avisos informativos del tablero mantienen su cierre automático a los tres segundos; el resumen final permanece abierto hasta cerrarlo o preparar revancha.
 
 Módulos: `lib/match-summary.js` acumula y congela estadísticas; `public/ui/results.js` presenta el resumen; `public/results.css` contiene su diseño adaptable.
+# Portada estática gratuita
+
+La portada independiente se prepara con `npm run build:landing`. Consulta [DESPLEGAR-PORTADA.md](DESPLEGAR-PORTADA.md) para los campos exactos de Render, la verificación en Search Console y la conexión al servidor actual. El tablero y las sesiones siguen en el Web Service; la portada no publica datos de partidas ni credenciales.

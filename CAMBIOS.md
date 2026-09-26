@@ -220,3 +220,10 @@ Los personajes se orientan hacia la cámara para mantener reconocible su silueta
 - Panel central verde/dorado, ocultación durante animaciones y controles de cámara, jugadores, chat y última carta en desplegables.
 - Separación de rutas HTTP, eventos Socket.IO, pantalla, controlador de vista, comercio, propiedades y estilos 3D. Sin cambios en reglas ni partidas guardadas.
 - Verificadas transiciones 2D/3D, comercio, propiedades, cartas y tamaños de escritorio/móvil; 125 pruebas automatizadas pasan.
+## Portada estática y acceso al servidor
+
+- Nueva portada ligera con formularios para crear/unirse, reglas, FAQ, autoría y créditos.
+- Espera de arranque con cancelación y reintento; consulta pública de salud sin datos de jugadores.
+- Entrada por fragmento de URL, validada, sin transferir tokens. Se conserva la identidad del navegador del juego.
+- Compilación independiente con SEO y sitemap generados usando la dirección real de Render.
+- Guía DESPLEGAR-PORTADA.md para desplegar ambos servicios desde el mismo repositorio.

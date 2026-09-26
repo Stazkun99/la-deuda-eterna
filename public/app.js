@@ -11,6 +11,9 @@ try {
   $('nombre').value = localStorage.getItem('deuda_eterna_nombre') || '';
   $('codigo').value = localStorage.getItem('deuda_eterna_sala') || '';
 } catch { storageAvailable = false; userId = 'usr_' + secureId().slice(0, 24); sessionToken = secureId(); }
+let entryIntent = globalThis.GameEntry?.parse(location.hash) || null, joining = false;
+if (entryIntent) { $('nombre').value = entryIntent.nombre; $('codigo').value = entryIntent.sala; }
+function clearEntry() { entryIntent = null; if (location.hash.startsWith('#entrada=')) history.replaceState(null, '', location.pathname + location.search); }
 const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
@@ -53,14 +56,18 @@ function log(container, text, prefix, color) {
   while (container.children.length > 150) container.firstElementChild.remove();
   container.scrollTop = container.scrollHeight;
 }
-function join(crear) {
-  const nombre = $('nombre').value.trim(), sala = crear ? secureId().slice(0, 6).toUpperCase() : $('codigo').value.trim().toUpperCase();
+function join(crear, intent = null) {
+  if (joining) return;
+  const nombre = intent?.nombre || $('nombre').value.trim(), sala = intent?.sala || (crear ? secureId().slice(0, 6).toUpperCase() : $('codigo').value.trim().toUpperCase());
   if (!nombre || nombre.length > 40) return notice('Introduce un nombre de entre 1 y 40 caracteres.');
   if (!/^[A-Z0-9_-]{3,12}$/.test(sala)) return notice('Introduce un código de sala válido.');
   if (!socket.connected) return notice('Estamos conectando. Espera un momento.');
+  joining = true; updateControls();
   socket.timeout(8000).emit('unirseSala', { nombre, sala, crear, userId, sessionToken }, (error, result) => {
+    joining = false; updateControls();
     if (error) return notice('El servidor tarda en responder. Espera a que conecte.');
-    if (result?.ok) { joinedRoom = sala; remember('deuda_eterna_nombre', nombre); remember('deuda_eterna_sala', sala); }
+    clearEntry();
+    if (result?.ok) { joinedRoom = sala; $('codigo').value = sala; remember('deuda_eterna_nombre', nombre); remember('deuda_eterna_sala', sala); }
   });
 }
 let board3d = null, board3dLoading = false, selected3d = null;
@@ -68,8 +75,8 @@ const {dialog3d,controls3d}=GameBoardView.create({$,element,amount,updateControl
  get state(){return state;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
  get board3d(){return board3d;},set board3d(v){board3d=v;},get board3dLoading(){return board3dLoading;},set board3dLoading(v){board3dLoading=v;},get selected3d(){return selected3d;},set selected3d(v){selected3d=v;}});
 $('interaccion-siguiente').onclick = nextInteraction;
-$('crear').onclick = () => join(true);
-$('acceso').onsubmit = e => { e.preventDefault(); join(false); };
+$('crear').onclick = () => { clearEntry(); join(true); };
+$('acceso').onsubmit = e => { e.preventDefault(); clearEntry(); join(false); };
 $('salir').onclick = () => {
   if (confirm('¿Abandonar la sala? Tu plaza se eliminará y tus propiedades se liberarán o pasarán a tu alianza.')) socket.emit('abandonarSala', {}, result => { if (!result?.ok) notice('No se pudo abandonar la sala.'); });
 };
@@ -135,7 +142,8 @@ $('chat-form').onsubmit = e => {
 socket.on('connect', () => {
   $('conexion').textContent = 'Conectado';
   const saved = joinedRoom || $('codigo').value.trim();
-  if (saved && $('nombre').value.trim()) socket.emit('unirseSala', { nombre: $('nombre').value.trim(), sala: saved, userId, sessionToken }, result => { if (result?.ok) joinedRoom = saved; });
+  if (entryIntent) join(entryIntent.crear, entryIntent);
+  else if (saved && $('nombre').value.trim()) socket.emit('unirseSala', { nombre: $('nombre').value.trim(), sala: saved, userId, sessionToken }, result => { if (result?.ok) joinedRoom = saved; });
   updateControls();
 });
 socket.on('disconnect', () => { globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; busy = false; $('conexion').textContent = 'Reconectando…'; updateControls(); renderDecision(true); });
@@ -389,7 +397,7 @@ function renderPlayers() {
   }
 }
 function updateControls() {
-  $('crear').disabled = $('unirse').disabled = !socket.connected;
+  $('crear').disabled = $('unirse').disabled = !socket.connected || joining;
   $('tirar-3d').disabled = true;
   if (!state) return;
   dialog3d.setWaiting(!state.enJuego);
