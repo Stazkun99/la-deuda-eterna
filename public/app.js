@@ -14,6 +14,8 @@ try {
 let entryIntent = globalThis.GameEntry?.parse(location.hash) || null, joining = false;
 if (entryIntent) { $('nombre').value = entryIntent.nombre; $('codigo').value = entryIntent.sala; }
 function clearEntry() { entryIntent = null; if (location.hash.startsWith('#entrada=')) history.replaceState(null, '', location.pathname + location.search); }
+const invitedRoom = globalThis.GameEntry?.invitation(location.search);
+if(invitedRoom && !entryIntent)$('codigo').value=invitedRoom;
 const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
@@ -80,6 +82,8 @@ $('acceso').onsubmit = e => { e.preventDefault(); clearEntry(); join(false); };
 $('salir').onclick = () => {
   if (confirm('¿Abandonar la sala? Tu plaza se eliminará y tus propiedades se liberarán o pasarán a tu alianza.')) socket.emit('abandonarSala', {}, result => { if (!result?.ok) notice('No se pudo abandonar la sala.'); });
 };
+GameInvites.create({$,getRoom:()=>state?.codigo,notice});
+$('agregar-bot').onclick=()=>action('agregarBot');
 $('copiar').onclick = async () => { try { await navigator.clipboard.writeText(state.codigo); notice('Código copiado: ' + state.codigo); } catch { notice('Código de sala: ' + state.codigo); } };
 $('dado-inicial').onclick=()=>action('tirarDadoInicial');
 $('pausar').onclick=()=>action('pausarPartida',{pausar:!state?.pausa});
@@ -392,7 +396,9 @@ function renderPlayers() {
     content.append(element('div', 'Ficha: ' + pieceFor(p).name, 'piece-name'));
     const stats = element('div', undefined, 'player-stats'); stats.append(element('span', amount(p.dinero)), element('span', 'Deuda ' + amount(p.deudaPersonal)), element('span', '◆ ' + p.oro+' lingotes')); content.append(stats);
     if(p.dadoInicial)content.append(element('small','Dado inicial: '+p.dadoInicial,'initial-roll-result'));
+    if(p.sombreroSandino)content.append(element('small','Sombrero de Sandino · 1 uso disponible','initial-roll-result'));
     content.append(element('div', [!p.conectado && 'Desconectado', p.enQuiebra && 'En quiebra', p.enAlianza && 'Alianza · caja común', p.industriasCerradas && 'Industrias cerradas', p.turnosPerdidos > 0 && 'Desempleo: ' + p.turnosPerdidos, p.deudaPersonal >= 30000 && 'Límite de deuda'].filter(Boolean).join(' · '), 'player-status'));
+    if(p.bot && !state.enJuego && !state.finalizada && me()?.esLider) { const remove=button('Quitar bot',()=>action('quitarBot',{jugadorId:p.id})); remove.disabled=busy||!socket.connected; content.append(remove); }
     row.append(avatar, content); $('jugadores').append(row);
   }
 }
@@ -407,9 +413,10 @@ function updateControls() {
   $('turno').textContent = state.enJuego ? mine ? 'Tu turno, ' + p.nombre : 'Turno de ' + current?.nombre : state.finalizada ? 'Partida terminada' : 'Esperando jugadores';
   $('turno-centro').textContent = state.enJuego ? current?.nombre : 'En espera';
   const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', fuga:'Fuga de Capitales: tira un dado para conocer el pago.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: cierra tras 10 segundos sin nuevas pujas.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
-  $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : state.finalizada ? 'Consulta el resultado o prepara la revancha.' : 'Mínimo dos conectados. Al iniciar se liberan las plazas desconectadas.';
+  $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : state.finalizada ? 'Consulta el resultado o prepara la revancha.' : 'Juega con amigos o añade bots. Cada participante debe tirar su dado inicial.';
   $('ver-resultado').hidden=!state.resultado;
   $('inicio').hidden = state.enJuego || state.finalizada || !p?.esLider;
+  $('agregar-bot').disabled=locked||state.jugadores.length>=4;
   $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2 || !state.jugadores.filter(j=>j.conectado).every(j=>j.dadoInicial) || Date.now()<(state.inicioAnimacionHasta||0);
   $('dado-inicial').hidden=state.enJuego||state.finalizada||!p?.personaje||!!p?.dadoInicial;
   $('dado-inicial').disabled=locked||Date.now()<(state.inicioAnimacionHasta||0);
@@ -565,6 +572,7 @@ function renderDecision(force = false) {
       if(d.oroPermitido)add('Usar un lingote de oro','responderDecisionPago',{usarOro:true},p.oro<1);
       if(state.monopolio){const c=state.tablero[p.posicion];if(c.region==='sur'&&c.dueño===d.dueñoId)add('Ver opción de monopolio','expropiarPropiedad',{nombrePropiedad:c.nombre});}
     } else if (d.tipo === 'eleccion') {
+      if(d.efecto==='sandino')container.append(element('p','Sombrero de Sandino: puedes anular «'+d.titulo+'» una vez. Si lo guardas, se aplica la carta completa.'));
       container.append(element('h3',d.efecto === 'industrializar' ? 'Industrialización gratuita' : 'Elige tu siguiente movimiento'));
       if (d.efecto === 'industrializar') {
         const dialog = $('industrial-dialog'), options = $('industrial-opciones');
@@ -640,6 +648,9 @@ $('reglas').onclick=()=>{
     ['Inicio','Todos reciben $5.000 más un dado × $200: entre $5.200 y $6.200, sin deuda inicial. Empieza quien saque el dado más alto; los empates se resuelven por sorteo entre los empatados. Después se sigue el orden de la mesa.'],
     ['Tu turno','Gestiona tus industrias antes de tirar. Después resuelve la casilla y pulsa Terminar turno. Tienes tres minutos; una desconexión conserva tu turno durante un minuto.'],
     ['Construcción','Compra materias primas en el Sur. Puedes construir hasta tres industrias nacionales y tres multinacionales; cada nivel de exportación necesita el mismo nivel nacional. Ayuda Solidaria permite construir después de tirar al 50%.'],
+    ['Tus industrias','En una industria propia del Sur no cobras ni pagas, tampoco con cadena. En una multinacional propia del Norte cobras exportaciones si no hay barrera ni otro impedimento.'],
+    ['Sombrero de Sandino','Nicaragua entrega un sombrero a cada jugador. En esta edición puedes guardarlo o gastarlo para anular una carta FMI que saques, incluidos sus efectos colectivos. Se consume al usarlo y no se acumula. Si se agota el turno, se guarda y se aplica la carta.'],
+    ['Bots e invitaciones','El anfitrión puede añadir hasta tres bots antes de empezar y quitarlos desde la lista de jugadores. El botón Invitar por enlace está en Sala en la vista 3D. Los bots juegan con las mismas reglas, gestionan reservas, deuda e industrias y valoran ofertas; juegan sin alianzas y no proponen tratos.'],
     ['Dinero y oro','Las rentas son el precio de casilla por las industrias. Las cadenas suman sus rentas. El oro paga manufacturas e intereses, pero no cartas, industrias, fuga de capitales ni monopolios.'],
     ['Deudas','Préstamos por el importe que elijas, hasta $30.000 de deuda por jugador. Puedes amortizar el importe que elijas, limitado por tu deuda y efectivo, en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
     ['Comercio','En tu turno, antes de tirar o tras resolver la casilla, puedes proponer propiedades y dinero a otro grupo. Cada terreno incluye sus industrias. El destinatario acepta o rechaza; la oferta caduca en 60 segundos como máximo. Cerrar la ventana no cancela la oferta.'],

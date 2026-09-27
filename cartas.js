@@ -22,7 +22,7 @@ const CARTAS_SOLIDARIDAD = [
   { id: 1, pais: "PUERTO RICO", desc: "Te invita a la NACIONALIZACIÓN (Casilla 24)." },
   { id: 2, pais: "GUATEMALA", desc: "Te regala una finca de algodón $2,600." },
   { id: 3, pais: "GUYANA Y SURINAM", desc: "Te envían a la casilla No. 10 para brindarte ayuda solidaria." },
-  { id: 4, pais: "NICARAGUA", desc: "Les regala a todos el SOMBRERO." },
+  { id: 4, pais: "NICARAGUA", desc: "Les regala a todos el SOMBRERO. En esta edición, cada jugador puede guardarlo o gastarlo para anular una carta FMI que saque. Se consume al usarlo; no se acumula." },
   { id: 5, pais: "ARGENTINA Y URUGUAY", desc: "Te regalan una cría de ganado $3,400." },
   { id: 6, pais: "HAITÍ Y DOMINICANA", desc: "Te regalan una vega de tabaco $2,800." },
   { id: 7, pais: "COLOMBIA", desc: "Te regala un saco de café $3,000." },

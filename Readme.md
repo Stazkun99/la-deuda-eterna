@@ -27,6 +27,20 @@ Esta adaptación admite **2–4 jugadores** y funciona en navegadores de escrito
 
 ## Funciones
 
+### Invitaciones y bots
+
+- **Invitar por enlace** abre un enlace a la portada con el código preparado. En 3D está en el menú **Sala**. Se puede copiar o compartir desde dispositivos compatibles. El enlace no contiene credenciales.
+- El anfitrión puede añadir hasta tres **bots competentes** en plazas libres y quitarlos antes de empezar. El máximo total sigue siendo cuatro participantes. Los bots eligen un personaje libre y tiran automáticamente su dado inicial; el anfitrión inicia la partida.
+- Los bots compran valorando reservas y grupos, construyen priorizando rentabilidad, amortizan para reducir intereses y dados, usan oro, resuelven cartas, liquidan por subasta y pujan con un presupuesto. Aceptan o rechazan ofertas recibidas según patrimonio y liquidez; no proponen intercambios, no forman alianzas y no realizan monopolios en esta versión.
+- Deciden en el servidor con información pública, sin conocer próximas cartas ni dados. No usan servicios de IA externos. Respetan pausas y esperas para las animaciones. Si se desconectan todos los humanos, dejan de jugar; al regresar se ajustan los plazos. Se conservan en la revancha y en el guardado mientras este exista.
+- `LANDING_URL` en el servidor permite cambiar el destino de las invitaciones. Por defecto: `https://la-deuda-eterna-1.onrender.com/`. No afecta a la configuración de la portada estática.
+
+### Sandino y cobros propios
+
+La carta de Nicaragua concede un sombrero a cada jugador. Regla de esta edición: al sacar una condición FMI, el jugador elige **guardar** el sombrero y aplicar la carta o **usarlo** para anular esa carta completa (también sus efectos colectivos). Usarlo consume solo su sombrero; no se acumulan varios. Por inactividad se guarda y la carta se aplica. Los bots valoran su uso según el perjuicio de la carta. Los sombreros de partidas guardadas pasan a ser un uso disponible.
+
+En el Sur, caer en una industria propia **no paga ni cobra**, también si forma una cadena. En el Norte, las industrias propias generan exportación cuando no hay barrera ni otro impedimento. El reglamento PDF de la carpeta original confirma esta distinción; su carta de Nicaragua dice que el sombrero se entrega a todos, pero no documenta su duración. La regla de un uso elegido es una adaptación acordada, no una afirmación sobre el reglamento original.
+
 - Tablero HTML de 40 casillas. Las fichas e industrias pertenecen a cada casilla: el movimiento no depende de coordenadas sobre una imagen.
 - Fichas numeradas con relieve, colores de jugador y aro dorado para el turno activo; agrupación cuando coinciden varias.
 - Dados animados con resultado confirmado por el servidor y adaptación a la preferencia de movimiento reducido.

@@ -1,5 +1,13 @@
 # Cambios preparados para revisión
 
+## Invitaciones, bots y Sandino
+
+- Invitación por enlace desde Sala, con código prellenado en la portada y opción de compartir/copiar.
+- Bots de servidor en plazas libres, gestión solo por anfitrión, tiradas iniciales y juego autónomo con reservas, deuda, industrias, cartas, subastas y valoración de ofertas.
+- Sin actividad automática cuando faltan todos los humanos; pausa, reanudación, guardado y revancha cubiertos por pruebas.
+- Sandino deja de ser inmunidad permanente: elección de guardar o consumir para anular una condición FMI. Indicador de un uso disponible y decisión estratégica del bot.
+- Cobro propio del Sur contrastado con el PDF y cubierto por prueba: no cobra ni paga. Cobro del Norte conservado.
+
 ## Final y revancha
 
 - Resumen persistido con patrimonio, rentas en efectivo/oro, préstamos, deuda, intereses, duración, turnos y destacados; estadísticas parciales señaladas en partidas anteriores.

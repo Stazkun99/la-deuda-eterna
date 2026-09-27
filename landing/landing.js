@@ -3,6 +3,9 @@ const form = document.getElementById('entry-form'), nombre = document.getElement
 const status = document.getElementById('entry-status'), cancel = document.getElementById('cancelar');
 const gameUrl = document.body.dataset.gameUrl;
 let sending = false, run = 0, lastWarm = 0;
+const invitedRoom = GameEntry.invitation(location.search);
+if(invitedRoom) { codigo.value=invitedRoom; status.textContent='Te han invitado a la sala '+invitedRoom+'. Escribe tu nombre y pulsa «Unirme».'; }
+nombre.addEventListener('keydown',event=>{if(invitedRoom && event.key==='Enter'){event.preventDefault();form.requestSubmit(document.getElementById('unirse'));}});
 try { nombre.value = localStorage.getItem('deuda_portada_nombre') || ''; } catch {}
 async function ping() {
   const response = await fetch(new URL('health', gameUrl), { mode: 'cors', credentials: 'omit', cache: 'no-store', signal: AbortSignal.timeout(7000) });
@@ -19,7 +22,7 @@ cancel.onclick = () => { run++; unlock(); status.textContent = 'Conexión cancel
 window.addEventListener('pageshow', () => { run++; unlock(); });
 form.addEventListener('submit', async event => {
   event.preventDefault(); if (sending) return;
-  const crear = event.submitter?.value !== 'unirse';
+  const crear = event.submitter ? event.submitter.value === 'crear' : !invitedRoom;
   const data = { nombre: nombre.value.trim(), crear, sala: crear ? Array.from(crypto.getRandomValues(new Uint8Array(4)), n => n.toString(16).padStart(2, '0')).join('').toUpperCase() : codigo.value.trim().toUpperCase() };
   if (!data.nombre) { nombre.focus(); status.textContent = 'Escribe tu nombre para entrar.'; return; }
   let destination;

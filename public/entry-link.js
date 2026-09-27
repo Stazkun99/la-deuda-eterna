@@ -15,7 +15,17 @@
     url.hash = p.toString();
     return url.href;
   }
-  const api = { parse, build };
+  function invitation(search) {
+    const room = (new URLSearchParams(search).get('sala') || '').trim().toUpperCase();
+    return /^[A-Z0-9_-]{3,12}$/.test(room) ? room : null;
+  }
+  function invite(base, room) {
+    const url = new URL(base);
+    if (!['http:', 'https:'].includes(url.protocol) || !invitation('?sala='+encodeURIComponent(room))) throw new Error('Invitación inválida');
+    url.search = new URLSearchParams({sala:room.toUpperCase()}).toString(); url.hash='';
+    return url.href;
+  }
+  const api = { parse, build, invitation, invite };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.GameEntry = api;
 })(globalThis);

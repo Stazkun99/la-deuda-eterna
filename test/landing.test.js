@@ -13,7 +13,7 @@ test('formulario espera salud real, evita doble envío y cancelar impide una red
   const context = {
     document: { getElementById: id => nodes[id], body: { dataset: { gameUrl: 'https://game.example/' } } },
     window: { addEventListener() {}, location: { assign: url => navigations.push(url) } },
-    localStorage: { getItem: () => null, setItem() {} }, GameEntry: Entry, URL, AbortSignal, crypto: require('node:crypto').webcrypto,
+    location: {search:''}, localStorage: { getItem: () => null, setItem() {} }, GameEntry: Entry, URL, AbortSignal, crypto: require('node:crypto').webcrypto,
     fetch: () => new Promise(resolve => requests.push(resolve)), setTimeout, Date
   };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, '../landing/landing.js'), 'utf8'), context);
