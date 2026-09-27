@@ -235,3 +235,14 @@ Los personajes se orientan hacia la cámara para mantener reconocible su silueta
 - Entrada por fragmento de URL, validada, sin transferir tokens. Se conserva la identidad del navegador del juego.
 - Compilación independiente con SEO y sitemap generados usando la dirección real de Render.
 - Guía DESPLEGAR-PORTADA.md para desplegar ambos servicios desde el mismo repositorio.
+
+## Economía progresiva y reglamento unificado
+
+### Economía y protección inicial
+
+- Dos propiedades con industrias activas de un grupo de tres: renta individual ×1,5, por región. Pesca/Ganado y Petróleo conservan sus cadenas. La cadena completa sustituye el bono parcial; no suma otro 50%.
+- Caer en industria propia del Sur: 50% de la renta efectiva, con bono parcial o cadena completa incluido. Sin industria, cierre o desempleo no hay cobro. Importes fraccionarios redondeados hacia abajo. Ejemplo: Azúcar con una industria y Cacao también construido da renta 150 y cobro propio 75.
+- Fuga: vuelta 1 resultado 1; vuelta 2 resultados 1–2; hasta 1–6 desde vuelta 6. Cada resultado permitido tiene igual probabilidad. Se pagan 1.000 por punto.
+- Golpe militar: pierde el 50% del efectivo en vueltas 1–2; 100% desde vuelta 3. Los resguardos siguen funcionando.
+- Las vueltas son individuales: cruzar salida con los dados suma una; un traslado de carta no suma por sí solo. Se guardan al reconectar y se reinician en revancha. Partidas antiguas sin contador comienzan en vuelta 1 al cargar esta versión.
+- El reglamento dentro del juego y el publicado en la portada proceden de `public/rules.js`. La portada lo incluye en HTML durante su compilación.

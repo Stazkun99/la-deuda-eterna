@@ -16,3 +16,7 @@ Gana el último jugador o grupo activo, o quien complete las doce propiedades co
 ## Acceso
 
 No se necesita instalar aplicaciones ni proporcionar correo o contraseña. Se necesita Internet y JavaScript. Usa el mismo navegador para recuperar tu plaza mientras exista la sala. El alojamiento gratuito puede tardar en despertar y perder partidas al reiniciarse o actualizarse.
+
+## Reglamento de esta edición
+
+__RULES_MD__

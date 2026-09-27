@@ -3,6 +3,7 @@
 > Adaptación web gratuita de un juego de mesa económico, creada por Staz, para 2–4 jugadores en navegador.
 
 - [Portada y entrada al juego](__SITE_URL__/)
+- [Reglamento actualizado](__SITE_URL__/#reglamento)
 - [Información y reglas resumidas](__SITE_URL__/index.md)
 - [Servidor de partidas](__GAME_URL__/)
 - [Créditos de modelos 3D](__GAME_URL__/creditos-modelos.html)

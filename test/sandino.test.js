@@ -24,9 +24,9 @@ test('inactividad conserva sombrero y resuelve el cargo sin inmunidad permanente
  const s=setup(),{game,r,p}=s;p.sombreroSandino=true;const cash=p.dinero;s.draw(14);s.advance(200000);game.tick();
  assert.equal(p.dinero,cash-1500);assert.equal(p.sombreroSandino,true);assert.equal(r.pendiente,null);
 });
-test('Sur propio y cadenas no cobran; Norte propio paga renta de exportación',()=>{
+test('Sur propio cobra media cadena; Norte propio paga renta de exportación',()=>{
  const {game,r,p}=setup();
  for(const name of ['Azúcar','Banano','Cacao']) {const c=game.sur(r,name);game.transfer(r,c,p.id);c.industriasNac=2;const n=game.north(r,c);n.dueño=p.id;n.industriasExp=1;}
- const cash=p.dinero;game.land(r,p,1);assert.equal(p.dinero,cash);assert.equal(r.pendiente,null);
- game.land(r,p,21);assert.equal(p.dinero,cash+900);
+ const cash=p.dinero;game.land(r,p,1);assert.equal(p.dinero,cash+450);assert.equal(r.pendiente,null);
+ game.land(r,p,21);assert.equal(p.dinero,cash+1350);
 });

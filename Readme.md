@@ -1,10 +1,10 @@
 # La Deuda Eterna · Edición web y multiplataforma
 
-![Vista previa del tablero](public/preview.png)
+![Captura real del tablero 3D](public/preview.png)
 
 Juego de mesa multijugador de estrategia económica: desarrolla materias primas en el Sur, construye manufacturas en el Norte, negocia con otros jugadores y gestiona tu deuda con el FMI.
 
-**[Jugar en línea](https://la-deuda-eterna.onrender.com/) · [Repositorio](https://github.com/Stazkun99/la-deuda-eterna) · [Historial de cambios](CAMBIOS.md)**
+**[Jugar en línea](https://la-deuda-eterna-1.onrender.com/) · [Repositorio](https://github.com/Stazkun99/la-deuda-eterna) · [Historial de cambios](CAMBIOS.md)**
 
 Esta adaptación admite **2–4 jugadores** y funciona en navegadores de escritorio y móvil. Las salas se comparten por código; no hace falta crear una cuenta. El servidor decide los resultados y valida cada acción.
 
@@ -39,9 +39,9 @@ Esta adaptación admite **2–4 jugadores** y funciona en navegadores de escrito
 
 La carta de Nicaragua concede un sombrero a cada jugador. Regla de esta edición: al sacar una condición FMI, el jugador elige **guardar** el sombrero y aplicar la carta o **usarlo** para anular esa carta completa (también sus efectos colectivos). Usarlo consume solo su sombrero; no se acumulan varios. Por inactividad se guarda y la carta se aplica. Los bots valoran su uso según el perjuicio de la carta. Los sombreros de partidas guardadas pasan a ser un uso disponible.
 
-En el Sur, caer en una industria propia **no paga ni cobra**, también si forma una cadena. En el Norte, las industrias propias generan exportación cuando no hay barrera ni otro impedimento. El reglamento PDF de la carpeta original confirma esta distinción; su carta de Nicaragua dice que el sombrero se entrega a todos, pero no documenta su duración. La regla de un uso elegido es una adaptación acordada, no una afirmación sobre el reglamento original.
+En el Sur propio se cobra el 50% de la renta efectiva, incluidos los bonos por pareja o cadena completa, si la industria está operativa. En el Norte propio se cobra la renta completa sin barrera ni otros impedimentos. Son reglas de esta adaptación; las tarjetas impresas pueden mostrar reglas anteriores.
 
-- Tablero HTML de 40 casillas. Las fichas e industrias pertenecen a cada casilla: el movimiento no depende de coordenadas sobre una imagen.
+- Tablero 3D de 40 casillas, con modelos, personajes y animaciones; vista HTML 2D opcional. Las fichas e industrias pertenecen a cada casilla: el movimiento no depende de coordenadas sobre una imagen.
 - Fichas numeradas con relieve, colores de jugador y aro dorado para el turno activo; agrupación cuando coinciden varias.
 - Dados animados con resultado confirmado por el servidor y adaptación a la preferencia de movimiento reducido.
 - Doce materias primas del Sur y doce manufacturas del Norte, cada una con su ilustración correspondiente.
@@ -66,7 +66,7 @@ npm start
 
 Abre [localhost:3001](http://localhost:3001). Para detener el servidor, pulsa `Ctrl+C` en su consola.
 
-Para probar tú solo una sala multijugador, usa una ventana normal y otra de incógnito, o perfiles de navegador distintos. Dos pestañas del mismo perfil comparten identidad: la conexión más reciente sustituye a la anterior.
+Para jugar solo, crea una sala y añade bots. Para probar varias personas, usa una ventana normal y otra de incógnito, o perfiles de navegador distintos. Dos pestañas del mismo perfil comparten identidad: la conexión más reciente sustituye a la anterior.
 
 ## Cómo jugar
 
@@ -117,6 +117,16 @@ Los miembros de una alianza operan con su caja y patrimonio compartidos, como al
 
 ## Reglas de esta edición
 
+### Economía y protección inicial
+
+- Dos propiedades con industrias activas de un grupo de tres: renta individual ×1,5, por región. Pesca/Ganado y Petróleo conservan sus cadenas. La cadena completa sustituye el bono parcial; no suma otro 50%.
+- Caer en industria propia del Sur: 50% de la renta efectiva, con bono parcial o cadena completa incluido. Sin industria, cierre o desempleo no hay cobro. Importes fraccionarios redondeados hacia abajo. Ejemplo: Azúcar con una industria y Cacao también construido da renta 150 y cobro propio 75.
+- Fuga: vuelta 1 resultado 1; vuelta 2 resultados 1–2; hasta 1–6 desde vuelta 6. Cada resultado permitido tiene igual probabilidad. Se pagan 1.000 por punto.
+- Golpe militar: pierde el 50% del efectivo en vueltas 1–2; 100% desde vuelta 3. Los resguardos siguen funcionando.
+- Las vueltas son individuales: cruzar salida con los dados suma una; un traslado de carta no suma por sí solo. Se guardan al reconectar y se reinician en revancha. Partidas antiguas sin contador comienzan en vuelta 1 al cargar esta versión.
+- El reglamento dentro del juego y el publicado en la portada proceden de `public/rules.js`. La portada lo incluye en HTML durante su compilación.
+
+
 Esta sección describe la implementación web. No reproduce todas las variantes del reglamento impreso.
 
 ### Propiedades y construcción
@@ -124,7 +134,7 @@ Esta sección describe la implementación web. No reproduce todas las variantes 
 - Hay doce terrenos del Sur, cada uno vinculado a una manufactura del Norte.
 - Cada propiedad admite hasta tres industrias nacionales y tres multinacionales. Cada multinacional necesita su nivel nacional correspondiente.
 - Se construye antes de tirar. En **Ayuda Solidaria** también se puede construir durante la gestión final, con un descuento del 50 %.
-- Las rentas dependen del precio de casilla y el número de industrias; las cadenas completas suman rentas de su grupo.
+- Las rentas dependen del precio de casilla y el número de industrias; dos propiedades con industrias en un grupo de tres dan renta ×1,5 en esa región; la cadena completa sustituye ese bono por la suma de rentas del grupo.
 - **Industrialización** permite elegir un terreno libre con su primera industria gratis. Si no quedan libres, permite añadir una industria nacional o multinacional disponible en una propiedad propia o de la alianza. Si no hay mejoras posibles, se informa sin bloquear el turno.
 
 ### Deuda, oro y FMI

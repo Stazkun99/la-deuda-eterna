@@ -64,7 +64,7 @@ test('rentas por industrias y cadenas, también en el Norte', () => {
   const { game, r } = fixture();
   for (const id of [5, 6, 7]) { r.tablero[id].dueño = r.jugadores[0].id; r.tablero[id].industriasNac = id === 7 ? 1 : 2; const n = game.north(r,r.tablero[id]); n.dueño=r.jugadores[0].id;n.industriasExp=1; }
   assert.equal(game.rent(r,r.tablero[5]),1450); assert.equal(game.rent(r,r.tablero[25]),1800);
-  r.tablero[7].industriasNac=0; assert.equal(game.rent(r,r.tablero[5]),500);
+  r.tablero[7].industriasNac=0; assert.equal(game.rent(r,r.tablero[5]),750);
 });
 test('al abandonar, los dueños conservan identidad y no se saltan turnos', () => {
   const { game, r } = fixture(); const owner=r.jugadores[2];r.tablero[5].dueño=owner.id;r.tablero[5].industriasNac=1;r.turnoActual=1;

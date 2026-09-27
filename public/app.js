@@ -564,7 +564,7 @@ function renderDecision(force = false) {
       container.append(element('h3',d.nombrePropiedad),element('p','Compra el terreno por '+amount(c.precio)+' o cobra la materia prima.'));
       add('Comprar · '+amount(c.precio),'decidirCompraPropiedad',{comprar:true},p.dinero<c.precio,true);add('Cobrar materia prima · '+amount(c.precio),'decidirCompraPropiedad',{comprar:false});
     } else if (d.tipo === 'fuga') {
-      container.append(element('h3','Fuga de Capitales'),element('p','Tira un dado: pagarás $1.000 por punto. No admite oro.'));
+      container.append(element('h3','Fuga de Capitales'),element('p','Vuelta '+(d.vuelta || (p.vueltasCompletadas || 0)+1)+': el dado puede sacar de 1 a '+(d.maximo || Math.min(6,(p.vueltasCompletadas || 0)+1))+'. Pagarás $1.000 por punto. No admite oro.'));
       add('Tirar dado de Fuga de Capitales','tirarDadoFuga',{},false,true);
     } else if (d.tipo === 'pago') {
       container.append(element('h3','Pago pendiente · '+amount(d.monto)),element('p',d.motivo));
@@ -642,22 +642,12 @@ function showResult(result){
   results.show(result);
 }
 $('carta-dialog').addEventListener('close',()=>{if(state?.resultado)showResult(state.resultado);});
+$('cerrar-reglamento').onclick=()=>$('reglamento-dialog').close();
 $('reglas').onclick=()=>{
-  selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','EDICIÓN WEB','eyebrow'),element('h2','Cómo jugar'));
-  for(const [title,text]of [
-    ['Inicio','Todos reciben $5.000 más un dado × $200: entre $5.200 y $6.200, sin deuda inicial. Empieza quien saque el dado más alto; los empates se resuelven por sorteo entre los empatados. Después se sigue el orden de la mesa.'],
-    ['Tu turno','Gestiona tus industrias antes de tirar. Después resuelve la casilla y pulsa Terminar turno. Tienes tres minutos; una desconexión conserva tu turno durante un minuto.'],
-    ['Construcción','Compra materias primas en el Sur. Puedes construir hasta tres industrias nacionales y tres multinacionales; cada nivel de exportación necesita el mismo nivel nacional. Ayuda Solidaria permite construir después de tirar al 50%.'],
-    ['Tus industrias','En una industria propia del Sur no cobras ni pagas, tampoco con cadena. En una multinacional propia del Norte cobras exportaciones si no hay barrera ni otro impedimento.'],
-    ['Sombrero de Sandino','Nicaragua entrega un sombrero a cada jugador. En esta edición puedes guardarlo o gastarlo para anular una carta FMI que saques, incluidos sus efectos colectivos. Se consume al usarlo y no se acumula. Si se agota el turno, se guarda y se aplica la carta.'],
-    ['Bots e invitaciones','El anfitrión puede añadir hasta tres bots antes de empezar y quitarlos desde la lista de jugadores. El botón Invitar por enlace está en Sala en la vista 3D. Los bots juegan con las mismas reglas, gestionan reservas, deuda e industrias y valoran ofertas; juegan sin alianzas y no proponen tratos.'],
-    ['Dinero y oro','Las rentas son el precio de casilla por las industrias. Las cadenas suman sus rentas. El oro paga manufacturas e intereses, pero no cartas, industrias, fuga de capitales ni monopolios.'],
-    ['Deudas','Préstamos por el importe que elijas, hasta $30.000 de deuda por jugador. Puedes amortizar el importe que elijas, limitado por tu deuda y efectivo, en la fase de gestión o antes de tirar. Se usan dos dados; tres desde $10.000 y cuatro desde $20.000. Los intereses se cobran al pasar o llegar al FMI.'],
-    ['Comercio','En tu turno, antes de tirar o tras resolver la casilla, puedes proponer propiedades y dinero a otro grupo. Cada terreno incluye sus industrias. El destinatario acepta o rechaza; la oferta caduca en 60 segundos como máximo. Cerrar la ventana no cancela la oferta.'],
-    ['Alianzas y subastas','La alianza comparte efectivo, oro y propiedades, conservando las deudas individuales. En embargo y sin efectivo, subasta una propiedad hasta que pasen 10 segundos sin nuevas pujas; sin ofertas, el FMI paga el 50% y libera el terreno.'],
-    ['Final','Gana el último jugador activo o el grupo que alcance las doce propiedades con tres industrias nacionales y tres multinacionales en cada una. Unirse en alianza no da una victoria automática.'],
-    ['Adaptación web','Esta edición admite 2–4 jugadores, alianzas de hasta cuatro, amortización sin visitar el FMI y no obliga a desplazarse al FMI al alcanzar una devaluación. El monopolio opcional compra una propiedad y su exportación, no una cadena completa. El comercio permite acordar propiedades y dinero; no incluye negociación de oro o deudas.']
-  ])box.append(element('h3',title),element('p',text));openDialog();
+  const box=$('reglamento-contenido');box.replaceChildren();
+  for(const [title,text]of EDITION_RULES)box.append(element('h3',title),element('p',text));
+  if(!$('reglamento-dialog').open)$('reglamento-dialog').showModal();
+
 };
 fetch('/api/catalogo').then(r=>{if(!r.ok)throw new Error();return r.json();}).then(data=>{catalog=data;if(state){renderBoard();board3d?.update();}}).catch(()=>notice('No se pudieron cargar los precios de construcción. Recarga la página.'));
 if(!storageAvailable)notice('Este navegador no permite guardar la sesión. No podrás recuperar tu plaza al cerrarlo.');
