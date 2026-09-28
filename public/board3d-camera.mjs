@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // Camera work is driven by the same demand-render loop as the board.
-export function createBoardCamera(camera,controls,{reduced=()=>false,aspect=()=>1}={}){
+export function createBoardCamera(camera,controls,{reduced=()=>false,aspect=()=>1,onOverview=()=>{}}={}){
  let tween=null,tracking=null,last=null;
  // View from the clear center of the table, above the miniature scenery.
  const offset=point=>{
@@ -23,6 +23,7 @@ export function createBoardCamera(camera,controls,{reduced=()=>false,aspect=()=>
   if(!tracking)return false;
   if(now<tracking.startsAt)return true;
   const subject=tracking.read();if(!subject){cancel();return false;}
+  if(!subject.moving){const pose=overviewPose(aspect());move(pose.position,pose.target,now,650);onOverview();return true;}
   // Keep the viewing direction throughout a roll, including corners.
   tracking.offset ||= offset(subject.point);
   const target=new THREE.Vector3(subject.point.x,.45,subject.point.z);
@@ -30,7 +31,6 @@ export function createBoardCamera(camera,controls,{reduced=()=>false,aspect=()=>
   const position=target.clone().add(tracking.offset);
   const dt=last===null?16:Math.min(64,Math.max(0,now-last));last=now;const alpha=1-Math.exp(-dt/160);
   camera.position.lerp(position,alpha);controls.target.lerp(target,alpha);controls.update();
-  if(!subject.moving&&camera.position.distanceTo(position)<.015&&controls.target.distanceTo(target)<.015){camera.position.copy(position);controls.target.copy(target);controls.update();cancel();return false;}
   return true;
  }
  return {move,focus,follow,tick,cancel};

@@ -14,7 +14,7 @@ const catalog=[
  ['cooperacion','Cooperación regional','Los países comparten maquinaria y conocimientos para impulsar la industria nacional.','La primera construcción nacional de cada jugador tiene un 30% de descuento.',true,[1,2,3,5,6,7,9,11,13,14,15,17],'link'],
  ['logistica','Atasco logístico','Buques y mercancías esperan en los puertos. Instalar nuevas fábricas de exportación requiere más recursos.','Construir multinacionales cuesta un 25% más. Las existentes siguen funcionando.',false,[21,22,23,25,26,27,29,31,33,34,35,37],'crane']
 ].map(([id,titulo,historia,efecto,positivo,casillas,visual])=>({id,titulo,historia,efecto,positivo,casillas,visual}));
-const definition=r=>catalog.find(e=>e.id===r.eventoActual?.id);
+const definition=r=>r.eventosHabilitados===false?undefined:catalog.find(e=>e.id===r.eventoActual?.id);
 const affected=(r,c)=>!!definition(r)?.casillas.includes(c.id);
 function rentFactor(r,c){return affected(r,c)&&['sanitaria','desplome'].includes(r.eventoActual.id)?.5:1;}
 function selfFactor(r,c){if(!affected(r,c))return 1;return ({cosecha:2,sequia:.5,pedidos:1.5,cancelaciones:.5,energia:2,escasez:.5})[r.eventoActual.id]||1;}

@@ -2,6 +2,7 @@
 'use strict';
 (() => {
   let context, master, noise, enabled = true;
+  const ambient=globalThis.GameZoneAudio?.create(()=>context,()=>enabled);
   const active = new Set(), last = new Map();
   try { enabled = localStorage.getItem('deuda_eterna_sound') !== 'off'; } catch {}
   const button = document.getElementById('sonido');
@@ -10,7 +11,7 @@
     button.setAttribute('aria-pressed', String(enabled));
     button.setAttribute('aria-label', enabled ? 'Silenciar sonidos del juego' : 'Activar sonidos del juego');
   }
-  function stop() { for (const node of active) { try { node.stop(); } catch {} } active.clear(); }
+  function stop() { ambient?.stop(); for (const node of active) { try { node.stop(); } catch {} } active.clear(); }
   function unlock() {
     if (!enabled || document.hidden) return;
     try {
@@ -110,6 +111,7 @@
   }
   function interaction(item, name) {
     const action=item.accion||'';
+    if(item.casillas)return play('solidarity');
     if(action==='Solidaridad')return; // The card reveal already has its own cue.
     if(action.includes('Golpe'))return play('military');
     if(/renta/i.test(action))return play(item.destino===name?'rentIn':'rentOut');
@@ -124,6 +126,6 @@
   document.addEventListener('pointerdown',unlock,{passive:true});document.addEventListener('keydown',unlock);
   document.addEventListener('visibilitychange',()=>{if(document.hidden){stop();if(context?.state==='running')context.suspend().catch(()=>{});}else unlock();});
   window.addEventListener('pagehide',stop);
-  window.GameAudio = { play, land, interaction, stop };
+  window.GameAudio = { play, land, interaction, stop, setZone:zone=>ambient?.setZone(zone) };
   update();
 })();

@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
 test('pantalla principal: apertura, controles compactos, pausa cinematográfica y regreso a 2D',()=>{
- class Node extends EventTarget{constructor(){super();this.hidden=true;this.inert=false;const set=new Set();this.classList={add:v=>set.add(v),remove:v=>set.delete(v),contains:v=>set.has(v),toggle:(v,on)=>on?set.add(v):set.delete(v)};}setAttribute(k,v){this[k]=v;}querySelectorAll(){return [];}focus(){this.focused=true;}}
+ class Node extends EventTarget{constructor(){super();this.hidden=true;this.inert=false;const set=new Set();this.classList={add:v=>set.add(v),remove:v=>set.delete(v),contains:v=>set.has(v),toggle:(v,on)=>on?set.add(v):set.delete(v)};}setAttribute(k,v){this[k]=v;}querySelector(){return this;}querySelectorAll(){return [];}focus(){this.focused=true;}}
  const root=new Node(),main=new Node(),body=new Node(),nodes={};for(const id of ['panel-3d','ir-turno-3d','pantalla-completa-3d','estado-3d','abrir-3d'])nodes[id]=new Node();
  const doc={body,documentElement:new Node(),getElementById:id=>nodes[id],querySelector:()=>main,addEventListener(){}};
  const context={document:doc,Event};vm.createContext(context);vm.runInContext(fs.readFileSync(require.resolve('../public/ui/screen.js'),'utf8'),context);

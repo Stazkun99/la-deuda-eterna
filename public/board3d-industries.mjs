@@ -19,6 +19,9 @@ export function createIndustryLayer(scene,board){
   // All geometry is in local tile coordinates, relative to the player lane anchor.
   const building=new THREE.Group();building.position.set(.265,0,-.5);group.add(building);
   const ownerMat=mat('#879796'),shell=mat(cell.region==='sur'?'#d48a57':'#4e9fba',.2),levels=[];
+  const ownership=new THREE.Group();group.add(ownership);
+  box(ownership,0,.018,.30,.88,.035,.08,ownerMat);
+  const rank=[];for(let n=0;n<3;n++)rank.push(box(ownership,(n-1)*.15,.055,.30,.10,.04,.065,light));
   box(building,0,.025,0,.38,.05,.30,concrete);
   function window(parent,x,y,z,w=.035,h=.046){box(parent,x,y,z,w,h,.009,light);}
   function gable(parent,x,y,z,w,d){
@@ -75,7 +78,7 @@ export function createIndustryLayer(scene,board){
    for(let n=0;n<6;n++){const stripe=box(shutter,-.34+n*.135,.15,.04,.052,.11,.016,dark);stripe.rotation.z=-.35;}
    lamp=box(gate,.38,.8,0,.07,.045,.055,warning);
   }
-  entries.set(cell.id,{group,building,levels,indicators,ownerMat,shell,gate,shutter,lamp,north:cell.region==='norte',progress:0,target:0,motion:null,initialized:false,level:0,buildMotion:null});
+  entries.set(cell.id,{group,ownership,rank,building,levels,indicators,ownerMat,shell,gate,shutter,lamp,north:cell.region==='norte',progress:0,target:0,motion:null,initialized:false,level:0,buildMotion:null});
  }
  function pose(e){if(!e.gate)return;e.gate.visible=e.progress>0||e.target===1;e.shutter.scale.y=Math.max(.015,e.progress);e.shutter.position.y=.67*(1-e.progress);}
  function sync(state,animate=false,now=performance.now()){
@@ -87,6 +90,7 @@ export function createIndustryLayer(scene,board){
     if(e.buildMotion)for(let i=previous;i<view.level;i++){e.levels[i].scale.y=.02;e.levels[i].position.y=.12;}
     e.ownerMat.emissiveIntensity=0;e.level=view.level;
    }
+   e.ownership.visible=!!cell.dueño;e.rank.forEach((m,i)=>m.visible=i<view.level);
    e.building.visible=view.level>0;e.levels.forEach((g,i)=>g.visible=i<view.level);e.indicators.forEach((m,i)=>m.visible=i<view.level);
    e.ownerMat.color.set(view.color);e.shell.color.set(view.closed||view.blocked?'#87918e':e.north?'#4e9fba':'#d48a57');
    const target=view.blocked?1:0;

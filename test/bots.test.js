@@ -8,12 +8,12 @@ function setup(seed=7) {
   game.shuffle=cards=>cards.map(c=>c.id).sort(()=> (rand()%3)-1);
   const data={nombre:'Humano',userId:'human_test',sessionToken:'a'.repeat(64),sala:'BOTS',crear:true};
   game.join('human',data);const r=game.rooms.BOTS;
-  return {game,r,data,advance:(ms=2000)=>{time+=ms;},start(count=3){
+  return {game,r,data,advance:(ms=2000)=>{time+=ms;},start(count=3,eventos=false){
     game.action('human','seleccionarPersonaje',{personaje:'kirby'});
     for(let i=0;i<count;i++)game.action('human','agregarBot');
     game.action('human','tirarDadoInicial');
     for(let i=0;i<count+2;i++){time+=3000;game.tick();}
-    game.action('human','iniciarPartida',{monopolio:false});
+    game.action('human','iniciarPartida',{monopolio:false,eventos});
   }};
 }
 test('solo anfitrión gestiona bots; plazas y secretos protegidos; se conservan en revancha',()=>{
@@ -76,3 +76,5 @@ test('simulaciones completas: bots resuelven todos los turnos sin acciones invá
     assert.ok(r.resultado.ganador);
   }
 });
+
+test('eventos activos: simulación acotada conserva progreso y pagos válidos sin exigir bancarrota', {timeout:30000},()=>{for(const seed of [3,19]){const s=setup(seed);s.start(3,true);const {game,r}=s,seen=new Set();let steps=0;while(r.enJuego&&steps++<1800){s.advance(2000);if(r.eventoActual)seen.add(r.eventoActual.id);const human=r.jugadores[0];if(!human.enQuiebra&&(!r.pendiente?.vence||r.pendiente.vence>game.now())){const d=strategy.plan(game,game.state(r),human);if(d)game.action('human',d.event,d.data);}game.tick();for(const p of r.jugadores){assert.ok(Number.isSafeInteger(p.dinero));assert.ok(p.deudaPersonal>=0&&p.deudaPersonal<=30000);assert.ok(p.oro>=0);}}assert.ok(r.turnoId>15);assert.ok(seen.size>0);}});

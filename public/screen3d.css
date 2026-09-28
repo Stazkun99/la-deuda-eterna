@@ -40,3 +40,18 @@ body.playing-3d :is(#comercio-dialog,#detalle,#prestamo-dialog,#amortizar-dialog
 
 body.playing-3d #reglamento-dialog{width:min(760px,94vw);max-width:94vw;background:linear-gradient(145deg,#173e33,#0e2925);color:#edf2df}body.playing-3d #reglamento-dialog h3{color:#f7dfa3}#reglamento-dialog{max-width:94vw}#reglamento-dialog h2{color:#245648}body.playing-3d #reglamento-dialog h2{color:#f7dfa3}.player .avatar[role=button]{cursor:pointer}.player .avatar[role=button]:focus-visible{outline:2px solid #e5c674;outline-offset:3px}
 body.playing-3d #reglamento-dialog p{color:#dce8d3}body.playing-3d #reglamento-dialog .eyebrow{color:#e2c576}body.playing-3d #reglamento-dialog .dialog-close{color:#f7dfa3}
+
+.player-name{cursor:pointer}
+
+#world-event-banner .event-end{font-size:11px}
+.player-lap{font-size:10px;color:#d2c286;white-space:nowrap}
+/* Secondary tools share one drawer; game actions remain directly accessible. */
+.utilities-menu>summary{list-style:none;cursor:pointer;border:1px solid #a8b99a60;border-radius:10px;padding:10px 14px;background:#23473b;color:#f7e5ae;font-weight:700}
+.utilities-menu[open]>summary{border-color:#d6b978;background:#315748}
+.utilities-body{position:absolute;bottom:calc(100% + 8px);right:12px;width:min(370px,calc(100vw - 24px));max-height:calc(100dvh - 160px);overflow:auto;padding:12px;display:grid;gap:8px;background:#12362e;color:#f7f4e8;border:1px solid #cfba7d;border-radius:14px;box-shadow:0 -10px 40px #001c2155}
+.utilities-body>.screen-drawer>.drawer-body{position:static;width:100%;max-height:none;margin-top:8px;box-shadow:none}
+.utilities-body>#restaurar-ventanas{width:100%;text-align:left}
+.utilities-menu summary:focus-visible{outline:2px solid #f9dc95;outline-offset:3px}
+.utilities-menu>summary::-webkit-details-marker{display:none}
+
+.finance-preview{display:grid;gap:5px;padding:12px;margin:10px 0;border:1px solid #cab37566;border-radius:12px;background:#1a483b;color:#f9f0cf;font-size:12px}.finance-preview small{opacity:.8;font-size:10px}.finance-preview.shortfall b{color:#ffb89f}.ambient-volume{display:flex;align-items:center;gap:8px;font-size:12px}.ambient-volume input{width:100px;padding:0;accent-color:#d6b978}

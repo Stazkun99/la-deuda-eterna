@@ -87,7 +87,7 @@ $('agregar-bot').onclick=()=>action('agregarBot');
 $('copiar').onclick = async () => { try { await navigator.clipboard.writeText(state.codigo); notice('Código copiado: ' + state.codigo); } catch { notice('Código de sala: ' + state.codigo); } };
 $('dado-inicial').onclick=()=>action('tirarDadoInicial');
 $('pausar').onclick=()=>action('pausarPartida',{pausar:!state?.pausa});
-$('iniciar').onclick = () => action('iniciarPartida', { monopolio: $('monopolio').checked });
+$('iniciar').onclick = () => action('iniciarPartida', { monopolio: $('monopolio').checked, eventos: $('eventos').checked });
 $('tirar').onclick = $('tirar-3d').onclick = () => action('tirarDado');
 $('terminar').onclick = () => action('terminarTurno');
 const loanBorrower = () => {
@@ -335,7 +335,7 @@ function renderBoard() {
   for (const c of state.tablero) {
     let tile = cells.get(c.id);
     if (!tile) {
-      tile = button('', () => showProperty(c.id), 'tile');
+      tile = button('', () => {}, 'tile');tile.ondblclick=()=>showProperty(c.id);tile.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();showProperty(c.id);}};
       const [row, column] = position(c.id); tile.style.gridRow = row; tile.style.gridColumn = column;
       tile.dataset.casilla = c.id;
       tile.append(element('span', String(c.id).padStart(2, '0'), 'tile-number'), element('span', icons[c.baseSur || c.nombre] || (c.nombre.includes('Solidaridad') ? '✦' : c.nombre.includes('FMI') ? '▥' : '↗'), 'tile-icon'), element('span', c.nombre.replace('América Latina (SALIDA)', 'Latinoamérica').replace('Barrera Proteccionista', 'Barrera').replace('12 Octubre 1492', '12 de Octubre'), 'tile-name'), element('span', c.precio ? amount(c.precio) : '', 'tile-price'), element('span', '', 'tile-industries'), element('span', '', 'tile-tokens'), element('span', '', 'tile-owner'));
@@ -399,15 +399,15 @@ function renderPlayers() {
     const row = element('div', undefined, 'player' + (state.enJuego && state.jugadores[state.turnoActual]?.id === p.id ? ' current' : ''));
     const avatar = element('span', String(state.jugadores.indexOf(p) + 1), 'avatar'); avatar.style.setProperty('--player', p.color); decoratePiece(avatar, p);
     const content = element('div'); content.append(element('div', p.nombre + (p.userId === userId ? ' · tú' : '') + (p.esLider ? ' ♛' : ''), 'player-name'));
+    content.querySelector('.player-name').append(element('small',' · V'+((p.vueltasCompletadas||0)+1),'player-lap'));
     content.append(element('div', 'Ficha: ' + pieceFor(p).name + ' · Vuelta ' + ((p.vueltasCompletadas || 0)+1), 'piece-name'));
-    const inspect=button('Ver propiedades',()=>showProperties(p.id),'ghost');content.append(inspect);
-    avatar.setAttribute('role','button');avatar.tabIndex=0;avatar.setAttribute('aria-label','Ver propiedades de '+p.nombre);avatar.onclick=()=>showProperties(p.id);avatar.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showProperties(p.id);}};
+    avatar.setAttribute('role','button');avatar.tabIndex=0;avatar.setAttribute('aria-label','Ver propiedades de '+p.nombre);avatar.ondblclick=()=>showProperties(p.id);avatar.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showProperties(p.id);}};
     const stats = element('div', undefined, 'player-stats'); stats.append(element('span', amount(p.dinero)), element('span', 'Deuda ' + amount(p.deudaPersonal)), element('span', '◆ ' + p.oro+' lingotes')); content.append(stats);
     if(p.dadoInicial)content.append(element('small','Dado inicial: '+p.dadoInicial,'initial-roll-result'));
     if(p.sombreroSandino)content.append(element('small','Sombrero de Sandino · 1 uso disponible','initial-roll-result'));
     content.append(element('div', [!p.conectado && 'Desconectado', p.enQuiebra && 'En quiebra', p.enAlianza && 'Alianza · caja común', p.industriasCerradas && 'Industrias cerradas', p.turnosPerdidos > 0 && 'Desempleo: ' + p.turnosPerdidos, p.deudaPersonal >= 30000 && 'Límite de deuda'].filter(Boolean).join(' · '), 'player-status'));
     if(p.bot && !state.enJuego && !state.finalizada && me()?.esLider) { const remove=button('Quitar bot',()=>action('quitarBot',{jugadorId:p.id})); remove.disabled=busy||!socket.connected; content.append(remove); }
-    row.onclick=e=>{if(!e.target.closest('button,[role=button]'))showProperties(p.id);};
+    row.ondblclick=e=>{if(!e.target.closest('button,[role=button]'))showProperties(p.id);};
     row.append(avatar, content); $('jugadores').append(row);
   }
 }
@@ -433,6 +433,11 @@ function updateControls() {
   $('pausar').disabled=busy||!socket.connected||p?.enQuiebra;
   $('pausar').textContent=state.pausa?'Reanudar partida ▶':'Pausar partida Ⅱ';
   if(state.pausa){$('turno').textContent='Partida en pausa';$('fase').textContent=state.pausa.jugador+' ha pausado los relojes de toda la mesa.';}
+  const forecast=$('resumen-financiero');forecast.hidden=!(state.enJuego&&mine&&state.fase==='tirada'&&p&&!p.enQuiebra);
+  if(!forecast.hidden){const interest=p.proximosIntereses??0,balance=p.dinero-interest;
+    forecast.replaceChildren(element('strong','Antes de tirar'),element('span','Deuda: '+amount(p.deudaPersonal)),element('span','Próximos intereses FMI: '+amount(interest)),element('b',(balance<0?'Te faltarían: ':'Efectivo tras intereses: ')+amount(Math.abs(balance))),element('small','Previsión si tu dinero y condiciones no cambian. Se cobra al pasar por el FMI.'));
+    forecast.classList.toggle('shortfall',balance<0);
+  }
   $('acciones').hidden = !state.enJuego;
   $('comerciar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase);
   $('tirar').hidden = state.fase !== 'tirada'; $('tirar').disabled = locked || !mine;
@@ -475,7 +480,7 @@ function nextInteraction() {
   box.querySelector('.interaction-multiplier')?.remove();
   box.classList.toggle('celebration',!!item.casillas);
   if(item.multiplicador){const badge=element('span','×'+Number(item.multiplicador.toFixed(2)),'interaction-multiplier');box.prepend(badge);}
-  if(item.casillas)board3d?.celebrate(item.casillas);
+  if(item.casillas)board3d?.celebrate(item.casillas,item.color);
   $('interaccion-siguiente').textContent=interactionQueue.length?'Siguiente aviso ('+interactionQueue.length+')':'Cerrar aviso';
   let remaining=3000,last=performance.now();
   const tick=()=>{
@@ -549,7 +554,7 @@ function renderDecision(force = false) {
   if (d.tipo === 'comercio') {
     container.append(element('h3','Oferta de comercio'),element('p','Esperando la respuesta de '+(state.jugadores.find(q=>q.id===d.destinatarioId)?.nombre||'otro jugador')+'.'));
     const involved = [d.jugadorId,d.destinatarioId].includes(p.id);
-    if(involved){container.append(button('Ver oferta ⇄',()=>showTradeOffer(d,true),'primary'));showTradeOffer(d);}
+    container.append(button(involved?'Ver oferta ⇄':'Ver negociación de la mesa',()=>showTradeOffer(d,true),'primary'));showTradeOffer(d);
     return;
   }
   if (d.tipo === 'votacion') {

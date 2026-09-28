@@ -50,7 +50,7 @@ function showTradeOffer(d, force=false) {
   const dialog=$('comercio-dialog'),box=$('comercio-contenido');
   ctx.tradeShown=d.id;box.replaceChildren();
   const sender=ctx.state.jugadores.find(q=>q.id===d.jugadorId),receiver=ctx.state.jugadores.find(q=>q.id===d.destinatarioId);
-  $('comercio-titulo').textContent=mine?'Tu oferta a '+receiver?.nombre:'Oferta de '+sender?.nombre;
+  $('comercio-titulo').textContent=mine?'Tu oferta a '+receiver?.nombre:'Negociación: '+sender?.nombre+' → '+receiver?.nombre;
   const terms=(title,names,cash)=>{
     const area=element('section',undefined,'trade-side');area.append(element('h3',title));
     for(const name of names){const snap=d.propiedades.find(c=>c.nombre===name);area.append(element('p',name+' · '+snap.nacionales+' nacionales / '+snap.multinacionales+' multinacionales'));}
@@ -62,7 +62,8 @@ function showTradeOffer(d, force=false) {
   box.append(element('p','Incluye todas las industrias indicadas. No se transfieren deudas ni oro. La oferta caduca en un máximo de 60 segundos.','card-note'));
   const answer=(label,accept,style)=>{const b=button(label,()=>action('responderComercio',{decisionId:d.id,aceptar:accept}),style);b.disabled=ctx.busy||!socket.connected;box.append(b);};
   if(mine)answer('Cancelar oferta',false,'secondary');
-  else {answer('Aceptar este trato',true,'primary');answer('Rechazar',false,'secondary');}
+  else if(p.id===d.destinatarioId) {answer('Aceptar este trato',true,'primary');answer('Rechazar',false,'secondary');}
+  if(!mine&&p.id!==d.destinatarioId)box.append(element('p','Estás viendo esta oferta como observador. Solo los participantes pueden responder.','card-note'));
   if((first||force)&&!dialog.open)dialog.showModal();
 }
 

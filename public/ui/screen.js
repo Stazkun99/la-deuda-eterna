@@ -6,6 +6,9 @@ globalThis.GameScreen={create(root){
  toggle.addEventListener('click',()=>{minimized=!minimized;paint();});
  document.getElementById('pantalla-completa-3d').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen();}catch{document.getElementById('estado-3d').textContent='Puedes ampliar el navegador con F11.';}};
  document.addEventListener('fullscreenchange',()=>{document.getElementById('pantalla-completa-3d').textContent=document.fullscreenElement?'Salir de pantalla completa':'Pantalla completa';});
+ const utilities=root.querySelector('.utilities-menu');
+ root.addEventListener('pointerdown',event=>{if(utilities.open&&!utilities.contains(event.target))utilities.open=false;});
+ utilities.addEventListener('keydown',event=>{if(event.key==='Escape'){utilities.open=false;utilities.querySelector('summary').focus();event.stopPropagation();}});
  // Only one utility drawer at a time, leaving the board easy to reach.
  for(const drawer of root.querySelectorAll('details.screen-drawer'))drawer.addEventListener('toggle',()=>{if(drawer.open)for(const other of root.querySelectorAll('details.screen-drawer'))if(other!==drawer)other.open=false;});
  return {

@@ -527,15 +527,15 @@ La portada independiente se prepara con `npm run build:landing`. Consulta [DESPL
 
 - El FMI interrumpe el recorrido en la casilla 39: se paga y se continúan los pasos restantes, sin otra tirada. La continuación se conserva si se desconecta el jugador.
 - La barrera 3D se activa o retira al terminar el recorrido, no antes de llegar.
-- Pulsar una casilla 3D abre su detalle. Pulsar una ficha o un jugador permite consultar su patrimonio; también existe un botón Ver propiedades.
+- Doble clic en casilla 3D abre su detalle; doble clic en ficha o jugador consulta su patrimonio. El panel de dinero conserva únicamente los datos del jugador.
 - Bots nuevos: Spider-Man, Iron Man y Thor. Pueden financiar inversiones rentables y descuentos con préstamos limitados, conservando reservas y evitando subir de tramo de dados por esa inversión.
 - Condición FMI 12, «Negocie directamente con el FMI»: temporalmente deshabilitada mediante `habilitada: false` en `cartas.js`. Se excluye al crear y al robar de los mazos, incluidos los guardados. Los pactos pendientes antiguos se cancelan; no se revierte dinero ya entregado.
 
 ## Eventos mundiales
 
-Un mazo barajado de 12 acontecimientos (6 favorables y 6 negativos), sin reposición hasta agotarlo. Cruce por Salida con dados activa uno solo si no hay otro; tras pagar en FMI, se activa al continuar y cruzar. No se activan por teletransporte ni al comenzar. El evento se aplica antes de resolver la casilla de destino, pero el anuncio de tres segundos espera al final del movimiento y precede a cartas y decisiones. El indicador permanente permite consultar historia, efecto y duración.
+Un mazo barajado de 12 acontecimientos (6 favorables y 6 negativos), sin reposición hasta agotarlo. Cruce por Salida con dados activa uno solo si no hay otro; tras pagar en FMI, se activa al continuar y cruzar. No se activan por teletransporte ni al comenzar. El evento se aplica antes de resolver la casilla de destino, pero el anuncio de cinco segundos espera al final del movimiento y precede a cartas y decisiones. El indicador permanente permite consultar historia, efecto y duración.
 
-Dura el resto del turno actual y una vuelta del orden de turnos, terminando tras el siguiente turno del activador. Turnos omitidos o jugadores retirados no lo prolongan indefinidamente; pausa y tiempo desconectado no descuentan segundos porque no es un temporizador. Se conserva al guardar/reconectar y se limpia en revancha/final.
+Cada evento dura hasta que todos los jugadores no quebrados alcancen la vuelta objetivo. Los cruces extra del más rápido no reinician la duración. Al alcanzar todos la vuelta 2 termina el primer evento; un cruce posterior activa el siguiente con meta vuelta 3, y así sucesivamente. Desconexión no equivale a abandonar: esa plaza sigue contando. Al abandonar o quebrar deja de contar. Se conserva al guardar y se limpia al terminar o preparar revancha. Los eventos de guardados antiguos que usaban duración por turnos se descartan al cargar.
 
 - **La gran cosecha**: Doble cobro propio en Azúcar, Banano y Cacao.
 - **Sequía prolongada**: Cobro propio a la mitad en Azúcar, Banano y Cacao. Las rentas no cambian.
@@ -553,3 +553,12 @@ Dura el resto del turno actual y una vuelta del orden de turnos, terminando tras
 Los multiplicadores se aplican sobre la renta con cadenas. Cierres, desempleo y barrera mantienen sus restricciones. Mercados populares solo paga por industrias nacionales operativas, sin cobrar al visitante. El bono minero solo se añade a rentas pagadas en efectivo (no lingotes). Construcción usa el mejor descuento, sin sumarlos, y luego el recargo vigente; redondeo entero hacia abajo. La primera construcción nacional de cooperación se consume incluso si Ayuda Solidaria ofrece mejor descuento.
 
 Los bots y los detalles de propiedades usan los costes efectivos del servidor. Los rótulos de las cuatro esquinas muestran jugadores y vecinos FMI respecto a ti; el siguiente jugador activo es tu izquierda y el anterior tu derecha. No cambian al girar la cámara.
+
+### Ajustes de eventos por vueltas e interfaz
+
+El anfitrión elige si habilita eventos al iniciar. El evento activo expira cuando todos los participantes no quebrados alcanzan la vuelta objetivo; el siguiente se activa solo en un cruce posterior. Costes, rentas y bonos vuelven a la normalidad al expirar, y los bonos pendientes de minería se invalidan por identificador del evento. Anuncio grande de 5 segundos y después indicador compacto con los nombres que faltan. Rótulos pequeños fuera de las casillas, consulta mediante doble clic y herramientas secundarias (ordenar ventanas, registro/chat, última carta, cámara y sala) agrupadas en Herramientas de mesa; las acciones del juego permanecen visibles. Todas las ofertas comerciales se muestran a la mesa; los observadores no pueden aceptarlas o rechazarlas.
+
+
+### Lectura de la mesa y ambiente
+
+Antes de tirar, el jugador ve deuda, previsión de intereses FMI y efectivo restante (no descuenta dinero). Las propiedades tienen una franja del dueño y hasta tres marcas de nivel. Las parejas industriales y cadenas se celebran con destellos y conexiones luminosas. El ambiente sintetizado de campo, costa e industria cambia suavemente según el encuadre 3D; tiene volumen independiente en Sala y respeta silencio, pausa y pestaña oculta.

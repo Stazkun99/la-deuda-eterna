@@ -23,7 +23,7 @@ test('cámara: encuadre interior, retrato y seguimiento anticipado sin giro en e
   const direction=camera.position.clone().sub(controls.target).normalize();
   point.set(-5,.225,5);ahead={x:-5,z:3};for(let t=2000;t<6000;t+=16)rig.tick(t);
   assert.ok(camera.position.clone().sub(controls.target).normalize().distanceTo(direction)<.001);
-  moving=false;for(let t=6000;t<10000;t+=16)rig.tick(t);assert.equal(controls.target.x,-5);assert.equal(controls.target.z,5);
+  moving=false;for(let t=6000;t<10000;t+=16)rig.tick(t);assert.equal(controls.target.x,0);assert.equal(controls.target.z,0);
  }
 });
 test('personajes: iluminación conserva color y textura y tamaño acotado por personaje',async()=>{

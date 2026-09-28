@@ -11,7 +11,7 @@ const controls3d = Game3DUI.createMount([
   [document.querySelector('.activity'), $('actividad-3d')],
   [$('interaccion'), $('avisos-3d')], [$('ultima-carta'), $('ultima-carta-3d')],
   [$('aviso'), $('notificaciones-3d')],
-  ...['conexion','sonido','reglas','invitar','copiar','salir'].map(id=>[$(id),$('utilidades-3d')])
+  ...['conexion','sonido','ambiente-volumen-control','reglas','invitar','copiar','salir'].map(id=>[$(id),$('utilidades-3d')])
 ]);
 dialog3d.addEventListener('close', () => { if(dialog3d.open)return; ctx.board3d?.setActive(false); controls3d.restore(); });
 $('abrir-3d').onclick = async () => {
@@ -31,7 +31,7 @@ $('abrir-3d').onclick = async () => {
     $('casilla-3d').replaceChildren(element('option','Elige una casilla…'));
     $('casilla-3d').firstElementChild.value='';
     for(const c of ctx.state.tablero){const option=element('option',c.id+' · '+c.nombre);option.value=c.id;$('casilla-3d').append(option);}
-    ctx.board3d.setAmbient($('ambiente-3d').checked);ctx.board3d.setFollow($('seguir-3d').checked);ctx.board3d.setShadows($('sombras-3d').checked);ctx.board3d.showScenery($('decorados-3d').checked); ctx.board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar o toca una casilla.';
+    ctx.board3d.setAmbient($('ambiente-3d').checked);ctx.board3d.setFollow($('seguir-3d').checked);ctx.board3d.setShadows($('sombras-3d').checked);ctx.board3d.showScenery($('decorados-3d').checked); ctx.board3d.setActive(dialog3d.open); $('estado-3d').textContent='Arrastra para explorar. Doble clic en casillas o fichas para consultar.';
   } catch { ctx.board3d?.dispose();ctx.board3d=null;$('escena-3d').replaceChildren(); controls3d.restore();dialog3d.close();notice('No se pudo cargar el 3D en este navegador. Puedes seguir jugando en 2D.'); }
   finally { ctx.board3dLoading=false; }
 };

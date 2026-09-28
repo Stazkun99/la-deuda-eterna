@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createSetCelebration} from './board3d-celebration.mjs';
 import {createWorldEventLayer} from './board3d-events.mjs';
 import {createSeats} from './board3d-seats.mjs';
 import {createDeckLayer} from './board3d-decks.mjs';
@@ -23,6 +24,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label','Tablero tridimensional. Usa los controles y el selector de casillas.');
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(42,1,.1,200);
+  const setCelebration=createSetCelebration(scene);
   const controls = new OrbitControls(camera,renderer.domElement);
   controls.enablePan=false; controls.enableDamping=false;
   controls.minDistance=4; controls.maxDistance=100;
@@ -31,7 +33,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const light=new THREE.DirectionalLight(0xffe8c6,3.2);light.position.set(-5,13,6);light.castShadow=true;
   light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:1,far:35});light.shadow.camera.updateProjectionMatrix();light.shadow.normalBias=.025;light.shadow.bias=-.00015;light.shadow.radius=2;scene.add(light);
   const fill=new THREE.DirectionalLight(0xb8dbe7,.85);fill.position.set(8,7,-5);scene.add(fill);
-  const cameraRig=createBoardCamera(camera,controls,{reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,aspect:()=>camera.aspect});
+  const cameraRig=createBoardCamera(camera,controls,{reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,aspect:()=>camera.aspect,onOverview:()=>{overview=true;}});
   let followEnabled=true,overview=true;
   controls.addEventListener('start',()=>{overview=false;cameraRig.cancel();});
   function shadowObjects(group){group.traverse(object=>{if(object.isMesh){object.castShadow=!object.isInstancedMesh;object.receiveShadow=true;}});renderer.shadowMap.needsUpdate=true;}
@@ -41,7 +43,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const diceTray=createDiceTray(scene,onDiceLabel);
   const eventLayer=createWorldEventLayer(scene),seats=createSeats(scene);let eventPending=false;
   let previousPlayers=[], lastRoll=null, barrierValue=!!getState().barreraProteccionista, barrierPending=null;
-  let active=false, disposed=false, frame=0, selection=null, down=null;
+  let active=false, disposed=false, frame=0, selection=null, down=null, lastTap=null;
   const own=r=>(resources.push(r),r);
   function box(w,h,d,color,x=0,y=0,z=0){
     const m=new THREE.Mesh(own(new THREE.BoxGeometry(w,h,d)),own(new THREE.MeshStandardMaterial({color,roughness:.72})));
@@ -73,8 +75,12 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     const eventMoving=eventLayer.tick(now,reduced);
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
     if(moving||rolling||barrierMoving||drawing||((ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    setCelebration.tick(now);
     if(celebration){const t=(now-celebration.start)/2400;for(const tile of tiles)if(celebration.ids.includes(tile.cell.id)){tile.top.emissive.set(t>=1?'#000000':'#eaba42');tile.top.emissiveIntensity=t>=1?0:.25+.5*Math.abs(Math.sin(t*Math.PI*4));}if(t>=1)celebration=null;}
     if(!moving&&!rolling&&(barrierPending!==null||eventPending)){if(barrierPending!==null)barrierValue=barrierPending;barrierPending=null;eventPending=false;update({animate:true});}
+    const soundState=getState();
+    let zone=null;if(soundState.enJuego&&!soundState.pausa&&active){let nearest=null,distance=Infinity;for(const c of soundState.tablero){if(!c.region)continue;const p=tilePosition(c.id),d=Math.hypot(p.x-controls.target.x,p.z-controls.target.z);if(d<distance){distance=d;nearest=c;}}zone=distance>3?'campo':nearest?.region==='norte'||[13,14,15,17].includes(nearest?.id)?'industria':nearest?.id===9?'costa':'campo';}
+    globalThis.GameAudio?.setZone(zone);
     onCinematic(moving||rolling||drawing);
     const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
@@ -116,7 +122,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
       const b=document.createElement('button');b.type='button';b.className='secondary';
       const current=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       b.textContent=player.nombre+' · '+(globalThis.GameCharacters.find(c=>c.id===player.personaje)?.name||pieceKind(player.color))+(current?' · En turno':'');b.style.borderLeft='5px solid '+player.color;
-      b.onclick=()=>{const piece=pieces.get(player.id);if(!piece)return;overview=false;cameraRig.focus(piece.root.position);select(player.posicion);onPlayer(player.id);schedule();};legend.append(b);
+      b.ondblclick=()=>{const piece=pieces.get(player.id);if(!piece)return;overview=false;cameraRig.focus(piece.root.position);select(player.posicion);onPlayer(player.id);schedule();};b.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();onPlayer(player.id);}};b.title='Doble clic para ver propiedades';legend.append(b);
     }}
   }
   function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
@@ -177,14 +183,14 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   function select(id){const tile=tiles.find(t=>t.cell.id===id);if(!tile)return;selection=id;for(const t of tiles){t.top.emissive.set(t.cell.id===selection?'#9d762b':'#000000');t.top.emissiveIntensity=.35;}onSelect(id);schedule();}
   const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();
   function pointerDown(e){down={x:e.clientX,y:e.clientY};}
-  function pointerUp(e){if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>6){down=null;return;}down=null;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...tiles.map(t=>t.mesh),models.root,...industries.root.children,...Array.from(pieces.values(),p=>p.root)],true).find(hit=>{let node=hit.object;while(node){if(!node.visible)return false;node=node.parent;}return true;});if(hit){let object=hit.object;while(object&&object.userData.id===undefined)object=object.parent;if(object){if(object.userData.playerId)onPlayer(object.userData.playerId);else {select(object.userData.id);onInspect(object.userData.id);}}}}
+  function pointerUp(e){if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>6){down=null;return;}down=null;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...tiles.map(t=>t.mesh),models.root,...industries.root.children,...Array.from(pieces.values(),p=>p.root)],true).find(hit=>{let node=hit.object;while(node){if(!node.visible)return false;node=node.parent;}return true;});if(hit){let object=hit.object;while(object&&object.userData.id===undefined)object=object.parent;if(object){const target=object.userData.playerId||object.userData.id,now=performance.now(),double=lastTap?.target===target&&now-lastTap.time<450;lastTap={target,time:now};if(!object.userData.playerId)select(object.userData.id);if(double){lastTap=null;if(object.userData.playerId)onPlayer(object.userData.playerId);else onInspect(object.userData.id);}}}}
   function lost(e){e.preventDefault();active=false;onError();}
   renderer.domElement.addEventListener('pointerdown',pointerDown);renderer.domElement.addEventListener('pointerup',pointerUp);renderer.domElement.addEventListener('webglcontextlost',lost);
   controls.addEventListener('change',schedule);document.addEventListener('visibilitychange',visibility);
   const observer=new ResizeObserver(resize);observer.observe(host);shadowObjects(scene);table.castShadow=false;surface.castShadow=false;resize();reset(true);update();
   return {
     update,select,reset,
-    celebrate(ids){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;celebration={ids,start:performance.now()};schedule();},
+    celebrate(ids,color){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;setCelebration.start(ids,color);celebration={ids,start:performance.now()};schedule();},
     drawCard(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return Promise.resolve();reset();const result=decks.draw(data);schedule();return result;},
     setAmbient(value){ambient.setEnabled(value);schedule();},
     setFollow(value){followEnabled=value;if(!value)cameraRig.cancel();},
@@ -194,7 +200,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     rotate(){overview=false;cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
     zoom(factor){overview=false;cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
     overhead(){overview=false;const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
-    setActive(value){renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    setActive(value){if(!value)globalThis.GameAudio?.setZone(null);renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
+    dispose(){setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }
