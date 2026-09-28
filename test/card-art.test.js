@@ -16,7 +16,7 @@ test('el servidor anuncia la imagen exacta de cada robo y conserva su identidad 
  const events=[],game=new Game({chooseIndex:()=>0,dice:()=>1,emit:(room,event,data)=>events.push({event,data})});
  for(let i=0;i<2;i++)game.join('s'+i,{nombre:'Jugador '+i,userId:'usuario_'+i,sessionToken:String(i).repeat(64),sala:'ARTE',crear:i===0});
  game.action('s0','iniciarPartida',{monopolio:false});const r=game.rooms.ARTE,p=r.jugadores[0];
- for(const [type,deck]of [['solidaridad',CARTAS_SOLIDARIDAD],['condiciones',CARTAS_CONDICIONES]])for(const c of deck){
+ for(const [type,deck]of [['solidaridad',CARTAS_SOLIDARIDAD],['condiciones',CARTAS_CONDICIONES]])for(const c of deck.filter(c=>c.habilitada!==false)){
   p.sombreroSandino=false;p.deudaPersonal=10000;r.mazos[type]=[c.id];game.card(r,p,type);
   const event=events.filter(e=>e.event==='mostrarCartaModal').at(-1).data;
   assert.equal(event.id,c.id);assert.equal(event.imagen,art[type][c.id]);assert.equal(event.titulo,c.pais||c.titulo);assert.ok(event.roboId);assert.equal(game.state(r).ultimaCarta.roboId,event.roboId);

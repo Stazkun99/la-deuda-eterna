@@ -21,7 +21,7 @@ let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, se
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
 let seenRoll = null, diceTimer, specialCatalog = {}, tradeShown = null;
 let interactionRoom = null, seenInteractions = new Set(), interactionQueue = [], interactionTimer, showingInteraction = false;
-let presentationBusy=false;
+let presentationBusy=false, displayedBarrier=false;
 let movement = null, pendingCard = null, pendingLanding = null, animateNextState = false;
 const cells = new Map();
 const icons = { 'Azúcar':'◈','Banano':'◒','Cacao':'◆','Algodón':'✿','Tabaco':'❧','Café':'☕','Pesca':'≈','Ganado':'♜','Cobre':'◇','Estaño':'⬡','Hierro':'⚒','Petróleo':'◕' };
@@ -73,7 +73,7 @@ function join(crear, intent = null) {
   });
 }
 let board3d = null, board3dLoading = false, selected3d = null;
-const {dialog3d,controls3d}=GameBoardView.create({$,element,amount,updateControls,showProperty,notice,
+const {dialog3d,controls3d}=GameBoardView.create({$,element,amount,updateControls,showProperty,showProperties,notice,
  get state(){return state;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
  get board3d(){return board3d;},set board3d(v){board3d=v;},get board3dLoading(){return board3dLoading;},set board3dLoading(v){board3dLoading=v;},get selected3d(){return selected3d;},set selected3d(v){selected3d=v;}});
 $('interaccion-siguiente').onclick = nextInteraction;
@@ -127,7 +127,7 @@ $('amortizar-form').onsubmit = e => {
   action('pagarDeuda', { monto: Number(input.value) }); $('amortizar-dialog').close();
 };
 $('levantar').onclick = () => action('levantarBarrera');
-$('propiedades').onclick = showProperties;
+$('propiedades').onclick = ()=>showProperties();
 $('comerciar').onclick = showTradeForm;
 $('cerrar-comercio').onclick = () => $('comercio-dialog').close();
 $('cerrar-industrial').onclick = () => $('industrial-dialog').close();
@@ -176,19 +176,20 @@ socket.on('actualizarEstado', next => {
   const animate = animateNextState && previousRoom === state.codigo && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (previousRoom !== state.codigo || !state.enJuego || !roll || (movement && movement.rollId !== roll.id)) cancelMovement();
   if (animate && roll && roll.id !== seenRoll && Number.isInteger(roll.desde) && state.jugadores.some(p => p.id === roll.jugadorId)) {
-    movement = { rollId: roll.id, playerId: roll.jugadorId, position: roll.desde, total: roll.total, node: null, animation: null };
+    movement = { rollId: roll.id, playerId: roll.jugadorId, position: roll.desde, total: roll.pasos ?? roll.total, continuation: roll.tipo === 'continuacion', node: null, animation: null };
   }
   if (animate && roll && roll.id !== seenRoll && !Number.isInteger(roll.desde)) {
     const run=movement={rollId:roll.id,started:true,diceOnly:true};
     setTimeout(()=>{if(movement===run){movement=null;renderPlayers();updateControls();flushLanding();}},1400);
   }
+  if(!movement)displayedBarrier=!!state.barreraProteccionista;
   animateNextState = true;
   renderDice(roll, animate);
   joinedRoom = state.codigo;
   $('login').hidden = true; $('mesa').hidden = false;
   $('sala-codigo').textContent = state.codigo;
   $('deuda').textContent = amount(state.deudaFMIGlobal);
-  $('barrera').textContent = state.barreraProteccionista ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
+  $('barrera').textContent = displayedBarrier ? 'BARRERA ACTIVA' : 'COMERCIO ABIERTO';
   $('registro').replaceChildren();
   for (const message of state.registro || []) log($('registro'), message);
   // Open once per room entry, before decisions so their dialogs stay above the table.
@@ -246,6 +247,7 @@ function decoratePiece(node, player) {
 function displayPosition(p) { return p?.id === movement?.playerId ? movement.position : p?.posicion; }
 function flushLanding() {
   if (!state || movement || presentationBusy) return;
+  if(displayedBarrier!==!!state.barreraProteccionista){displayedBarrier=!!state.barreraProteccionista;renderBoard();$('barrera').textContent=displayedBarrier?'BARRERA ACTIVA':'COMERCIO ABIERTO';}
   if (pendingLanding !== null) { globalThis.GameAudio?.land(pendingLanding); pendingLanding = null; }
   renderPlayers();
   if (pendingCard) {
@@ -263,7 +265,7 @@ function cancelMovement() {
 }
 async function movePiece(run) {
   // Positions come from the rendered cells, so the route follows every responsive layout.
-  await new Promise(resolve => setTimeout(resolve, globalThis.GameMovement?.startDelayMs || 900));
+  await new Promise(resolve => setTimeout(resolve, run.continuation ? 0 : (globalThis.GameMovement?.startDelayMs || 900)));
   if (movement !== run) return;
   const player = state.jugadores.find(p => p.id === run.playerId);
   const node = element('span', String(state.jugadores.indexOf(player) + 1), 'token token-current moving-token');
@@ -306,7 +308,7 @@ function position(id) {
 function renderBarrier(tile, cell) {
   if (cell.region !== 'norte') return;
   let shutter = tile.querySelector('.north-barrier');
-  const blocked = !!state.barreraProteccionista;
+  const blocked = displayedBarrier;
   if (!shutter) {
     shutter = element('span', undefined, 'north-barrier'); shutter.setAttribute('aria-hidden', 'true');
     const band = element('span', undefined, 'barrier-band');
@@ -393,12 +395,15 @@ function renderPlayers() {
     const row = element('div', undefined, 'player' + (state.enJuego && state.jugadores[state.turnoActual]?.id === p.id ? ' current' : ''));
     const avatar = element('span', String(state.jugadores.indexOf(p) + 1), 'avatar'); avatar.style.setProperty('--player', p.color); decoratePiece(avatar, p);
     const content = element('div'); content.append(element('div', p.nombre + (p.userId === userId ? ' · tú' : '') + (p.esLider ? ' ♛' : ''), 'player-name'));
-    content.append(element('div', 'Ficha: ' + pieceFor(p).name, 'piece-name'));
+    content.append(element('div', 'Ficha: ' + pieceFor(p).name + ' · Vuelta ' + ((p.vueltasCompletadas || 0)+1), 'piece-name'));
+    const inspect=button('Ver propiedades',()=>showProperties(p.id),'ghost');content.append(inspect);
+    avatar.setAttribute('role','button');avatar.tabIndex=0;avatar.setAttribute('aria-label','Ver propiedades de '+p.nombre);avatar.onclick=()=>showProperties(p.id);avatar.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();showProperties(p.id);}};
     const stats = element('div', undefined, 'player-stats'); stats.append(element('span', amount(p.dinero)), element('span', 'Deuda ' + amount(p.deudaPersonal)), element('span', '◆ ' + p.oro+' lingotes')); content.append(stats);
     if(p.dadoInicial)content.append(element('small','Dado inicial: '+p.dadoInicial,'initial-roll-result'));
     if(p.sombreroSandino)content.append(element('small','Sombrero de Sandino · 1 uso disponible','initial-roll-result'));
     content.append(element('div', [!p.conectado && 'Desconectado', p.enQuiebra && 'En quiebra', p.enAlianza && 'Alianza · caja común', p.industriasCerradas && 'Industrias cerradas', p.turnosPerdidos > 0 && 'Desempleo: ' + p.turnosPerdidos, p.deudaPersonal >= 30000 && 'Límite de deuda'].filter(Boolean).join(' · '), 'player-status'));
     if(p.bot && !state.enJuego && !state.finalizada && me()?.esLider) { const remove=button('Quitar bot',()=>action('quitarBot',{jugadorId:p.id})); remove.disabled=busy||!socket.connected; content.append(remove); }
+    row.onclick=e=>{if(!e.target.closest('button,[role=button]'))showProperties(p.id);};
     row.append(avatar, content); $('jugadores').append(row);
   }
 }
@@ -493,6 +498,7 @@ function renderDice(roll, animate) {
   if (!roll) { seenRoll = null; clearTimeout(diceTimer); panel.hidden = true; panel.classList.remove('rolling'); return; }
   if (roll.id === seenRoll) return;
   seenRoll = roll.id; clearTimeout(diceTimer);
+  if(roll.tipo==='continuacion'){panel.hidden=true;return;}
   if(animate&&$('interaccion'))$('interaccion').hidden=true;
   const faces = $('dados-caras'), label = $('dados-resultado');
   panel.hidden = false; panel.classList.remove('rolling'); faces.replaceChildren();
@@ -593,10 +599,11 @@ function renderDecision(force = false) {
   } else container.append(element('p','Esperando la decisión de '+(state.jugadores.find(j=>j.id===d.jugadorId)?.nombre||'otro jugador')+'.'));
 }
 function openDialog() { if (!$('detalle').open) $('detalle').showModal(); }
-function showProperties(){
-  selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','PATRIMONIO','eyebrow'),element('h2','Mis propiedades'));
-  const list=element('div',undefined,'property-portfolio'),properties=state.tablero.filter(c=>c.region==='sur'&&myProperty(c));
-  if(!properties.length)list.append(element('p','Todavía no tienes propiedades.'));
+function showProperties(playerId=me()?.id){
+  const player=state?.jugadores.find(p=>p.id===playerId);if(!player)return;
+  selectedProperty=null;const box=$('detalle-contenido');box.replaceChildren(element('p','PATRIMONIO','eyebrow'),element('h2',player.id===me()?.id?'Mis propiedades':'Propiedades de '+player.nombre));
+  const list=element('div',undefined,'property-portfolio'),properties=state.tablero.filter(c=>c.region==='sur'&&(c.dueño===player.id || player.alianzaId && state.jugadores.some(q=>q.id===c.dueño && q.alianzaId===player.alianzaId)));
+  if(!properties.length)list.append(element('p','Todavía no hay propiedades en este patrimonio.'));
   for(const c of properties){
     const tile=button('',()=>showProperty(c.id),'secondary property-tile'),art=catalog.find(a=>a.nombre===c.nombre),north=state.tablero.find(n=>n.baseSur===c.nombre);
     if(art?.icono){const img=element('img');img.src=art.icono;img.alt='';tile.append(img);}

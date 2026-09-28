@@ -24,7 +24,7 @@ $('abrir-3d').onclick = async () => {
     const room=ctx.state.codigo;
     const module = await import('/board3d.mjs');
     if(!ctx.state||ctx.state.codigo!==room||!dialog3d.open)return;
-    ctx.board3d = module.createBoard3D({ host:$('escena-3d'), legend:$('jugadores-3d'), onCinematic:value=>dialog3d.setCinematic(value), onDiceLabel:text=>{$('resultado-dados-3d').textContent=text;}, getState:()=>ctx.state, getArt:()=>({catalog:ctx.catalog,specialCatalog:ctx.specialCatalog}), onSelect:id=>{
+    ctx.board3d = module.createBoard3D({ host:$('escena-3d'), legend:$('jugadores-3d'), onCinematic:value=>dialog3d.setCinematic(value), onDiceLabel:text=>{$('resultado-dados-3d').textContent=text;}, getState:()=>ctx.state, getArt:()=>({catalog:ctx.catalog,specialCatalog:ctx.specialCatalog}), onInspect:id=>showProperty(id), onPlayer:id=>ctx.showProperties(id), onSelect:id=>{
       ctx.selected3d=id; $('casilla-3d').value=String(id); $('detalle-3d').disabled=false;
       const cell=ctx.state?.tablero.find(c=>c.id===id); if(cell)$('estado-3d').textContent=cell.nombre + (cell.precio?' · '+amount(cell.precio):'') + (cell.region?' · '+(cell.region==='sur'?'Nacionales: '+(cell.industriasNac||0):'Multinacionales: '+(cell.industriasExp||0))+'/3':'') + (cell.region==='norte'&&ctx.state.barreraProteccionista?' · Barrera activa':'');
     }, onError:()=>{ctx.board3d?.dispose();ctx.board3d=null;controls3d.restore();dialog3d.close();notice('Se ha perdido la vista 3D. Puedes continuar en 2D sin salir de la partida.');} });

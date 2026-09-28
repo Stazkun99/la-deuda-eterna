@@ -16,6 +16,7 @@ function showProperty(id) {
   box.append(element('p',(owner?'Propiedad de '+owner.nombre:'Terreno disponible')),element('p','Industrias nacionales: '+(c.industriasNac||0)+'/3 · Multinacionales: '+(n?.industriasExp||0)+'/3'));
   if(original.region==='norte' && ctx.specialCatalog[original.id]){const img=element('img');img.src=ctx.specialCatalog[original.id].imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
     if(info?.imagen){const img=element('img');img.className='property-original';img.src=info.imagen;img.alt='Carta original de '+c.nombre;img.loading='lazy';box.append(img);}
+  box.append(element('p','Renta actual: '+amount(original.rentaActual || 0)+' · Cobro al caer en tu industria: '+amount(original.cobroPropio || 0)+' (si está operativa).','card-note'));
   const actions=element('div',undefined,'detail-actions');
   if(myProperty(c)&&myTurn()){
     for(const [label,type]of [['Construir industria nacional','nacional'],['Construir multinacional','exportacion']]){

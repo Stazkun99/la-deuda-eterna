@@ -16,9 +16,10 @@ export function playerSlot(players, player) {
   return {x:(index%2 ? 1:-1)*.235,z:(index<2 ? -1:1)*.235,scale:.56};
 }
 export function rollPath(previous, next, roll, seenRoll) {
-  if(!previous||!roll||roll.id===seenRoll||roll.jugadorId!==next.id||roll.desde!==previous.posicion||roll.hasta!==next.posicion||!Number.isInteger(roll.total)||roll.total<1||roll.total>24)return [];
-  if((roll.desde+roll.total)%40!==roll.hasta)return [];
-  return Array.from({length:roll.total+1},(_,i)=>(roll.desde+i)%40);
+  const steps=roll?.pasos ?? roll?.total;
+  if(!previous||!roll||roll.id===seenRoll||roll.jugadorId!==next.id||roll.desde!==previous.posicion||roll.hasta!==next.posicion||!Number.isInteger(steps)||steps<1||steps>24)return [];
+  if((roll.desde+steps)%40!==roll.hasta)return [];
+  return Array.from({length:steps+1},(_,i)=>(roll.desde+i)%40);
 }
 
 // Local negative Z is the outer strip; positive Z is the player lane.

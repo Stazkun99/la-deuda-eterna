@@ -81,7 +81,7 @@ test('intereses al llegar al FMI, oro y continuación de la casilla tras el pago
 });
 test('intereses antes de una oferta al cruzar el FMI',()=>{
   const {game,r,act}=fixture();const p=r.jugadores[0];p.posicion=38;p.deudaPersonal=10000;
-  act(0,'tirarDado');assert.equal(p.posicion,1);assert.equal(r.pendiente.monto,1000);act(0,'responderDecisionPago',{decisionId:r.pendiente.id,usarOro:true});assert.equal(r.fase,'compra');assert.equal(r.pendiente.nombrePropiedad,'Azúcar');
+  act(0,'tirarDado');assert.equal(p.posicion,39);assert.equal(r.pendiente.monto,1000);act(0,'responderDecisionPago',{decisionId:r.pendiente.id,usarOro:true});assert.equal(r.fase,'compra');assert.equal(r.pendiente.nombrePropiedad,'Azúcar');
 });
 test('NO PAGAR evita intereses una vez',()=>{const {game,r}=fixture();const p=r.jugadores[0];p.deudaPersonal=10000;p.noPagarVuelta=true;assert.equal(game.interest(p),0);assert.equal(game.interest(p),1000);});
 test('Ecuador paga 2400 y las 17 condiciones tienen efectos ejecutables',()=>{

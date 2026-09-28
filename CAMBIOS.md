@@ -246,3 +246,11 @@ Los personajes se orientan hacia la cámara para mantener reconocible su silueta
 - Golpe militar: pierde el 50% del efectivo en vueltas 1–2; 100% desde vuelta 3. Los resguardos siguen funcionando.
 - Las vueltas son individuales: cruzar salida con los dados suma una; un traslado de carta no suma por sí solo. Se guardan al reconectar y se reinician en revancha. Partidas antiguas sin contador comienzan en vuelta 1 al cargar esta versión.
 - El reglamento dentro del juego y el publicado en la portada proceden de `public/rules.js`. La portada lo incluye en HTML durante su compilación.
+
+### Ajustes de mesa y bots
+
+- El FMI interrumpe el recorrido en la casilla 39: se paga y se continúan los pasos restantes, sin otra tirada. La continuación se conserva si se desconecta el jugador.
+- La barrera 3D se activa o retira al terminar el recorrido, no antes de llegar.
+- Pulsar una casilla 3D abre su detalle. Pulsar una ficha o un jugador permite consultar su patrimonio; también existe un botón Ver propiedades.
+- Bots nuevos: Spider-Man, Iron Man y Thor. Pueden financiar inversiones rentables y descuentos con préstamos limitados, conservando reservas y evitando subir de tramo de dados por esa inversión.
+- Condición FMI 12, «Negocie directamente con el FMI»: temporalmente deshabilitada mediante `habilitada: false` en `cartas.js`. Se excluye al crear y al robar de los mazos, incluidos los guardados. Los pactos pendientes antiguos se cancelan; no se revierte dinero ya entregado.

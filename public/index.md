@@ -26,3 +26,7 @@ Es una adaptación con ajustes propios, no una reproducción exacta de todas las
 ## Continuidad de las partidas
 
 La sesión permite reconectar mientras la sala siga disponible. El alojamiento gratuito puede tardar en arrancar y las partidas pueden perderse al reiniciar o actualizar el servidor.
+
+## Cambios de esta edición
+
+Dos propiedades con industria de un grupo de tres dan renta ×1,5; la cadena completa suma rentas. El Sur propio cobra el 50% de la renta con bonos. Fuga desbloquea una cara por vuelta, desde 1 hasta 6. Golpe militar pierde el 50% del efectivo durante las dos primeras vueltas. La condición FMI que regalaba $10.000 está suspendida. El reglamento actualizado se abre desde el botón Reglamento del juego.

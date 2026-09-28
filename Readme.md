@@ -45,7 +45,7 @@ En el Sur propio se cobra el 50% de la renta efectiva, incluidos los bonos por p
 - Fichas numeradas con relieve, colores de jugador y aro dorado para el turno activo; agrupación cuando coinciden varias.
 - Dados animados con resultado confirmado por el servidor y adaptación a la preferencia de movimiento reducido.
 - Doce materias primas del Sur y doce manufacturas del Norte, cada una con su ilustración correspondiente.
-- Imágenes originales de propiedades, casillas especiales, 20 cartas de Solidaridad y 17 condiciones FMI.
+- Imágenes originales de propiedades, casillas especiales, 20 cartas de Solidaridad y 17 ilustraciones de condiciones FMI (16 activas; el regalo de $10.000 está suspendido).
 - Cartas completas al sacarlas y opción de volver a consultar la última carta.
 - Compra, construcción, rentas, préstamos, amortización, oro, alianzas, subastas y monopolio opcional.
 - Industrialización con elección de terreno libre o mejora gratuita cuando todos están ocupados.
@@ -522,3 +522,11 @@ Módulos: `lib/match-summary.js` acumula y congela estadísticas; `public/ui/res
 # Portada estática gratuita
 
 La portada independiente se prepara con `npm run build:landing`. Consulta [DESPLEGAR-PORTADA.md](DESPLEGAR-PORTADA.md) para los campos exactos de Render, la verificación en Search Console y la conexión al servidor actual. El tablero y las sesiones siguen en el Web Service; la portada no publica datos de partidas ni credenciales.
+
+### Ajustes de mesa y bots
+
+- El FMI interrumpe el recorrido en la casilla 39: se paga y se continúan los pasos restantes, sin otra tirada. La continuación se conserva si se desconecta el jugador.
+- La barrera 3D se activa o retira al terminar el recorrido, no antes de llegar.
+- Pulsar una casilla 3D abre su detalle. Pulsar una ficha o un jugador permite consultar su patrimonio; también existe un botón Ver propiedades.
+- Bots nuevos: Spider-Man, Iron Man y Thor. Pueden financiar inversiones rentables y descuentos con préstamos limitados, conservando reservas y evitando subir de tramo de dados por esa inversión.
+- Condición FMI 12, «Negocie directamente con el FMI»: temporalmente deshabilitada mediante `habilitada: false` en `cartas.js`. Se excluye al crear y al robar de los mazos, incluidos los guardados. Los pactos pendientes antiguos se cancelan; no se revierte dinero ya entregado.

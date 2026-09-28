@@ -10,7 +10,7 @@ const CARTAS_CONDICIONES = [
   { id: 9, titulo: "GUERRA EN LA FRONTERA", desc: "Usted y el jugador de su derecha le comprarán cada uno al FMI $1,000 en armas." },
   { id: 10, titulo: "REUNIÓN CON EL CLUB DE PARÍS", desc: "Todos los jugadores avanzarán hasta el FMI para recibir consejos (pagando intereses)." },
   { id: 11, titulo: "CIERRE DE INDUSTRIAS", desc: "Todas sus industrias quedarán cerradas hasta que usted llegue al FMI." },
-  { id: 12, titulo: "NEGOCIE DIRECTAMENTE CON EL FMI", desc: "Si promete no hacer pactos, el FMI le regala $10,000." },
+  { id: 12, habilitada: false, titulo: "NEGOCIE DIRECTAMENTE CON EL FMI", desc: "Si promete no hacer pactos, el FMI le regala $10,000." },
   { id: 13, titulo: "PATENTES", desc: "Debe pagar al FMI $200 por cada industria nacional y $400 por cada exportación." },
   { id: 14, titulo: "IMPUESTO", desc: "Por importación de autos de lujo y whisky pague $1,500." },
   { id: 15, titulo: "SOBREVALORACIÓN DEL DÓLAR", desc: "Cuando llegue al FMI pagará sus intereses al 20% en esta vuelta." },

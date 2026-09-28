@@ -18,7 +18,7 @@ test('guardar aplica la carta sin volver a robar; conserva decisiones FMI y se r
  const s=setup(),{r,p}=s;p.sombreroSandino=true;p.deudaPersonal=10000;s.draw(2);
  const saved=new Game({rooms:structuredClone(s.game.rooms)});assert.equal(saved.rooms.SANDINO.pendiente.cartaId,2);
  s.choose('guardar');assert.equal(p.sombreroSandino,true);assert.equal(r.pendiente.tipo,'pago');assert.equal(r.pendiente.monto,1500);
- r.pendiente=null;r.fase='gestion';s.draw(12);s.choose('guardar');assert.equal(r.pendiente.efecto,'pactoFmi');s.choose('aceptar');assert.equal(p.sinPactos,true);assert.equal(p.sombreroSandino,true);
+ r.pendiente=null;r.fase='gestion';s.draw(14);s.choose('guardar');assert.equal(r.pendiente,null);assert.equal(p.sombreroSandino,true);
 });
 test('inactividad conserva sombrero y resuelve el cargo sin inmunidad permanente',()=>{
  const s=setup(),{game,r,p}=s;p.sombreroSandino=true;const cash=p.dinero;s.draw(14);s.advance(200000);game.tick();
