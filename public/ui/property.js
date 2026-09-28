@@ -22,7 +22,7 @@ function showProperty(id) {
     for(const [label,type]of [['Construir industria nacional','nacional'],['Construir multinacional','exportacion']]){
       const national=type==='nacional',level=national?(c.industriasNac||0):(n?.industriasExp||0);
       const price=info?.[national?'nac':'exp']?.[level];
-      const cost=price===undefined?null:Math.floor(price*(ctx.state.descuento?0.5:1));
+      const cost=me()?.costesConstruccion?.[c.nombre]?.[type] ?? (price===undefined?null:Math.floor(price*(ctx.state.descuento?0.5:1)));
       const text=level>=3?label+' · Máximo alcanzado':label+(cost===null?'':' · '+amount(cost));
       const b=button(text,()=>action('construirIndustria',{nombrePropiedad:c.nombre,tipo:type}),'secondary');
       b.disabled=!socket.connected||ctx.busy||level>=3||(!national&&c.industriasNac<=level)||!(ctx.state.fase==='tirada'||ctx.state.fase==='gestion'&&ctx.state.descuento);

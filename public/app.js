@@ -74,7 +74,7 @@ function join(crear, intent = null) {
 }
 let board3d = null, board3dLoading = false, selected3d = null;
 const {dialog3d,controls3d}=GameBoardView.create({$,element,amount,updateControls,showProperty,showProperties,notice,
- get state(){return state;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
+ get viewerId(){return me()?.id;},get state(){return state;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
  get board3d(){return board3d;},set board3d(v){board3d=v;},get board3dLoading(){return board3dLoading;},set board3dLoading(v){board3dLoading=v;},get selected3d(){return selected3d;},set selected3d(v){selected3d=v;}});
 $('interaccion-siguiente').onclick = nextInteraction;
 $('crear').onclick = () => { clearEntry(); join(true); };
@@ -155,7 +155,7 @@ socket.on('connect_error', () => { $('conexion').textContent = 'Sin conexión ·
 socket.on('sesionReemplazada', message => { socket.disconnect(); $('conexion').textContent = 'Sesión en otra pestaña'; notice(message); });
 socket.on('errorAcceso', message => { notice(message); if (!joinedRoom) remember('deuda_eterna_sala', null); });
 socket.on('errorAccion', notice);
-socket.on('salaAbandonada', () => { results.reset(); dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); $('amortizar-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
+socket.on('salaAbandonada', () => { globalThis.WorldEventUI?.capture(null,false); results.reset(); dialog3d.close(); controls3d.restore(); board3d?.dispose(); board3d=null; selected3d=null; globalThis.GameAudio?.stop(); cancelMovement(); animateNextState = false; pendingCard = null; pendingLanding = null; $('prestamo-dialog').close(); $('amortizar-dialog').close(); joinedRoom = null; state = null; remember('deuda_eterna_sala', null); $('codigo').value = ''; $('mesa').hidden = true; $('login').hidden = false; $('detalle').close(); $('carta-dialog').close(); $('registro').replaceChildren(); $('chat').replaceChildren(); lastResult = null; lastCardShown = null; currentCard = null; seenRoll = null; clearTimeout(diceTimer); $('industrial-dialog').close(); $('comercio-dialog').close(); tradeShown = null; resetInteractions(); $('dados-panel').hidden = true; });
 socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, data.color));
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
@@ -183,6 +183,7 @@ socket.on('actualizarEstado', next => {
     setTimeout(()=>{if(movement===run){movement=null;renderPlayers();updateControls();flushLanding();}},1400);
   }
   if(!movement)displayedBarrier=!!state.barreraProteccionista;
+  globalThis.WorldEventUI?.capture(state,animate);
   animateNextState = true;
   renderDice(roll, animate);
   joinedRoom = state.codigo;
@@ -250,6 +251,8 @@ function flushLanding() {
   if(displayedBarrier!==!!state.barreraProteccionista){displayedBarrier=!!state.barreraProteccionista;renderBoard();$('barrera').textContent=displayedBarrier?'BARRERA ACTIVA':'COMERCIO ABIERTO';}
   if (pendingLanding !== null) { globalThis.GameAudio?.land(pendingLanding); pendingLanding = null; }
   renderPlayers();
+  const eventNotice=globalThis.WorldEventUI?.present();
+  if(eventNotice){presentationBusy=true;updateControls();eventNotice.finally(()=>{presentationBusy=false;updateControls();flushLanding();});return;}
   if (pendingCard) {
     const card=pendingCard;pendingCard=null;presentationBusy=true;renderLastCard(card);updateControls();
     showCard(card,true).finally(()=>{presentationBusy=false;updateControls();renderDecision(true);renderInteractions();});
@@ -350,6 +353,7 @@ function renderBoard() {
       }
     }
     const active = state.enJuego && displayPosition(state.jugadores[state.turnoActual]) === c.id;
+    tile.dataset.cellId=c.id;
     tile.className = 'tile ' + (c.region === 'norte' ? 'norte' : c.region === 'sur' ? 'sur' : 'special') + (active ? ' active' : '');
     const base = c.baseSur ? state.tablero.find(s => s.nombre === c.baseSur) : c;
     tile.style.setProperty('--group', groups[base.grupo] || '#a6b49a');

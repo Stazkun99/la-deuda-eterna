@@ -254,3 +254,26 @@ Los personajes se orientan hacia la cámara para mantener reconocible su silueta
 - Pulsar una casilla 3D abre su detalle. Pulsar una ficha o un jugador permite consultar su patrimonio; también existe un botón Ver propiedades.
 - Bots nuevos: Spider-Man, Iron Man y Thor. Pueden financiar inversiones rentables y descuentos con préstamos limitados, conservando reservas y evitando subir de tramo de dados por esa inversión.
 - Condición FMI 12, «Negocie directamente con el FMI»: temporalmente deshabilitada mediante `habilitada: false` en `cartas.js`. Se excluye al crear y al robar de los mazos, incluidos los guardados. Los pactos pendientes antiguos se cancelan; no se revierte dinero ya entregado.
+
+## Eventos mundiales
+
+Un mazo barajado de 12 acontecimientos (6 favorables y 6 negativos), sin reposición hasta agotarlo. Cruce por Salida con dados activa uno solo si no hay otro; tras pagar en FMI, se activa al continuar y cruzar. No se activan por teletransporte ni al comenzar. El evento se aplica antes de resolver la casilla de destino, pero el anuncio de tres segundos espera al final del movimiento y precede a cartas y decisiones. El indicador permanente permite consultar historia, efecto y duración.
+
+Dura el resto del turno actual y una vuelta del orden de turnos, terminando tras el siguiente turno del activador. Turnos omitidos o jugadores retirados no lo prolongan indefinidamente; pausa y tiempo desconectado no descuentan segundos porque no es un temporizador. Se conserva al guardar/reconectar y se limpia en revancha/final.
+
+- **La gran cosecha**: Doble cobro propio en Azúcar, Banano y Cacao.
+- **Sequía prolongada**: Cobro propio a la mitad en Azúcar, Banano y Cacao. Las rentas no cambian.
+- **Pedidos de ultramar**: Cobro propio +50% en Algodón, Tabaco, Café y sus manufacturas.
+- **Contratos cancelados**: Cobro propio −50% en Algodón, Tabaco, Café y sus manufacturas.
+- **Mercados populares**: En Pesca y Ganado, el banco paga media renta al dueño cuando cae cualquiera. El visitante no paga.
+- **Crisis sanitaria**: Rentas y cobros propios −50% en Pesca, Ganado, Enlatados y Zapatos.
+- **El mundo necesita metales**: El banco añade un 50% a las rentas en efectivo cobradas a rivales en minería y sus manufacturas.
+- **Desplome de los metales**: Rentas y cobros propios −50% en minería y sus manufacturas.
+- **Acuerdo energético**: Doble cobro propio en Petróleo y Gasolina. Construcción −15% para todos.
+- **Crisis de abastecimiento**: Cobro propio −50% en Petróleo y Gasolina. Construcción +15% para todos.
+- **Cooperación regional**: La primera construcción nacional de cada jugador tiene un 30% de descuento.
+- **Atasco logístico**: Construir multinacionales cuesta un 25% más. Las existentes siguen funcionando.
+
+Los multiplicadores se aplican sobre la renta con cadenas. Cierres, desempleo y barrera mantienen sus restricciones. Mercados populares solo paga por industrias nacionales operativas, sin cobrar al visitante. El bono minero solo se añade a rentas pagadas en efectivo (no lingotes). Construcción usa el mejor descuento, sin sumarlos, y luego el recargo vigente; redondeo entero hacia abajo. La primera construcción nacional de cooperación se consume incluso si Ayuda Solidaria ofrece mejor descuento.
+
+Los bots y los detalles de propiedades usan los costes efectivos del servidor. Los rótulos de las cuatro esquinas muestran jugadores y vecinos FMI respecto a ti; el siguiente jugador activo es tu izquierda y el anterior tu derecha. No cambian al girar la cámara.

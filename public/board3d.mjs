@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import {createWorldEventLayer} from './board3d-events.mjs';
+import {createSeats} from './board3d-seats.mjs';
 import {createDeckLayer} from './board3d-decks.mjs';
 import {createAmbientLayer} from './board3d-ambient.mjs';
 import {createBoardCamera,overviewPose} from './board3d-camera.mjs';
@@ -11,7 +13,7 @@ import { GLTFLoader } from '/vendor/three/loaders/GLTFLoader.js';
 import { createModelLayer } from './board3d-models.mjs';
 import { tilePosition, tileAnchor, pieceKind, sceneryPlayerSlot, rollPath } from './board3d-layout.mjs';
 
-export function createBoard3D({host, getState, getArt, onSelect, onInspect=()=>{}, onPlayer=()=>{}, onError, legend, onDiceLabel, onCinematic=()=>{}}) {
+export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=>null, onInspect=()=>{}, onPlayer=()=>{}, onError, legend, onDiceLabel, onCinematic=()=>{}}) {
   const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
   renderer.setClearColor('#142c2b');
@@ -37,6 +39,7 @@ export function createBoard3D({host, getState, getArt, onSelect, onInspect=()=>{
   const pieces=new Map();
   const industries=createIndustryLayer(scene,getState().tablero);
   const diceTray=createDiceTray(scene,onDiceLabel);
+  const eventLayer=createWorldEventLayer(scene),seats=createSeats(scene);let eventPending=false;
   let previousPlayers=[], lastRoll=null, barrierValue=!!getState().barreraProteccionista, barrierPending=null;
   let active=false, disposed=false, frame=0, selection=null, down=null;
   const own=r=>(resources.push(r),r);
@@ -67,14 +70,15 @@ export function createBoard3D({host, getState, getArt, onSelect, onInspect=()=>{
     frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick&&!piece.travel)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,piece.travel||false,reduced))charactersMoving=true;}
+    const eventMoving=eventLayer.tick(now,reduced);
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
     if(moving||rolling||barrierMoving||drawing||((ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
     if(celebration){const t=(now-celebration.start)/2400;for(const tile of tiles)if(celebration.ids.includes(tile.cell.id)){tile.top.emissive.set(t>=1?'#000000':'#eaba42');tile.top.emissiveIntensity=t>=1?0:.25+.5*Math.abs(Math.sin(t*Math.PI*4));}if(t>=1)celebration=null;}
-    if(!moving&&!rolling&&barrierPending!==null){barrierValue=barrierPending;barrierPending=null;update({animate:true});}
+    if(!moving&&!rolling&&(barrierPending!==null||eventPending)){if(barrierPending!==null)barrierValue=barrierPending;barrierPending=null;eventPending=false;update({animate:true});}
     onCinematic(moving||rolling||drawing);
     const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
-    if(fast||ambientMoving||charactersMoving||celebration)schedule();
+    if(fast||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
   });}
   function settle(piece){piece.finish?.();piece.motion=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
@@ -150,6 +154,8 @@ export function createBoard3D({host, getState, getArt, onSelect, onInspect=()=>{
     if(deferred && !!actual.barreraProteccionista!==barrierValue)barrierPending=!!actual.barreraProteccionista;
     else if(!deferred){barrierValue=!!actual.barreraProteccionista;barrierPending=null;}
     const state={...actual,barreraProteccionista:barrierValue};
+    if(deferred)eventPending=true;else {eventPending=false;eventLayer.sync(state.enJuego?state.eventoActual:null);}
+    seats.sync(state,getViewerId());
     const {catalog,specialCatalog}=getArt();
     for(const tile of tiles){const c=state.tablero.find(c=>c.id===tile.cell.id);if(!c)continue;
       const art=catalog.find(a=>a.nombre===(c.baseSur||c.nombre));
@@ -189,6 +195,6 @@ export function createBoard3D({host, getState, getArt, onSelect, onInspect=()=>{
     zoom(factor){overview=false;cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
     overhead(){overview=false;const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
     setActive(value){renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    dispose(){eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }
