@@ -76,3 +76,7 @@ Los 420 archivos originales (aprox. 41,5 MB), con OBJ, MTL, FBX, Blend, vistas p
 `C:/Users/alfredo/Documents/Codex/2026-09-09/re/work/modelos-nuevos-originales-2026-09-20`.
 
 Se verificaron las huellas SHA-256 antes y después del traslado. Inventario: `work/modelos-nuevos-inventario.json`, junto al archivo. No se borraron originales. Vaca y tanque se usan estáticos; los originales con animaciones permanecen guardados. Se eligió un velero sin decoración pirata, no una réplica histórica. Las otras especies, variantes de tanque y piezas del kit de barcos quedan disponibles en el archivo, sin descargarse con el juego.
+
+
+### Escenarios con modelos descargados
+Se retiran las maquetas geométricas del centro. Los 12 eventos combinan los GLB del tablero con diez modelos CC0 recuperados de los packs archivados: vegetación genérica, surcos, suelo, contenedor, cono, muelle, barco y barril. Se guardan en `public/assets/modelos-3d/eventos`, junto a sus texturas; procedencia y huellas en `origenes.json`. No se sustituyen especies concretas de las casillas por cultivos genéricos. Carga por evento, caché, animación suave de vegetación/barco y materiales propios para el tono apagado de los eventos negativos, sin alterar los originales.

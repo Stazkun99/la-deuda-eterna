@@ -286,3 +286,15 @@ El anfitrión elige si habilita eventos al iniciar. El evento activo expira cuan
 ### Lectura de la mesa y ambiente
 
 Antes de tirar, el jugador ve deuda, previsión de intereses FMI y efectivo restante (no descuenta dinero). Las propiedades tienen una franja del dueño y hasta tres marcas de nivel. Las parejas industriales y cadenas se celebran con destellos y conexiones luminosas. El ambiente sintetizado de campo, costa e industria cambia suavemente según el encuadre 3D; tiene volumen independiente en Sala y respeta silencio, pausa y pestaña oculta.
+
+
+### Escenarios, subastas y recorrido de cartas
+Los doce eventos tienen una maqueta temporal en el borde interior del centro, dejando libres los mazos. Se retira al terminar y respeta movimiento reducido. La subasta destaca al líder, muestra una cuenta atrás circular y suena en los últimos tres segundos; cada puja reinicia el plazo. Las cartas de traslado conservan primero la llegada a Solidaridad/FMI, muestran la carta y después trasladan las fichas mediante un arco visible en 3D.
+
+
+### Escenarios con modelos descargados
+Se retiran las maquetas geométricas del centro. Los 12 eventos combinan los GLB del tablero con diez modelos CC0 recuperados de los packs archivados: vegetación genérica, surcos, suelo, contenedor, cono, muelle, barco y barril. Se guardan en `public/assets/modelos-3d/eventos`, junto a sus texturas; procedencia y huellas en `origenes.json`. No se sustituyen especies concretas de las casillas por cultivos genéricos. Carga por evento, caché, animación suave de vegetación/barco y materiales propios para el tono apagado de los eventos negativos, sin alterar los originales.
+
+
+### Fachadas y maquinaria animada
+Fábricas y oficinas del Norte giradas para orientar sus entradas principales hacia el tablero. La bomba petrolera articula balancín y varilla, manteniendo inmóvil su base. Llegar a Golpe Militar activa un disparo breve del tanque con retroceso, destello, humo y sonido sintetizado; no se repite en el aviso de pago. El ambiente y movimiento reducido controlan la animación continua; sonido respeta silencio.

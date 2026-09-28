@@ -23,7 +23,8 @@ test('GLB: catalogue covers forty spaces, real assets fit lots and every texture
   const {fitModel}=await import('../public/board3d-models.mjs');
   assert.equal(Object.keys(BOARD_MODELS).length,25);
   for(let id=0;id<40;id++)assert.notEqual(!!BOARD_MODELS[id],!!MISSING_MODELS[id],'one state per space '+id);
-  const files=new Set(Object.values(BOARD_MODELS).flat().map(s=>s.file));
+  const {EVENT_MODELS}=await import('../public/board3d-event-catalog.mjs');
+  const files=new Set([...Object.values(BOARD_MODELS).flat(),...Object.values(EVENT_MODELS).flat(),{file:'eventos/nature/suelo.glb'}].map(s=>s.file));
   const manifest=JSON.parse(fs.readFileSync(path.join(assetRoot,'origenes.json'),'utf8'));
   assert.deepEqual([...files].sort(),manifest.map(m=>m.archivo).sort(),'no unused models ship');
   const templates=new Map(),loader=new GLTFLoader();
@@ -47,6 +48,7 @@ test('GLB: catalogue covers forty spaces, real assets fit lots and every texture
     assert.ok(bounds.min.z>=-1.49&&bounds.max.z<=-.56,'keep models outside printed space '+id);
     assert.ok(bounds.min.y>=-.00001&&bounds.max.y<=.65,'height '+id);
   }
+  for(const specs of Object.values(EVENT_MODELS))for(const spec of specs){const model=fitModel(templates.get(spec.file),spec),bounds=new THREE.Box3().setFromObject(model);assert.ok(bounds.min.x>=-1.5&&bounds.max.x<=1.5);assert.ok(bounds.min.z>=-.75&&bounds.max.z<=.75);}
   for(const scene of templates.values())scene.traverse(o=>{o.geometry?.dispose();if(o.material)for(const m of Array.isArray(o.material)?o.material:[o.material])m.dispose();});
 });
 

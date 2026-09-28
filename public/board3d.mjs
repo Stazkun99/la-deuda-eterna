@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {createMachineAnimations} from './board3d-machines.mjs';
 import {createSetCelebration} from './board3d-celebration.mjs';
 import {createWorldEventLayer} from './board3d-events.mjs';
 import {createSeats} from './board3d-seats.mjs';
@@ -41,7 +42,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const pieces=new Map();
   const industries=createIndustryLayer(scene,getState().tablero);
   const diceTray=createDiceTray(scene,onDiceLabel);
-  const eventLayer=createWorldEventLayer(scene),seats=createSeats(scene);let eventPending=false;
+  const eventLayer=createWorldEventLayer(scene,{load:url=>new GLTFLoader().loadAsync(url),onChange:()=>{renderer.shadowMap.needsUpdate=true;schedule();}}),seats=createSeats(scene);let eventPending=false;
   let previousPlayers=[], lastRoll=null, barrierValue=!!getState().barreraProteccionista, barrierPending=null;
   let active=false, disposed=false, frame=0, selection=null, down=null, lastTap=null;
   const own=r=>(resources.push(r),r);
@@ -66,15 +67,17 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const surface=new THREE.Mesh(own(new THREE.PlaneGeometry(8.92,8.92)),mat);surface.rotation.x=-Math.PI/2;surface.position.y=.07;scene.add(surface);
   const textureLoader=new THREE.TextureLoader();
   const decks=createDeckLayer({scene,loadTexture:(url,done)=>textureLoader.load(url,done),onChange:schedule});
+  let machines,ambientEnabled=true;
   let ambient,lastPaint=0,lastAmbientShadow=0,celebration=null;
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
   function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{
     frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick&&!piece.travel)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,piece.travel||false,reduced))charactersMoving=true;}
+    const machineMoving=machines?.tick(now,reduced,ambientEnabled&&models.root.visible)||false;
     const eventMoving=eventLayer.tick(now,reduced);
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
-    if(moving||rolling||barrierMoving||drawing||((ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    if(moving||rolling||barrierMoving||drawing||((machineMoving||ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
     setCelebration.tick(now);
     if(celebration){const t=(now-celebration.start)/2400;for(const tile of tiles)if(celebration.ids.includes(tile.cell.id)){tile.top.emissive.set(t>=1?'#000000':'#eaba42');tile.top.emissiveIntensity=t>=1?0:.25+.5*Math.abs(Math.sin(t*Math.PI*4));}if(t>=1)celebration=null;}
     if(!moving&&!rolling&&(barrierPending!==null||eventPending)){if(barrierPending!==null)barrierValue=barrierPending;barrierPending=null;eventPending=false;update({animate:true});}
@@ -82,12 +85,13 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     let zone=null;if(soundState.enJuego&&!soundState.pausa&&active){let nearest=null,distance=Infinity;for(const c of soundState.tablero){if(!c.region)continue;const p=tilePosition(c.id),d=Math.hypot(p.x-controls.target.x,p.z-controls.target.z);if(d<distance){distance=d;nearest=c;}}zone=distance>3?'campo':nearest?.region==='norte'||[13,14,15,17].includes(nearest?.id)?'industria':nearest?.id===9?'costa':'campo';}
     globalThis.GameAudio?.setZone(zone);
     onCinematic(moving||rolling||drawing);
-    const fast=moving||rolling||barrierMoving||cameraMoving||drawing;
+    const fast=machines?.firing||moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
-    if(fast||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
+    if(fast||machineMoving||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
   });}
-  function settle(piece){piece.finish?.();piece.motion=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
+  function settle(piece){piece.finish?.();piece.motion=null;piece.teleport=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
+    if(piece.teleport){const jump=piece.teleport,t=Math.min(1,Math.max(0,(now-jump.start)/850)),ease=t*t*(3-2*t);piece.root.position.lerpVectors(jump.origin,piece.target,ease);piece.root.position.y+=Math.sin(t*Math.PI)*1.1;if(t===1)settle(piece);else moving=true;continue;}
     const motion=piece.motion;if(!motion)continue;
     const elapsed=Math.max(0,now-motion.start),step=elapsed/(globalThis.GameMovement?.stepMs||320),index=Math.floor(step);
     if(index>=motion.path.length-1){settle(piece);continue;}
@@ -115,7 +119,8 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
       piece.root.userData.playerId=player.id;piece.root.userData.id=player.posicion;piece.ring.visible=state.enJuego&&state.jugadores[state.turnoActual]?.id===player.id;
       const previous=previousPlayers.find(p=>p.id===player.id),path=rollPath(previous,player,state.ultimaTirada,lastRoll);
       if(animate&&path.length&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion={path,origin:piece.root.position.clone(),start:performance.now()+(state.ultimaTirada?.tipo==='continuacion'?0:(globalThis.GameMovement?.startDelayMs||900))};piece.root.scale.setScalar(slot.scale);if(followEnabled){overview=false;cameraRig.follow(()=>pieces.has(player.id)?{point:piece.root.position,moving:!!piece.motion,ahead:piece.lookAhead}:null,piece.motion.start);}}
-      else if(!piece.motion||previous?.posicion!==player.posicion||!active||document.hidden||!state.enJuego||!animate)settle(piece);
+      else if(animate&&previous&&previous.posicion!==player.posicion&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){piece.motion=null;piece.teleport={origin:piece.root.position.clone(),start:performance.now()};piece.travel=null;}
+      else if(!piece.motion&&!piece.teleport||previous?.posicion!==player.posicion||!active||document.hidden||!state.enJuego||!animate)settle(piece);
     }
     previousPlayers=state.jugadores.map(p=>({...p}));lastRoll=state.ultimaTirada?.id;
     if(legend){legend.replaceChildren();for(const player of visible){
@@ -125,7 +130,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
       b.ondblclick=()=>{const piece=pieces.get(player.id);if(!piece)return;overview=false;cameraRig.focus(piece.root.position);select(player.posicion);onPlayer(player.id);schedule();};b.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();onPlayer(player.id);}};b.title='Doble clic para ver propiedades';legend.append(b);
     }}
   }
-  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
+  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
   function wrap(ctx,text,y){const words=text.split(' ');let line='';for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>222&&line){ctx.fillText(line,128,y);y+=23;line=word;}else line=next;}ctx.fillText(line,128,y);}
   function paint(tile){
     if(disposed)return;
@@ -153,7 +158,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     onChange(){renderer.shadowMap.needsUpdate=true;schedule();},
     onStatus({loaded,failed,total}){modelStatus.hidden=loaded+failed===total&&!failed;modelStatus.textContent=loaded+failed<total?'Preparando los decorados…':failed?'Algunos decorados no se pudieron cargar. Puedes seguir jugando o recargar la página para reintentar.':'';}
   });
-  ambient=createAmbientLayer(models.lots);
+  ambient=createAmbientLayer(models.lots);machines=createMachineAnimations(models.lots);
   function update({animate=true}={}){
     const actual=getState();if(!actual||disposed)return;
     const deferred=animate&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches && (Array.from(pieces.values()).some(p=>p.motion)||actual.ultimaTirada?.id!==lastRoll&&Number.isInteger(actual.ultimaTirada?.desde));
@@ -190,9 +195,10 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const observer=new ResizeObserver(resize);observer.observe(host);shadowObjects(scene);table.castShadow=false;surface.castShadow=false;resize();reset(true);update();
   return {
     update,select,reset,
+    landing(id){if(id===18&&active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){machines.fire();schedule();}},
     celebrate(ids,color){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;setCelebration.start(ids,color);celebration={ids,start:performance.now()};schedule();},
     drawCard(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return Promise.resolve();reset();const result=decks.draw(data);schedule();return result;},
-    setAmbient(value){ambient.setEnabled(value);schedule();},
+    setAmbient(value){ambientEnabled=!!value;ambient.setEnabled(value);schedule();},
     setFollow(value){followEnabled=value;if(!value)cameraRig.cancel();},
     setShadows(value){renderer.shadowMap.enabled=value;renderer.shadowMap.needsUpdate=true;schedule();},
     focus(){overview=false;if(selection===null)return;const p=tilePosition(selection);cameraRig.focus(p);schedule();},
@@ -200,7 +206,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     rotate(){overview=false;cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
     zoom(factor){overview=false;cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
     overhead(){overview=false;const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
-    setActive(value){if(!value)globalThis.GameAudio?.setZone(null);renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    setActive(value){if(!value)globalThis.GameAudio?.setZone(null);renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
+    dispose(){machines?.dispose();setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }

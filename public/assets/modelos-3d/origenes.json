@@ -358,5 +358,105 @@
     "bytes": 144900,
     "sha256": "65195182404c160b2a30b35caf3cea80f1fe98b433f70c57f92da2e5a212a12c",
     "sha256Original": "279ea019268f855240c3cebf7616644c8141c20bee617da72eae4733b8e310af"
+  },
+  {
+    "archivo": "eventos/nature/cultivo-hojas.glb",
+    "original": "crops_leafsStageB.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 7768,
+    "sha256": "aea4fe9a7943e7b2b7df99dc4fa00b85e34d00ea9b8e1b144504cef25d77b98c",
+    "sha256Original": "aea4fe9a7943e7b2b7df99dc4fa00b85e34d00ea9b8e1b144504cef25d77b98c"
+  },
+  {
+    "archivo": "eventos/nature/arbusto.glb",
+    "original": "plant_bushDetailed.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 10172,
+    "sha256": "2e0487020d68ccf664435db9d829c78ae00e6d2785ee3ec10b9f89cc70a10406",
+    "sha256Original": "2e0487020d68ccf664435db9d829c78ae00e6d2785ee3ec10b9f89cc70a10406"
+  },
+  {
+    "archivo": "eventos/nature/arbol-seco.glb",
+    "original": "tree_default_fall.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 16940,
+    "sha256": "f8e90ed7f7771644998a7c361302213af04350150b3ea0631e8384d26506efa2",
+    "sha256Original": "f8e90ed7f7771644998a7c361302213af04350150b3ea0631e8384d26506efa2"
+  },
+  {
+    "archivo": "eventos/nature/suelo.glb",
+    "original": "ground_grass.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 1576,
+    "sha256": "da741e8ab34ca70c0c85ccda21538558a798188db2f1e265885bcdd226a5cca2",
+    "sha256Original": "da741e8ab34ca70c0c85ccda21538558a798188db2f1e265885bcdd226a5cca2"
+  },
+  {
+    "archivo": "eventos/nature/surcos.glb",
+    "original": "crops_dirtDoubleRow.glb",
+    "paquete": "kenney_nature-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 7560,
+    "sha256": "b5c330d81a4efe0944caf5f1d1dd0c0d50227c93f2a4a57ec2425d2c9b7a2d84",
+    "sha256Original": "b5c330d81a4efe0944caf5f1d1dd0c0d50227c93f2a4a57ec2425d2c9b7a2d84"
+  },
+  {
+    "archivo": "eventos/industrial/contenedor.glb",
+    "original": "shipping-container-a.glb",
+    "paquete": "kenney_city-kit-industrial_2.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 36624,
+    "sha256": "7b2d5ca874c8e659ee6cfd1614f0470b70410b2ddc7620ac83b8954dedeb861d",
+    "sha256Original": "7b2d5ca874c8e659ee6cfd1614f0470b70410b2ddc7620ac83b8954dedeb861d"
+  },
+  {
+    "archivo": "eventos/factory/cono.glb",
+    "original": "cone.glb",
+    "paquete": "kenney_factory-kit_3.0",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 7028,
+    "sha256": "deb6ea20fe61bc094f0e64a3d6891b029ff552c5ab00bf57b763798624228e41",
+    "sha256Original": "deb6ea20fe61bc094f0e64a3d6891b029ff552c5ab00bf57b763798624228e41"
+  },
+  {
+    "archivo": "eventos/pirate/muelle.glb",
+    "original": "structure-platform-dock.glb",
+    "paquete": "kenney_pirate-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 33336,
+    "sha256": "bf64343d37b5570cb78cf0918e3eeb98f96f9b2c69b3f16d103c61ebc8f063f7",
+    "sha256Original": "bf64343d37b5570cb78cf0918e3eeb98f96f9b2c69b3f16d103c61ebc8f063f7"
+  },
+  {
+    "archivo": "eventos/pirate/barco.glb",
+    "original": "ship-small.glb",
+    "paquete": "kenney_pirate-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 116440,
+    "sha256": "6fdabdfd358f345ad3dd0510af4165843ab3fffe46357395c94ca00db4f317b3",
+    "sha256Original": "6fdabdfd358f345ad3dd0510af4165843ab3fffe46357395c94ca00db4f317b3"
+  },
+  {
+    "archivo": "eventos/pirate/barril.glb",
+    "original": "barrel.glb",
+    "paquete": "kenney_pirate-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 14092,
+    "sha256": "7616dedf7c1023afa6ecd3c52a4609460aae0e582dee14e60ec5e47c1174793b",
+    "sha256Original": "7616dedf7c1023afa6ecd3c52a4609460aae0e582dee14e60ec5e47c1174793b"
   }
 ]

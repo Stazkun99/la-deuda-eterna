@@ -7,3 +7,5 @@
 Oil pump conserva el GLB original. En Tractor se ha extraído la textura PNG a un archivo local sin recomprimir, conservando geometría y materiales. En el tablero se ajustan su escala, posición y orientación. No implica respaldo de los autores al juego.
 
 Vaca y tanque: Quaternius, CC0. Conversión de OBJ/MTL a GLB estático y adaptación de materiales. Velero: Kenney Pirate Kit, CC0; ruta de textura adaptada. Las licencias originales se conservan en esta carpeta. Los packs originales, incluidos Blend/FBX con animaciones, se conservan en el archivo externo de modelos.
+
+Escenarios de eventos: Nature Kit, City Kit Industrial, Factory Kit y Pirate Kit de Kenney (CC0). Diez modelos adicionales recuperados de los originales archivados; escala y orientación adaptadas. Los eventos negativos usan un tinte temporal, sin modificar los archivos originales.

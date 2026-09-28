@@ -5,7 +5,7 @@ const machine=name=>'maquinaria/'+name+'.glb';
 const nature=name=>'naturaleza/'+name+'.glb';
 const mine=rock=>[item(nature('entrada-mina'),0,-1.23,.74,.49,.39),item(nature(rock),-.18,-.77,.33,.21,.28),item(machine('caja-suministros'),.27,-.78,.17,.12,.19)];
 const factory=(building,product)=>[
-  item('industrial/'+building+'.glb',0,-1.23,.81,.48,.43),
+  item('industrial/'+building+'.glb',0,-1.23,.81,.48,.43,0,Math.PI),
   item(food(product),-.19,-.78,.34,.28,.28),
   item(machine('caja-suministros'),.26,-.76,.19,.16,.22)
 ];
@@ -35,11 +35,11 @@ export const BOARD_MODELS = {
   24:[item(machine('grua-industrial'),-.18,-1.17,.47,.64,.52),item(machine('brazo-robotico'),.26,-1.12,.24,.42,.29),item(machine('caja-suministros'),0,-.77,.31,.20,.23)],
   27:factory('tostadero-cafe','cafe-elaborado'),
   29:factory('planta-conservas','lata-conserva'),
-  30:[item('comercial/oficinas-bid.glb',0,-1.04,.80,.60,.78)],
-  34:[item('industrial/planta-electronica.glb',0,-1.23,.80,.46,.43),item(machine('pantalla-electronica'),-.16,-.77,.36,.27,.25),item(machine('brazo-robotico'),.26,-.79,.18,.30,.21)],
+  30:[item('comercial/oficinas-bid.glb',0,-1.04,.80,.60,.78,0,Math.PI)],
+  34:[item('industrial/planta-electronica.glb',0,-1.23,.80,.46,.43,0,Math.PI),item(machine('pantalla-electronica'),-.16,-.77,.36,.27,.25),item(machine('brazo-robotico'),.26,-.79,.18,.30,.21)],
   36:supplies(),
   37:[item('industrial/refineria.glb',-.13,-1.20,.54,.57,.50),item('industrial/deposito-industrial.glb',.29,-1.23,.24,.42,.30),item(machine('tuberia-valvula'),0,-.77,.46,.22,.26)],
-  39:[item('comercial/oficinas-fmi.glb',0,-1.04,.81,.64,.78)]
+  39:[item('comercial/oficinas-fmi.glb',0,-1.04,.81,.64,.78,0,Math.PI)]
 };
 
 // Downloaded upgrades still wanted. These spaces already have local scenery.

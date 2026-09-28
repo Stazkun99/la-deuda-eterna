@@ -36,7 +36,7 @@
     node.start(at);node.stop(at+duration+.01);
   }
   const tunes = {
-    rentIn:[880,1320,1760], rentOut:[880,660,440], income:[660,880,1320], payment:[660,440,330], solidarity:[523,659,784,1047],
+    auctionTick:[1047], rentIn:[880,1320,1760], rentOut:[880,660,440], income:[660,880,1320], payment:[660,440,330], solidarity:[523,659,784,1047],
     fmi:[220,207,165], loan:[196,247,330], trade:[440,659,494,740],
     build:[262,392,523], aid:[587,740,880], military:[110,98,82]
   };
@@ -46,7 +46,8 @@
     if(now-(last.get(kind) ?? -Infinity)<(kind==='step'?.08:.55))return;
     last.set(kind,now);
     try {
-      if(kind==='dice') {
+      if(kind==='cannon'){note(75,0,.5,'sine',.4,28);note(700,0,.095,'noise',.45);note(150,.08,.1,'noise',.18);}
+      else if(kind==='dice') {
         for(let i=0;i<Math.min(4,Math.max(2,count));i++)for(const [j,t] of [0,.32,.48].entries()) {
           note(1300+i*180,t+i*.045,.055,'noise',.4/(j+1));note(280+i*45,t+i*.045,.07,'triangle',.18/(j+1),100);
         }
@@ -91,7 +92,7 @@
     if ([4,16,36].includes(id)) return play('solidarity');
     if ([8,19,28,39].includes(id)) return play('fmi');
     if (id===10) return play('build');
-    if (id===18) return play('military');
+    if (id===18) return play('cannon');
     if (id===30) return play('aid');
     const key='tile:'+id, now=context.currentTime;
     if (now-(last.get(key)??-Infinity)<.6) return;
@@ -113,7 +114,7 @@
     const action=item.accion||'';
     if(item.casillas)return play('solidarity');
     if(action==='Solidaridad')return; // The card reveal already has its own cue.
-    if(action.includes('Golpe'))return play('military');
+    if(action.includes('Golpe'))return; // The landing already plays the cannon.
     if(/renta/i.test(action))return play(item.destino===name?'rentIn':'rentOut');
     if(action.includes('Préstamo'))return play('loan');
     if(action.includes('Ayuda'))return play('aid');

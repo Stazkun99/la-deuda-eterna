@@ -19,7 +19,7 @@ test('sonidos: no reproducen antes de un gesto y respetan silencio guardado',()=
 });
 test('sonidos: cada mecánica produce un efecto y rentas distinguen cobro de pago',()=>{
  const f=setup();f.handlers.pointerdown();
- for(const kind of ['step','dice','solidarity','fmi','loan','trade','build','aid','military','income','payment']){
+ for(const kind of ['cannon','step','dice','solidarity','fmi','loan','trade','build','aid','military','income','payment']){
   const before=f.nodes.length;f.window.GameAudio.play(kind,3);assert.ok(f.nodes.length>before,kind);f.audio().currentTime+=2;
  }
  f.window.GameAudio.interaction({accion:'Pago de renta',origen:'Ana',destino:'Staz'},'Staz');
