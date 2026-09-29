@@ -17,7 +17,7 @@ Juego gratuito en español para 2–4 jugadores en tiempo real. Funciona en nave
 5. Compra materias primas del Sur, construye industrias nacionales y multinacionales y accede a los mercados del Norte en un tablero de 40 casillas.
 6. Tira los dados, resuelve la casilla y termina el turno. Puedes comerciar con propiedades y dinero, formar alianzas y pedir préstamos de importe elegido, hasta $30.000 de deuda personal.
 
-Gana el último jugador o grupo activo, o el que complete el desarrollo industrial de las doce propiedades. Las cartas de Solidaridad y las condiciones del FMI afectan a la partida. Ayuda BID entrega $1.500 sin generar deuda.
+Gana el último jugador o grupo activo, o el que complete el desarrollo industrial de las doce propiedades. Las cartas de Solidaridad y las condiciones del FMI afectan a la partida. Ayuda USA para el desarrollo entrega $1.500 sin generar deuda.
 
 ## Edición web
 

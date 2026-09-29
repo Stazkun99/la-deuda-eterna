@@ -3,6 +3,7 @@
 (() => {
   let context, master, noise, enabled = true;
   const ambient=globalThis.GameZoneAudio?.create(()=>context,()=>enabled);
+  const samples=globalThis.GameSampleAudio?.create(()=>context,()=>master);
   const active = new Set(), last = new Map();
   try { enabled = localStorage.getItem('deuda_eterna_sound') !== 'off'; } catch {}
   const button = document.getElementById('sonido');
@@ -11,7 +12,7 @@
     button.setAttribute('aria-pressed', String(enabled));
     button.setAttribute('aria-label', enabled ? 'Silenciar sonidos del juego' : 'Activar sonidos del juego');
   }
-  function stop() { ambient?.stop(); for (const node of active) { try { node.stop(); } catch {} } active.clear(); }
+  function stop() { samples?.stop();ambient?.stop(); for (const node of active) { try { node.stop(); } catch {} } active.clear(); }
   function unlock() {
     if (!enabled || document.hidden) return;
     try {
@@ -22,6 +23,7 @@
         noise = context.createBuffer(1, Math.floor(context.sampleRate * .1), context.sampleRate);
         const data = noise.getChannelData(0); for (let i=0;i<data.length;i++) data[i]=Math.random()*2-1;
       }
+      samples?.preload();
       if (context.state === 'suspended') context.resume().catch(() => {});
     } catch { /* Unsupported or blocked audio must never interrupt the game. */ }
   }
@@ -30,7 +32,7 @@
     gain.gain.setValueAtTime(0,at);gain.gain.linearRampToValueAtTime(volume,at+.005);gain.gain.exponentialRampToValueAtTime(.001,at+duration);
     gain.connect(master);
     let node, filter;
-    if(type==='noise') { node=context.createBufferSource();node.buffer=noise;filter=context.createBiquadFilter();filter.type='bandpass';filter.frequency.value=frequency;node.connect(filter);filter.connect(gain); }
+    if(type==='noise') { node=context.createBufferSource();node.buffer=noise;node.loop=true;filter=context.createBiquadFilter();filter.type='bandpass';filter.frequency.value=frequency;node.connect(filter);filter.connect(gain); }
     else { node=context.createOscillator();node.type=type;node.frequency.setValueAtTime(frequency,at);node.frequency.exponentialRampToValueAtTime(end,at+duration);node.connect(gain); }
     active.add(node);node.onended=()=>{active.delete(node);node.disconnect();filter?.disconnect();gain.disconnect();};
     node.start(at);node.stop(at+duration+.01);
@@ -46,6 +48,7 @@
     if(now-(last.get(kind) ?? -Infinity)<(kind==='step'?.08:.55))return;
     last.set(kind,now);
     try {
+      if(samples?.play(kind))return;
       if(kind==='cannon'){note(75,0,.5,'sine',.4,28);note(700,0,.095,'noise',.45);note(150,.08,.1,'noise',.18);}
       else if(kind==='dice') {
         for(let i=0;i<Math.min(4,Math.max(2,count));i++)for(const [j,t] of [0,.32,.48].entries()) {
@@ -57,6 +60,15 @@
   }
   // Short, original sound scenes for the board: frequency, start, length, timbre, level, end pitch.
   const scenes = {
+    4:[[1800,0,.11,'noise',.10],[523,.13,.20],[659,.32,.20],[784,.51,.25]],
+    16:[[1900,0,.09,'noise',.10],[587,.12,.20],[740,.30,.20],[880,.49,.25]],
+    36:[[2100,0,.12,'noise',.10],[659,.14,.20],[831,.32,.20],[988,.51,.25]],
+    8:[[1600,0,.10,'noise',.12],[145,.2,.10,'triangle'],[220,.36,.23,'triangle']],
+    19:[[1300,0,.14,'noise',.12],[125,.23,.10,'triangle'],[207,.39,.24,'triangle']],
+    28:[[1700,0,.10,'noise',.10],[105,.20,.13,'triangle'],[185,.39,.25,'triangle']],
+    39:[[98,0,.35,'triangle',.15],[147,.18,.32,'triangle',.12],[196,.42,.4,'triangle',.12]],
+    10:[[140,0,.10,'triangle'],[280,.16,.1,'triangle'],[560,.32,.15],[1120,.51,.24]],
+    30:[[700,0,.08,'noise',.12],[622,.13,.19],[784,.34,.20],[932,.55,.25]],
     0: [[392,0,.25],[523,.15,.3],[784,.3,.4]],
     1: [[3600,0,.06,'noise'],[3000,.12,.06,'noise'],[2400,.25,.06,'noise'],[1300,.4,.12]], // pouring sugar
     2: [[900,0,.16,'sine',.12,1900],[1200,.22,.15,'sine',.1,2400]], // tropical birds
@@ -81,7 +93,7 @@
     29: [[1250,0,.2,'sine',.22],[1870,0,.1,'sine',.08],[1600,.19,.22,'sine',.2],[2390,.19,.1,'sine',.08],[1050,.42,.28,'sine',.2]], // cans clattering
     31: [[130,0,.08,'triangle'],[1800,0,.05,'noise',.1],[170,.24,.08,'triangle'],[2100,.24,.05,'noise',.1],[130,.48,.08,'triangle'],[170,.72,.08,'triangle']], // walking shoes
     32: [[880,0,.3],[1320,.12,.3],[1760,.24,.4]], // glass mirror
-    33: [[110,0,.35,'sawtooth',.025],[880,.12,.05,'noise',.14],[1300,.35,.09,'sine',.1,600]], // cable buzz and spark
+    33: [[110,0,.3,'sawtooth',.025],[4400,.12,.06,'noise',.22],[2700,.23,.07,'noise',.18],[5400,.44,.06,'noise',.20],[1300,.58,.13,'sine',.10,180]], // cable buzz and spark
     34: [[880,0,.07,'square',.06],[1320,.12,.07,'square',.06],[1760,.24,.12,'square',.06]], // electronic beeps
     35: [[65,0,.22,'sawtooth',.06,90],[80,.16,.22,'sawtooth',.06,110],[95,.32,.3,'sawtooth',.06,135],[1600,.1,.07,'noise',.1]], // tractor engine
     37: [[350,.0,.2,'triangle',.12,90],[2200,.12,.08,'noise',.1],[2000,.22,.08,'noise',.1],[1800,.32,.08,'noise',.1],[1000,.48,.12]], // filling fuel, click
@@ -89,15 +101,12 @@
   };
   function land(id) {
     if (!Number.isInteger(id) || id<0 || id>39 || !enabled || document.hidden || !context || context.state!=='running') return;
-    if ([4,16,36].includes(id)) return play('solidarity');
-    if ([8,19,28,39].includes(id)) return play('fmi');
-    if (id===10) return play('build');
     if (id===18) return play('cannon');
-    if (id===30) return play('aid');
     const key='tile:'+id, now=context.currentTime;
     if (now-(last.get(key)??-Infinity)<.6) return;
     last.set(key,now);
     try {
+      if(samples?.land(id))return;
       if(id===11) {
         // Voiced, rounded "muuu": harmonics share a rising then falling pitch and slow envelope.
         for(let h=1;h<=6;h++) {

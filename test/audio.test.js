@@ -3,7 +3,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),vm=require(
 function setup(saved){
  const handlers={},nodes=[],storage={},button={setAttribute(){},addEventListener:(type,fn)=>handlers['button:'+type]=fn};
  const param=()=>({value:0,setValueAtTime(value){this.value=value},linearRampToValueAtTime(){},exponentialRampToValueAtTime(){}});
- const node=()=>({gain:param(),frequency:param(),connect(){},disconnect(){},start(){this.started=true},stop(){this.stopped=true;this.onended?.()}});
+ const node=()=>({gain:param(),frequency:param(),connect(target){this.target=target},disconnect(){},start(){this.started=true},stop(){this.stopped=true;this.onended?.()}});
  let audio;
  class Audio{constructor(){audio=this;this.state='running';this.currentTime=0;this.sampleRate=48000;}createGain(){return node()}createBuffer(){return{getChannelData:()=>new Float32Array(4800)}}createOscillator(){const n=node();nodes.push(n);return n}createBufferSource(){const n=node();nodes.push(n);return n}createBiquadFilter(){return node()}resume(){this.state='running';return Promise.resolve()}suspend(){this.state='suspended';return Promise.resolve()}}
  const document={hidden:false,getElementById:()=>button,addEventListener:(type,fn)=>handlers[type]=fn};
@@ -39,9 +39,10 @@ test('ambientes: las 40 casillas tienen sonido y las propiedades tienen escenas 
  for(let id=0;id<40;id++){
   const before=f.nodes.length;f.window.GameAudio.land(id);
   assert.ok(f.nodes.length>before,'Casilla '+id);
-  signatures.set(id,JSON.stringify(f.nodes.slice(before).map(n=>[n.type,n.frequency.value])));
+  signatures.set(id,JSON.stringify(f.nodes.slice(before).map(n=>[n.type,n.frequency.value,n.target?.frequency?.value])));
   f.audio().currentTime+=3;
  }
+ assert.equal(new Set(signatures.values()).size,40,'each landing has a distinct sound');
  assert.notEqual(signatures.get(9),signatures.get(11));
  assert.notEqual(signatures.get(29),signatures.get(31));
  assert.notEqual(signatures.get(15),signatures.get(35));

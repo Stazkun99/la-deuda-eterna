@@ -220,16 +220,6 @@
     "sha256Original": "edbe5b49858a3c83e72d3cf496129c06082ef3a3d6005769f8883138e275b456"
   },
   {
-    "archivo": "naturaleza/obelisco.glb",
-    "original": "statue_obelisk.glb",
-    "paquete": "kenney_nature-kit",
-    "autor": "Kenney",
-    "licencia": "CC0",
-    "bytes": 4416,
-    "sha256": "e18013044ad6453a1850226be29f63c37d67e0002141f5f6a4d14a46bde69e00",
-    "sha256Original": "e18013044ad6453a1850226be29f63c37d67e0002141f5f6a4d14a46bde69e00"
-  },
-  {
     "archivo": "naturaleza/palmera.glb",
     "original": "tree_palmDetailedShort.glb",
     "paquete": "kenney_nature-kit",
@@ -458,5 +448,46 @@
     "bytes": 14092,
     "sha256": "7616dedf7c1023afa6ecd3c52a4609460aae0e582dee14e60ec5e47c1174793b",
     "sha256Original": "7616dedf7c1023afa6ecd3c52a4609460aae0e582dee14e60ec5e47c1174793b"
+  },
+  {
+    "archivo": "eventos/vehiculos/ambulance.glb",
+    "original": "ambulance.glb",
+    "paquete": "kenney_car-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 233612,
+    "sha256": "9e429e2b6202c0d78d0c38b2adbaae6b77716bb2a0f6fbb2811556e1fb31edba",
+    "sha256Original": "9e429e2b6202c0d78d0c38b2adbaae6b77716bb2a0f6fbb2811556e1fb31edba"
+  },
+  {
+    "archivo": "eventos/vehiculos/delivery.glb",
+    "original": "delivery.glb",
+    "paquete": "kenney_car-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 240264,
+    "sha256": "426a3e3a2c242c05c889b1445ba02ef95b2c8b7cd6f597e1275ef736a826014b",
+    "sha256Original": "426a3e3a2c242c05c889b1445ba02ef95b2c8b7cd6f597e1275ef736a826014b"
+  },
+  {
+    "archivo": "eventos/vehiculos/truck.glb",
+    "original": "truck.glb",
+    "paquete": "kenney_car-kit",
+    "autor": "Kenney",
+    "licencia": "CC0",
+    "bytes": 176360,
+    "sha256": "5e1bc66c343501dd7d5734b57e672dd949bf95d7abdce680c6508cef99d374f8",
+    "sha256Original": "5e1bc66c343501dd7d5734b57e672dd949bf95d7abdce680c6508cef99d374f8"
+  },
+  {
+    "archivo": "eventos/nature-textured/arbusto.glb",
+    "original": "Bush_Small.gltf",
+    "paquete": "Ultimate Stylized Nature - May 2022",
+    "autor": "Quaternius",
+    "licencia": "CC0",
+    "bytes": 14764,
+    "sha256": "d11bb3484264f43ee65cfcb7384fb54e3e88291683e5f4657ba02c6c020745fa",
+    "sha256Original": "fd7e4efb44e897403235c11271a77732b0f552a46060eec0084d36b3c41749ea",
+    "conversion": "glTF y buffer binario empaquetados en GLB; textura original sin modificación"
   }
 ]

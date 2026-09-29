@@ -161,7 +161,7 @@ Esta sección describe la implementación web. No reproduce todas las variantes 
 - No están implementadas las declaraciones de empate ni las retiradas por otros grados de triunfo del reglamento.
 - El catálogo disponible contiene 20 cartas de Solidaridad, aunque el reglamento enumera 21. No se añade una carta inventada.
 - Algunos identificadores del catálogo y números impresos de cartas difieren: las imágenes se vinculan por contenido.
-- Las ilustraciones conservan el impreso original. Por ejemplo, aparecen los rótulos «Nacionalización» y «Ayuda USA» donde la interfaz usa Industrialización y Ayuda BID; los detalles aclaran la diferencia. Los efectos aplicados son los de esta edición web.
+- Las ilustraciones conservan el impreso original. Por ejemplo, aparecen los rótulos «Nacionalización» y «Ayuda USA» donde la interfaz usa Industrialización y Ayuda USA para el desarrollo; los detalles aclaran la diferencia. Los efectos aplicados son los de esta edición web.
 
 ## Guardado y reconexión
 
@@ -367,7 +367,7 @@ La edición web está basada en el material de La Deuda Eterna. Los originales v
 
 ### Ajuste de la ayuda al desarrollo
 
-La casilla 30 (Ayuda BID) entrega **$1.500**, sin generar deuda. Este importe sustituye los $50 de la versión anterior; la ilustración original se conserva y los detalles de la casilla muestran la regla de esta edición.
+La casilla 30 (Ayuda USA para el desarrollo) entrega **$1.500**, sin generar deuda. Este importe sustituye los $50 de la versión anterior; la ilustración original se conserva y los detalles de la casilla muestran la regla de esta edición.
 
 ## Buscadores y asistentes de IA
 
@@ -384,7 +384,7 @@ No hace falta instalar Analytics, Tag Manager ni un script externo para aparecer
 
 ## Sonidos del juego
 
-Efectos sintetizados originales para dados, pasos, cobros y pagos, construcción, intercambio, préstamos, Solidaridad, FMI, ayuda BID y golpe militar. El botón Sonido permite silenciarlos y guarda la preferencia. Se activan después de interactuar con la página, no se reproducen tiradas antiguas al reconectar y se silencian al ocultar la pestaña. No hay descargas de audio ni servicios externos.
+Efectos sintetizados originales para dados, pasos, cobros y pagos, construcción, intercambio, préstamos, Solidaridad, FMI, Ayuda USA para el desarrollo y golpe militar. El botón Sonido permite silenciarlos y guarda la preferencia. Se activan después de interactuar con la página, no se reproducen tiradas antiguas al reconectar y se silencian al ocultar la pestaña. No hay descargas de audio ni servicios externos.
 
 ## Edificios del tablero
 
@@ -574,3 +574,17 @@ Se retiran las maquetas geométricas del centro. Los 12 eventos combinan los GLB
 
 ### Fachadas y maquinaria animada
 Fábricas y oficinas del Norte giradas para orientar sus entradas principales hacia el tablero. La bomba petrolera articula balancín y varilla, manteniendo inmóvil su base. Llegar a Golpe Militar activa un disparo breve del tanque con retroceso, destello, humo y sonido sintetizado; no se repite en el aviso de pago. El ambiente y movimiento reducido controlan la animación continua; sonido respeta silencio.
+
+### Portada con maqueta 3D
+
+La landing estática incluye una maqueta animada con ocho modelos del juego, librerías, texturas y licencias propias del despliegue estático. Funciona sin despertar el servidor. Tiene control de pausa, respeta movimiento reducido y ahorro de datos, y conserva una imagen de respaldo cuando no hay WebGL.
+
+### Animación de casillas y eventos
+
+Las casillas combinan ambiente en reposo y reacción al llegar. Las llegadas en 3D reservan 1,5 segundos antes de presentar los avisos. Los 12 eventos incluyen entorno y acciones de sus modelos; los sonidos de las 40 casillas tienen secuencias propias. Detalles y recursos gratuitos en [RECURSOS-AUDIOVISUALES.md](RECURSOS-AUDIOVISUALES.md).
+
+La cámara conserva el encuadre de llegada durante los 1,5 segundos de reacción y después vuelve suavemente a la vista general. Mover la cámara manualmente cancela este retorno automático. Se integran grabaciones seleccionadas de Kenney; no es necesario descargar Sonniss para utilizarlas.
+
+### Animaciones económicas de llegada
+
+Las industrias nacionales y de exportación muestran cuatro reacciones: cobro simple, renta pendiente simple, cobro con conjunto y renta pendiente con conjunto. Las monedas entran al cobrar y salen al tener una renta pendiente; las parejas y cadenas conectan visualmente las industrias e indican el importe real. Las exenciones conservan solo la reacción normal de la casilla. La cámara espera hasta terminar el efecto (1,9–2,4 segundos) antes de volver al plano general. Los efectos respetan la reducción de movimiento y no modifican los cálculos ni la elección de pagar con dinero o lingotes.

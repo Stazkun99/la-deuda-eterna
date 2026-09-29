@@ -21,7 +21,7 @@ test('GLB: catalogue covers forty spaces, real assets fit lots and every texture
   const THREE=await import('three'),{GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
   const {BOARD_MODELS,MISSING_MODELS}=await import('../public/board3d-model-catalog.mjs');
   const {fitModel}=await import('../public/board3d-models.mjs');
-  assert.equal(Object.keys(BOARD_MODELS).length,25);
+  assert.equal(Object.keys(BOARD_MODELS).length,33);
   for(let id=0;id<40;id++)assert.notEqual(!!BOARD_MODELS[id],!!MISSING_MODELS[id],'one state per space '+id);
   const {EVENT_MODELS}=await import('../public/board3d-event-catalog.mjs');
   const files=new Set([...Object.values(BOARD_MODELS).flat(),...Object.values(EVENT_MODELS).flat(),{file:'eventos/nature/suelo.glb'}].map(s=>s.file));

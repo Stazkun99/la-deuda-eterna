@@ -34,8 +34,8 @@ test('inicio: todos empatados tienen acceso al primer turno y reiniciar renueva 
     assert.equal(r.jugadores[0].dinero,6200);assert.equal(r.jugadores[0].deudaPersonal,0);
   }
 });
-test('ayuda BID entrega 1500 sin deuda y registra el importe correcto', () => {
+test('ayuda USA entrega 1500 sin deuda y registra el importe correcto', () => {
   const {game,r,start}=setup([1,2,3]);start();const p=r.jugadores[2], cash=p.dinero;
   game.land(r,p,30);assert.equal(p.dinero,cash+1500);assert.equal(p.deudaPersonal,0);
-  assert.equal(r.interacciones.at(-1).monto,1500);assert.equal(r.interacciones.at(-1).origen,'BID');
+  assert.equal(r.interacciones.at(-1).monto,1500);assert.equal(r.interacciones.at(-1).origen,'Ayuda USA');
 });

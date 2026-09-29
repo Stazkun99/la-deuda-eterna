@@ -168,10 +168,10 @@ socket.on('actualizarEstado', next => {
   if (!me()) return;
   const roll = state.ultimaTirada;
   if (animateNextState && previousRoom === state.codigo && state.enJuego) {
-    if (roll && roll.id !== previousState?.ultimaTirada?.id && Number.isInteger(roll.hasta)) pendingLanding = roll.hasta;
+    if (roll && roll.id !== previousState?.ultimaTirada?.id && Number.isInteger(roll.hasta)) pendingLanding = {casilla:roll.hasta,economia:state.ultimaLlegadaEconomica?.id!==previousState?.ultimaLlegadaEconomica?.id&&state.ultimaLlegadaEconomica?.jugadorId===roll.jugadorId&&state.ultimaLlegadaEconomica?.casilla===roll.hasta?state.ultimaLlegadaEconomica:null};
     else {
       const moved = state.jugadores.find(p => previousState?.jugadores.some(q => q.id === p.id && q.posicion !== p.posicion));
-      if (moved) pendingLanding = moved.posicion;
+      if (moved) pendingLanding = {casilla:moved.posicion,economia:state.ultimaLlegadaEconomica?.id!==previousState?.ultimaLlegadaEconomica?.id&&state.ultimaLlegadaEconomica?.jugadorId===moved.id&&state.ultimaLlegadaEconomica?.casilla===moved.posicion?state.ultimaLlegadaEconomica:null};
     }
   } else pendingLanding = null;
   const animate = animateNextState && previousRoom === state.codigo && !document.hidden && !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -252,8 +252,8 @@ function displayPosition(p) { return p?.id === movement?.playerId ? movement.pos
 function flushLanding() {
   if (!state || movement || presentationBusy) return;
   if(displayedBarrier!==!!state.barreraProteccionista){displayedBarrier=!!state.barreraProteccionista;renderBoard();$('barrera').textContent=displayedBarrier?'BARRERA ACTIVA':'COMERCIO ABIERTO';}
-  if (pendingLanding !== null) { const landed=pendingLanding;pendingLanding=null;globalThis.GameAudio?.land(landed);board3d?.landing(landed);
-    if(landed===18&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){presentationBusy=true;updateControls();setTimeout(()=>{presentationBusy=false;updateControls();flushLanding();},900);return;}
+  if (pendingLanding !== null) { const landed=pendingLanding;pendingLanding=null;globalThis.GameAudio?.land(landed.casilla);const arrivalDuration=board3d?.landing(landed.casilla,landed.economia)||0;
+    if(arrivalDuration>0){presentationBusy=true;updateControls();setTimeout(()=>{presentationBusy=false;updateControls();flushLanding();},arrivalDuration);return;}
   }
   renderPlayers();
   const eventNotice=globalThis.WorldEventUI?.present();
@@ -463,7 +463,7 @@ function resetInteractions() {
   clearTimeout(interactionTimer); interactionRoom=null; seenInteractions.clear(); interactionQueue=[]; showingInteraction=false; $('interaccion').hidden=true;
 }
 function renderInteractions() {
-  if (movement || presentationBusy || pendingCard) return;
+  if (movement || pendingLanding !== null || presentationBusy || pendingCard) return;
   const items=state.interacciones || [];
   if(interactionRoom!==state.codigo){resetInteractions();interactionRoom=state.codigo;for(const item of items)seenInteractions.add(item.id);return;}
   if(!items.length){resetInteractions();interactionRoom=state.codigo;return;}
@@ -475,7 +475,7 @@ function renderInteractions() {
 }
 function nextInteraction() {
   clearTimeout(interactionTimer);
-  if(movement||presentationBusy||pendingCard){interactionTimer=setTimeout(nextInteraction,150);return;}
+  if(movement||pendingLanding!==null||presentationBusy||pendingCard){interactionTimer=setTimeout(nextInteraction,150);return;}
   const item=interactionQueue.shift();
   if(!item){showingInteraction=false;$('interaccion').hidden=true;return;}
   showingInteraction=true;
@@ -551,7 +551,7 @@ function updateClock() {
 setInterval(()=>{updateClock();if(state&&!state.enJuego)updateControls();},1000);
 function renderDecision(force = false) {
   if (!state) return;
-  if (movement || presentationBusy || pendingCard || state.pausa) { $('decision').replaceChildren(); return; }
+  if (movement || pendingLanding !== null || presentationBusy || pendingCard || state.pausa) { $('decision').replaceChildren(); return; }
   const d = state.pendiente, p = me(), container = $('decision');
   if (d?.tipo !== 'comercio' && tradeShown) { $('comercio-dialog').close(); tradeShown = null; }
   const key = JSON.stringify([d, state.pausa, state.turnoId, p?.dinero, p?.oro, socket.connected, busy]);
@@ -665,7 +665,7 @@ async function showCard(data, automatic = false) {
   if (!$('carta-dialog').open) $('carta-dialog').showModal();
 }
 function showResult(result){
-  if(movement||presentationBusy||pendingCard||$('carta-dialog').open)return;
+  if(movement||pendingLanding!==null||presentationBusy||pendingCard||$('carta-dialog').open)return;
   results.show(result);
 }
 $('carta-dialog').addEventListener('close',()=>{if(state?.resultado)showResult(state.resultado);});

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
 // Each miniature is baked into one mesh: no extra draw call per stalk, wheel or leaf.
-export const SCENERY = ['Plaza latinoamericana','Cañaveral','Bananera','Cacaotero','Solidaridad','Algodonal','Tabacal','Cafetal','Condiciones FMI','Pesca','Ayuda solidaria','Ganado','Fuga de capitales','Mina de cobre','Mina de estaño','Mina de hierro','Solidaridad','Bomba petrolera','Golpe militar','Condiciones FMI','Barrera proteccionista','Caramelos','Mermelada','Chocolate','Industrialización','Ropa','Cigarrillos','Café elaborado','Condiciones FMI','Enlatados','Ayuda BID','Zapatos','Carabela','Cables','Electrónica','Tractor','Solidaridad','Gasolinera','No pagar','Sede FMI'];
+export const SCENERY = ['Salida latinoamericana','Cañaveral','Bananera','Cacaotero','Solidaridad','Algodonal','Tabacal','Cafetal','Condiciones FMI','Pesca','Ayuda Solidaria para el desarrollo','Ganado','Fuga de capitales','Mina de cobre','Mina de estaño','Mina de hierro','Solidaridad','Bomba petrolera','Golpe militar','Condiciones FMI','Barrera proteccionista','Caramelos','Mermelada','Chocolate','Industrialización','Ropa','Cigarrillos','Café elaborado','Condiciones FMI','Enlatados','Ayuda USA para el desarrollo','Zapatos','Carabela','Cables','Electrónica','Tractor','Solidaridad','Gasolinera','No pagar','Sede FMI'];
 export function createSceneryGeometry(id) {
   if(!Number.isInteger(id)||!SCENERY[id])throw new RangeError('Casilla inválida');
   const parts=[];
