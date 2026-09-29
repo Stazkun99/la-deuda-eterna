@@ -24,8 +24,9 @@ export function createModelLayer({scene,board,load,onChange=()=>{},onStatus=()=>
   const root=new THREE.Group();root.name='Modelos descargados';scene.add(root);
   const lots=new Map(),templates=new Map(),resources=new Set(),images=new Set();
   const wanted=new Map();let disposed=false,loaded=0,failed=0;
-  const padGeometry=new THREE.BoxGeometry(.96,.79,1.06);
-  const padMaterial=new THREE.MeshStandardMaterial({color:'#796449',roughness:.85});
+  const footprint=new THREE.Shape();footprint.moveTo(-.47,-.52);footprint.lineTo(.47,-.52);footprint.lineTo(.47,.52);footprint.lineTo(-.47,.52);footprint.closePath();
+  const padGeometry=new THREE.ExtrudeGeometry(footprint,{depth:.77,bevelEnabled:true,bevelSize:.01,bevelThickness:.01,bevelSegments:2,steps:1});padGeometry.rotateX(-Math.PI/2);padGeometry.translate(0,-.385,0);
+  const padMaterial=new THREE.MeshStandardMaterial({color:'#897351',roughness:.76});
   const sceneryMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.8});
   for(const cell of board) {
     const lot=new THREE.Group(),p=tilePosition(cell.id);

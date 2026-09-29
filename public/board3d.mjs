@@ -1,3 +1,4 @@
+import {createTableFinish} from './board3d-finish.mjs';
 import {createEconomyArrival} from './board3d-economy.mjs';
 import {createTileChoreography} from './board3d-tile-choreography.mjs';
 import * as THREE from 'three';
@@ -23,7 +24,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
   renderer.setClearColor('#142c2b');
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;
+  renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.06;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
   host.replaceChildren(renderer.domElement);
   renderer.domElement.setAttribute('aria-label','Tablero tridimensional. Usa los controles y el selector de casillas.');
@@ -33,10 +34,10 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   controls.enablePan=false; controls.enableDamping=false;
   controls.minDistance=4; controls.maxDistance=100;
   controls.minPolarAngle=.01; controls.maxPolarAngle=1.15;
-  scene.add(new THREE.HemisphereLight(0xfff2db,0x426765,1.65));
-  const light=new THREE.DirectionalLight(0xffe8c6,3.2);light.position.set(-5,13,6);light.castShadow=true;
+  scene.add(new THREE.HemisphereLight(0xfff4df,0x385653,1.8));
+  const light=new THREE.DirectionalLight(0xffe4bc,2.65);light.position.set(-5,13,6);light.castShadow=true;
   light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:1,far:35});light.shadow.camera.updateProjectionMatrix();light.shadow.normalBias=.025;light.shadow.bias=-.00015;light.shadow.radius=2;scene.add(light);
-  const fill=new THREE.DirectionalLight(0xb8dbe7,.85);fill.position.set(8,7,-5);scene.add(fill);
+  const fill=new THREE.DirectionalLight(0xc0e2ed,1.05);fill.position.set(8,7,-5);scene.add(fill);
   const cameraRig=createBoardCamera(camera,controls,{reduced:()=>matchMedia('(prefers-reduced-motion: reduce)').matches,aspect:()=>camera.aspect,onOverview:()=>{overview=true;}});
   let followEnabled=true,overview=true;
   controls.addEventListener('start',()=>{overview=false;cameraRig.cancel();});
@@ -75,7 +76,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   let ambient,lastPaint=0,lastAmbientShadow=0,celebration=null;
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
   function schedule(){if(active&&!disposed&&!document.hidden&&!frame)frame=requestAnimationFrame(now=>{
-    frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),barrierMoving=industries.tick(now),cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
+    frame=0;const moving=animatePieces(now),rolling=diceTray.tick(now),industryMoving=industries.tick(now,ambientEnabled&&!getState().pausa&&!matchMedia('(prefers-reduced-motion: reduce)').matches),barrierMoving=industries.active,cameraMoving=cameraRig.tick(now),drawing=decks.tick(now);
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick&&!piece.travel)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,piece.travel||false,reduced))charactersMoving=true;}
     const machineMoving=machines?.tick(now,reduced,ambientEnabled&&models.root.visible)||false;
@@ -83,7 +84,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     const economyMoving=economy.tick(now,reduced);
     const tileMoving=choreography?.tick(now,reduced||!models.root.visible,ambientEnabled)||false;
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
-    if(moving||rolling||barrierMoving||drawing||((machineMoving||tileMoving||ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
+    if(moving||rolling||barrierMoving||drawing||((industryMoving||machineMoving||tileMoving||ambientMoving||charactersMoving)&&now-lastAmbientShadow>250)){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
     setCelebration.tick(now);
     if(celebration){const t=(now-celebration.start)/2400;for(const tile of tiles)if(celebration.ids.includes(tile.cell.id)){tile.top.emissive.set(t>=1?'#000000':'#eaba42');tile.top.emissiveIntensity=t>=1?0:.25+.5*Math.abs(Math.sin(t*Math.PI*4));}if(t>=1)celebration=null;}
     if(!moving&&!rolling&&(barrierPending!==null||eventPending)){if(barrierPending!==null)barrierValue=barrierPending;barrierPending=null;eventPending=false;update({animate:true});}
@@ -93,7 +94,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     onCinematic(moving||rolling||drawing);
     const fast=economyMoving||choreography?.active||machines?.firing||moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
-    if(fast||tileMoving||machineMoving||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
+    if(fast||industryMoving||tileMoving||machineMoving||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
   });}
   function settle(piece){piece.finish?.();piece.motion=null;piece.teleport=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
@@ -164,6 +165,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     onChange(){renderer.shadowMap.needsUpdate=true;schedule();},
     onStatus({loaded,failed,total}){modelStatus.hidden=loaded+failed===total&&!failed;modelStatus.textContent=loaded+failed<total?'Preparando los decorados…':failed?'Algunos decorados no se pudieron cargar. Puedes seguir jugando o recargar la página para reintentar.':'';}
   });
+  const finish=createTableFinish(table,models.lots);
   const placeDetails=createPlaceDetails(models.lots);
   choreography=createTileChoreography(models.lots);ambient=createAmbientLayer(models.lots);machines=createMachineAnimations(models.lots);
   function update({animate=true}={}){
@@ -202,6 +204,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const observer=new ResizeObserver(resize);observer.observe(host);shadowObjects(scene);table.castShadow=false;surface.castShadow=false;resize();reset(true);update();
   return {
     update,select,reset,
+    interestPayment(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return 0;const duration=economy.start(data);const point=tileAnchor(39);cameraRig.follow(()=>({point,moving:false}),performance.now());cameraRig.holdArrival(duration);schedule();return duration;},
     landing(id,data){if(active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const duration=Math.max(1500,economy.start(data?.casilla===id?data:null));cameraRig.holdArrival(duration);choreography.land(id);ambient.land(id);if(id===18)machines.fire();schedule();return duration;}return 0;},
     celebrate(ids,color){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;setCelebration.start(ids,color);celebration={ids,start:performance.now()};schedule();},
     drawCard(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return Promise.resolve();reset();const result=decks.draw(data);schedule();return result;},
@@ -214,6 +217,6 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     zoom(factor){overview=false;cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
     overhead(){overview=false;const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
     setActive(value){if(!value)globalThis.GameAudio?.setZone(null);renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{economy.finish();choreography?.finish();machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){economy.dispose();choreography?.dispose();placeDetails.dispose();machines?.dispose();setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    dispose(){finish.dispose();economy.dispose();choreography?.dispose();placeDetails.dispose();machines?.dispose();setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }

@@ -24,14 +24,14 @@ export function createTileChoreography(lots){
     else if(kind==='cloth'||kind==='paper'){o.rotation.z=b.r.z+Math.sin(a*pace)*.08*amp;o.rotation.y=b.r.y+Math.sin(a*pace*.7)*.10*amp;}
     else if(kind==='jam'){o.rotation.y=b.r.y+Math.sin(a*pace)*.12*amp;}
     else if(kind==='tractor'&&f.includes('tractor')){o.position.z=b.p.z+Math.sin(t*(hit?5:1))*.04*amp;o.rotation.z=b.r.z+Math.sin(t*17)*.012*amp;}
-    else if(['copper','tin','iron'].includes(kind)&&f.includes('roca')){o.position.y=b.p.y+Math.abs(Math.sin(a*(hit?7:1)))*.035*amp;}
+    else if(hit&&['copper','tin','iron'].includes(kind)&&f.includes('roca')){o.position.y=b.p.y+Math.abs(Math.sin(a*(hit?7:1)))*.035*amp;}
     else if(kind==='build'&&f.includes('robotico'))o.rotation.y=b.r.y+Math.sin(a*(hit?4:1))*.24*amp;
     else if(kind==='gate'&&f.includes('porton'))o.position.y=b.p.y+envelope*.18;
     else if(kind==='fish'&&f.includes('pescado')){o.position.y=b.p.y+envelope*.19;o.rotation.z=b.r.z+Math.sin((u||0)*Math.PI*2)*.5*envelope;}
     else if(kind==='aid'&&f.includes('alimentos'))o.position.y=b.p.y+envelope*.08;
    });
    const group=groups.get(id);group.children.forEach((p,i)=>{if(p.name==='Arco eléctrico'){p.visible=hit;p.material.opacity=hit?(.5+.5*Math.sin(u*48))*envelope:0;return;}
-    const continuous=idle&&['spark','screen','oil','fuel','start','protest','escape','fmi','aid','build','tank'].includes(kind),v=hit?((u*2+i/12)%1):((t*.22+i/12)%1);
+    const continuous=idle&&['screen','oil','fuel'].includes(kind),v=hit?((u*2+i/12)%1):((t*.22+i/12)%1);
     p.visible=hit||(continuous&&i<3);if(!p.visible)return;const strength=hit?envelope:.14;
     const radius=kind==='spark'?.25:.22,theta=i*2.4+id;
     p.position.set(Math.cos(theta)*radius*(.3+v),.1+v*(hit?.36:.15),-1.02+Math.sin(theta)*.22*(.3+v));

@@ -13,13 +13,13 @@ export function createEconomyArrival(scene){
   }
   function start(data,now=performance.now()){
     finish();if(!data||!(data.monto>0)||!['cobrar','pagar'].includes(data.direccion))return 0;
-    collect=data.direccion==='cobrar';chained=!!data.cadena;started=now;duration=chained?2400:1900;
-    const color=collect?'#f4cb62':'#ef795f',accent=collect?'#63e8b0':'#ffac70';
+    collect=data.direccion==='cobrar';chained=!!data.cadena;started=now;duration=data.fmi?2300:chained?2400:1900;
+    const color=data.oro?'#edcd79':data.fmi?'#edcd79':collect?'#f4cb62':'#ef795f',accent=data.fmi?'#8dbbff':collect?'#63e8b0':'#ffac70';
     const anchor=tileAnchor(data.casilla,0,.25),center=new THREE.Vector3(anchor.x,.42,anchor.z);
-    const geometry=new THREE.CylinderGeometry(.065,.065,.022,16);
+    const geometry=data.oro?new THREE.BoxGeometry(.16,.065,.09):new THREE.CylinderGeometry(.065,.065,.022,16);
     const material=new THREE.MeshStandardMaterial({color,metalness:.65,roughness:.28,emissive:color,emissiveIntensity:.2,transparent:true});
     const sources=(chained?data.casillas:[data.casilla]).map(id=>{const a=tileAnchor(id,0,-.22);return new THREE.Vector3(a.x,.48,a.z);});
-    for(let i=0;i<(chained?24:10);i++){
+    for(let i=0;i<(data.oro?1:chained?24:10);i++){
       const coin=new THREE.Mesh(geometry,material);const origin=sources[i%sources.length].clone();
       if(!chained){origin.x+=Math.cos(i*2.4)*.35;origin.z+=Math.sin(i*2.4)*.35;}
       coins.push({coin,origin,target:center.clone(),delay:(i%8)*.045});root.add(coin);
@@ -34,8 +34,8 @@ export function createEconomyArrival(scene){
       const canvas=document.createElement('canvas');canvas.width=768;canvas.height=192;const ctx=canvas.getContext('2d');
       ctx.fillStyle=collect?'#133d32':'#4b2526';ctx.beginPath();ctx.roundRect(4,4,760,184,35);ctx.fill();
       ctx.strokeStyle=accent;ctx.lineWidth=4;ctx.stroke();ctx.textAlign='center';ctx.fillStyle=color;ctx.font='bold 64px sans-serif';
-      ctx.fillText((collect?'+$':'Renta $')+data.monto.toLocaleString('es-ES'),384,85);
-      ctx.fillStyle='#fff7e4';ctx.font='30px sans-serif';ctx.fillText(chained?(data.conjunto==='completo'?'Cadena completa':'Bono de pareja'):(collect?'Producción cobrada':'Por pagar'),384,144);
+      ctx.fillText(data.oro?'1 lingote':(data.fmi?'−$':collect?'+$':'Renta $')+data.monto.toLocaleString('es-ES'),384,85);
+      ctx.fillStyle='#fff7e4';ctx.font='30px sans-serif';ctx.fillText(data.fmi?'Intereses pagados al FMI':data.tributo?'Tributo de 12 de Octubre':chained?(data.conjunto==='completo'?'Cadena completa':'Bono de pareja'):(collect?'Producción cobrada':'Por pagar'),384,144);
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       label=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false}));label.position.copy(center);label.position.y=1.35;label.scale.set(1.85,.4625,1);label.renderOrder=30;root.add(label);
     }
@@ -48,7 +48,7 @@ export function createEconomyArrival(scene){
     for(const {coin,origin,target,delay} of coins){
       const t=THREE.MathUtils.clamp((progress-delay)/.64,0,1),u=collect?t:1-t;
       coin.position.lerpVectors(origin,target,u);coin.position.y+=Math.sin(t*Math.PI)*(chained?.7:.45);
-      coin.rotation.set(Math.PI/2,t*8,0);coin.visible=t>0&&t<1;coin.material.opacity=fade;
+      coin.rotation.set(coin.geometry.type==='BoxGeometry'?0:Math.PI/2,t*8,0);coin.visible=t>0&&t<1;coin.material.opacity=fade;
     }
     for(const ring of rings){ring.scale.setScalar(1+Math.sin(progress*Math.PI*4)*.12);ring.material.opacity=fade*.75;}
     if(label){label.material.opacity=fade;label.position.y=1.35+progress*.22;}

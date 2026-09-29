@@ -20,11 +20,11 @@ export function createBoardCamera(camera,controls,{reduced=()=>false,aspect=()=>
  function holdArrival(duration=1500,now=performance.now()){if(tracking)tracking.until=Math.max(tracking.until||0,now+duration);}
  function tick(now){
   if(reduced()&&(tween||tracking)){if(tween){camera.position.copy(tween.position);controls.target.copy(tween.target);controls.update();}cancel();return false;}
-  if(tween){const t=Math.min(1,Math.max(0,(now-tween.start)/tween.duration)),ease=t*t*(3-2*t);camera.position.lerpVectors(tween.from,tween.position,ease);controls.target.lerpVectors(tween.fromTarget,tween.target,ease);controls.update();if(t===1)tween=null;return !!tween||!!tracking;}
+  if(tween){const t=Math.min(1,Math.max(0,(now-tween.start)/tween.duration)),ease=t*t*t*(t*(t*6-15)+10);camera.position.lerpVectors(tween.from,tween.position,ease);controls.target.lerpVectors(tween.fromTarget,tween.target,ease);controls.update();if(t===1)tween=null;return !!tween||!!tracking;}
   if(!tracking)return false;
   if(now<tracking.startsAt)return true;
   const subject=tracking.read();if(!subject){cancel();return false;}
-  if(!subject.moving){tracking.until??=now+1500;if(now>=tracking.until){const pose=overviewPose(aspect());move(pose.position,pose.target,now,650);onOverview();return true;}}else tracking.until=null;
+  if(!subject.moving){tracking.until??=now+1500;if(now>=tracking.until){const pose=overviewPose(aspect());move(pose.position,pose.target,now,900);onOverview();return true;}}else tracking.until=null;
   // Keep the viewing direction throughout a roll, including corners.
   tracking.offset ||= offset(subject.point);
   const target=new THREE.Vector3(subject.point.x,.45,subject.point.z);

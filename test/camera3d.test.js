@@ -24,6 +24,6 @@ test('cámara: cancelar seguimiento respeta el encuadre manual incluso después 
 });
 
 test('cámara espera toda la reacción y después vuelve; un gesto manual cancela la espera',async()=>{
- const {THREE,camera,controls,rig}=await setup();let moving=true;const point=new THREE.Vector3(5,0,-5);rig.follow(()=>({point,moving}),0);for(let t=0;t<1000;t+=16)rig.tick(t);moving=false;rig.tick(1000);rig.holdArrival(1500,1200);rig.tick(2600);assert.ok(controls.target.x>4,'sigue enfocando la llegada');rig.tick(2700);rig.tick(3350);assert.equal(controls.target.x,0);
+ const {THREE,camera,controls,rig}=await setup();let moving=true;const point=new THREE.Vector3(5,0,-5);rig.follow(()=>({point,moving}),0);for(let t=0;t<1000;t+=16)rig.tick(t);moving=false;rig.tick(1000);rig.holdArrival(1500,1200);rig.tick(2600);assert.ok(controls.target.x>4,'sigue enfocando la llegada');rig.tick(2700);rig.tick(3350);assert.ok(controls.target.x>0);rig.tick(3600);assert.equal(controls.target.x,0);
  moving=true;rig.follow(()=>({point,moving}),4000);rig.tick(4100);moving=false;rig.tick(4200);rig.cancel();const position=camera.position.clone();rig.holdArrival(1500,4300);assert.equal(rig.tick(7000),false);assert.ok(camera.position.equals(position));
 });

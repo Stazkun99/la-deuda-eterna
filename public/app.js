@@ -478,6 +478,10 @@ function nextInteraction() {
   if(movement||pendingLanding!==null||presentationBusy||pendingCard){interactionTimer=setTimeout(nextInteraction,150);return;}
   const item=interactionQueue.shift();
   if(!item){showingInteraction=false;$('interaccion').hidden=true;return;}
+  if(item.pagoIntereses&&!item.interesesAnimados){
+    item.interesesAnimados=true;const duration=board3d?.interestPayment(item.pagoIntereses)||0;
+    if(duration){interactionQueue.unshift(item);presentationBusy=true;$('interaccion').hidden=true;updateControls();interactionTimer=setTimeout(()=>{presentationBusy=false;updateControls();nextInteraction();},duration);return;}
+  }
   showingInteraction=true;
   globalThis.GameAudio?.interaction(item, me()?.nombre);
   if (!$('dados-panel').classList.contains('rolling')) $('dados-panel').hidden = true;

@@ -47,6 +47,7 @@
     const now=context.currentTime;
     if(now-(last.get(kind) ?? -Infinity)<(kind==='step'?.08:.55))return;
     last.set(kind,now);
+    ambient?.duck(kind==='step'?.35:1.6);
     try {
       if(samples?.play(kind))return;
       if(kind==='cannon'){note(75,0,.5,'sine',.4,28);note(700,0,.095,'noise',.45);note(150,.08,.1,'noise',.18);}
@@ -105,6 +106,7 @@
     const key='tile:'+id, now=context.currentTime;
     if (now-(last.get(key)??-Infinity)<.6) return;
     last.set(key,now);
+    ambient?.duck(1.8);
     try {
       if(samples?.land(id))return;
       if(id===11) {

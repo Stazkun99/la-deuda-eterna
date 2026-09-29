@@ -57,3 +57,33 @@ body.playing-3d #reglamento-dialog p{color:#dce8d3}body.playing-3d #reglamento-d
 .finance-preview{display:grid;gap:5px;padding:12px;margin:10px 0;border:1px solid #cab37566;border-radius:12px;background:#1a483b;color:#f9f0cf;font-size:12px}.finance-preview small{opacity:.8;font-size:10px}.finance-preview.shortfall b{color:#ffb89f}.ambient-volume{display:flex;align-items:center;gap:8px;font-size:12px}.ambient-volume input{width:100px;padding:0;accent-color:#d6b978}
 
 .auction-card{position:relative;box-shadow:inset 4px 0 var(--bidder-color,#c9aa62);background:linear-gradient(145deg,#244f40,#142f29);color:#f5efd9}.auction-leader{padding:9px;border-radius:8px;border-left:3px solid var(--bidder-color);background:#ffffff0b;font-weight:700}.auction-clock{--auction-progress:1;width:72px;height:72px;display:grid;place-items:center;margin:12px auto;border-radius:50%;background:radial-gradient(closest-side,#16392e 78%,transparent 80%),conic-gradient(#e3c477 calc(var(--auction-progress)*1turn),#ffffff16 0);font-size:25px;font-weight:800}.auction-clock.urgent{color:#ffb494;background:radial-gradient(closest-side,#402e26 78%,transparent 80%),conic-gradient(#f28d63 calc(var(--auction-progress)*1turn),#ffffff16 0);animation:auction-pulse 1s ease-in-out infinite}.auction-history li:first-child{font-weight:700;color:#ffe298}@keyframes auction-pulse{50%{box-shadow:0 0 0 5px #f28d6325}}@media(prefers-reduced-motion:reduce){.auction-clock.urgent{animation:none}}
+/* Cohesive table finish: warm brass, deep green and readable parchment. */
+body.playing-3d{--table-ink:#102e29;--table-brass:#d4b777;--table-paper:#fff3d7}
+#panel-3d,#finanzas-3d{background:linear-gradient(155deg,#21483ff5,#102e29f5);border-color:#d4b77766;border-radius:16px;box-shadow:0 16px 38px #00120e55,inset 0 1px #fff2ca12}
+.window-handle{background:linear-gradient(100deg,#36584a,#24483d);border-bottom-color:#d4b77740;border-radius:15px 15px 0 0;color:#f2dca5;letter-spacing:.035em;font-size:11px}
+#panel-3d .panel,#finanzas-3d .panel{padding:16px}
+#finanzas-3d .player{padding:12px 8px}#finanzas-3d .player.current{background:linear-gradient(100deg,#ddbd6820,#71ad8212);box-shadow:inset 3px 0 #dec680}
+#finanzas-3d .player-stats{font-variant-numeric:tabular-nums;line-height:1.5}#finanzas-3d .player-stats span:first-child{letter-spacing:.025em;color:#ffe2a0}
+.game-screen button:not(.window-handle),body.playing-3d dialog button{transition:background .16s,border-color .16s,box-shadow .16s}
+.game-screen button:not(:disabled):hover,body.playing-3d dialog button:not(:disabled):hover{border-color:#e5cc91;box-shadow:inset 0 1px #fff3cf25}
+.game-screen .primary,body.playing-3d dialog .primary{background:linear-gradient(#f0d593,#d7b46d);color:#15352a;box-shadow:inset 0 1px #fff4cc80,0 3px 9px #0002;font-weight:750}
+.game-screen button:disabled{opacity:.48;box-shadow:none}.game-screen .ghost{background:#183b32c9}
+#panel-3d #reloj{padding:6px 9px;background:#061d192e;border-radius:8px;display:inline-block;color:#f4e3be}
+.finance-preview{background:linear-gradient(110deg,#31574377,#173c3299);border-color:#cdb77b40;line-height:1.5}.finance-preview.shortfall{border-left:3px solid #e49876}
+#avisos-3d .interaction-card{width:min(350px,85vw);padding:18px 20px;border-radius:18px;background:linear-gradient(135deg,#fffaec,#f1e4c7);border-color:#d5b977;box-shadow:0 18px 50px #061c2650,inset 0 1px #fff;line-height:1.45}
+#avisos-3d .interaction-card strong{font-variant-numeric:tabular-nums}#avisos-3d .interaction-card button{border-radius:9px}
+body.playing-3d dialog{border-color:#d4b77799;background:linear-gradient(150deg,#244b3e,#102d28);box-shadow:0 22px 80px #001a1599,inset 0 1px #f8e9bd18}
+body.playing-3d dialog::backdrop{background:#041d2266;backdrop-filter:blur(3px)}
+body.playing-3d dialog h2{letter-spacing:-.025em}body.playing-3d dialog input:focus,body.playing-3d dialog select:focus{outline:2px solid #e5c784;outline-offset:2px}
+body.playing-3d dialog .trade-side{background:#ffffff06;border-color:#c6b88040}.drawer-body{background:linear-gradient(140deg,#fff8e7,#ede3ca);border-color:#cdb681}.screen-header,.screen-bottom{border-color:#d4b77736}
+@media(max-width:600px){#panel-3d .panel,#finanzas-3d .panel{padding:10px}#avisos-3d .interaction-card{width:min(320px,85vw);padding:14px 16px}.game-screen button:not(.window-handle){min-height:32px}body.playing-3d dialog{padding:22px 16px}}
+@media(prefers-reduced-motion:reduce){.game-screen button,body.playing-3d dialog button{transition:none}}
+/* In portrait, keep a clear view of the board below the two movable windows. */
+@media(max-width:600px){
+ #panel-3d,#finanzas-3d{max-height:min(250px,32dvh);scrollbar-width:thin;scrollbar-color:#d4b777 #153c31}
+ #panel-3d h2{font-size:17px}#finanzas-3d .panel>h2{font-size:13px;margin:0 0 7px}
+ #finanzas-3d .player{padding:8px 3px;grid-template-columns:25px 1fr;gap:5px}#finanzas-3d .avatar{width:25px;height:25px}
+ #finanzas-3d .player-name{font-size:11px}#finanzas-3d .player-stats{font-size:10px;line-height:1.3}#finanzas-3d .player-stats span:first-child{font-size:17px}
+ #panel-3d .finance-preview{padding:8px;font-size:11px;margin:7px 0;line-height:1.35}#panel-3d .finance-preview small{font-size:9px}
+ .waiting-room #panel-3d{max-height:60dvh}
+}

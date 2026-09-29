@@ -588,3 +588,16 @@ La cámara conserva el encuadre de llegada durante los 1,5 segundos de reacción
 ### Animaciones económicas de llegada
 
 Las industrias nacionales y de exportación muestran cuatro reacciones: cobro simple, renta pendiente simple, cobro con conjunto y renta pendiente con conjunto. Las monedas entran al cobrar y salen al tener una renta pendiente; las parejas y cadenas conectan visualmente las industrias e indican el importe real. Las exenciones conservan solo la reacción normal de la casilla. La cámara espera hasta terminar el efecto (1,9–2,4 segundos) antes de volver al plano general. Los efectos respetan la reducción de movimiento y no modifican los cálculos ni la elección de pagar con dinero o lingotes.
+### Acabado visual de la mesa
+
+La vista 3D utiliza una textura de paño compartida, bases biseladas y sombras de contacto bajo los edificios. La iluminación equilibra una luz principal cálida con relleno frío. Los eventos tienen peanas redondeadas y una secuencia de carga más pausada; las mercancías y minerales permanecen apoyados. El regreso de cámara dura 0,9 segundos con aceleración y frenado suaves, después de mostrar la reacción de llegada. Ventanas, avisos y formularios comparten colores y contraste; en móvil, las ventanas limitan su altura para dejar ver la mesa. Estos cambios conservan los modelos existentes y no equivalen a sustituirlos por modelos HD.
+### Ambiente y cobros especiales
+
+El ambiente usa fondos estéreo de 24 segundos sin pájaros agudos ni zumbidos de tono fijo: roces suaves en campo, oleaje sintetizado en costa y ruido grave amortiguado en industria. Se añaden detalles espaciados de las grabaciones Kenney CC0 existentes y el volumen baja durante los efectos de juego. No son grabaciones nuevas de paisajes naturales. El volumen independiente, el silencio y la pausa siguen disponibles.
+
+Los pagos confirmados de intereses presentan una animación en la sede FMI, con monedas o un lingote según el medio de pago, antes de su aviso. 12 de Octubre anima la retirada de un lingote al jugador; sin oro no presenta un cobro ficticio.
+### Actividad de construcciones y secuencias de evento
+
+Cada nivel de construcción incorpora maquinaria visible dentro de su parcela: volante o ventilación en el primero, cinta de carga en el segundo y válvula de silo o extractor en el tercero. Las nacionales mantienen taller y tejados de teja; las de exportación conservan naves, oficinas y depósitos. La maquinaria se detiene con cierre, barrera aplicable, pausa o movimiento reducido. Las ampliaciones nuevas conservan su animación de construcción.
+
+Los modelos de eventos comparten un ciclo de 18 segundos: atraque, trabajo, descarga y salida. En pedidos se coordinan barco, contenedor y grúa; los vehículos y tractores tienen fases de trabajo y reposo. La bomba de escasez permanece parada. Son ciclos visuales: la duración y reglas de los eventos por vueltas no cambian.

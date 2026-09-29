@@ -20,3 +20,13 @@ test('efectos 3D: cuatro variantes, duración, recursos y reducción de movimien
  }
  layer.start({casilla:1,direccion:'cobrar',monto:30,casillas:[1]},0);layer.tick(10,true);assert.equal(layer.active,false);layer.dispose();assert.equal(scene.children.length,0);
 });
+test('FMI anima solo intereses confirmados, distingue efectivo de oro y excluye préstamos',()=>{
+ const {game,r,p}=fixture();p.dinero=10000;p.oro=2;
+ game.payment(r,p,500,'Intereses al pasar por el FMI');assert.equal(r.interacciones.at(-1)?.pagoIntereses,undefined);
+ game.pay(r,p,{decisionId:r.pendiente.id,usarOro:false});assert.equal(r.interacciones.at(-1).pagoIntereses.monto,500);assert.equal(r.interacciones.at(-1).pagoIntereses.oro,false);
+ game.payment(r,p,1000,'Intereses FMI · carta');game.pay(r,p,{decisionId:r.pendiente.id,usarOro:true});assert.equal(r.interacciones.at(-1).pagoIntereses.oro,true);
+ game.debit(r,p,100,null,'Amortización');assert.equal(r.interacciones.at(-1).pagoIntereses,undefined);
+});
+test('12 Octubre retira un lingote y anima salida; sin oro no inventa un tributo',()=>{
+ const {game,r,p}=fixture();p.oro=2;game.land(r,p,32);assert.equal(p.oro,1);assert.equal(r.ultimaLlegadaEconomica.oro,true);assert.equal(r.ultimaLlegadaEconomica.tributo,true);assert.equal(r.ultimaLlegadaEconomica.direccion,'pagar');p.oro=0;game.land(r,p,32);assert.equal(r.ultimaLlegadaEconomica,null);
+});
