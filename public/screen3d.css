@@ -87,3 +87,13 @@ body.playing-3d dialog .trade-side{background:#ffffff06;border-color:#c6b88040}.
  #panel-3d .finance-preview{padding:8px;font-size:11px;margin:7px 0;line-height:1.35}#panel-3d .finance-preview small{font-size:9px}
  .waiting-room #panel-3d{max-height:60dvh}
 }
+
+/* Screen-space notices remain readable at every camera distance. */
+#avisos-3d:has(.compact-notice:not([hidden])){place-items:start center;top:72px;bottom:auto}
+#avisos-3d .interaction-card.compact-notice{width:min(440px,calc(100vw - 32px));max-height:35vh;overflow:auto;padding:12px 18px;font-size:14px;background:#123b32;color:#fff5df;pointer-events:auto}
+#avisos-3d .compact-notice .eyebrow,#avisos-3d .compact-notice #interaccion-importe{color:#f7dfa3}
+#avisos-3d .compact-notice #interaccion-importe{font-size:24px}
+#avisos-3d .compact-notice p{margin:4px 0}
+.construction-notice{position:fixed;top:16px;left:50%;transform:translateX(-50%);width:max-content;max-width:min(560px,85vw);padding:12px 18px;border:1px solid #d9bd78;border-radius:12px;background:#123b32;color:#fff5df;font:600 14px/1.45 system-ui;z-index:30;pointer-events:none;box-shadow:0 8px 24px #0005}
+
+#avisos-3d .compact-notice #interaccion-detalle{color:#dce9da}

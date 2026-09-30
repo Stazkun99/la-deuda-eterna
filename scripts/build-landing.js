@@ -22,6 +22,7 @@ function build({ siteUrl, gameUrl = 'https://la-deuda-eterna.onrender.com', outp
     const rel='assets/modelos-3d/'+file+'.glb',source=path.join(root,'public',rel),data=fs.readFileSync(source),json=JSON.parse(data.subarray(20,20+data.readUInt32LE(12)).toString());copy(source,path.join(output,rel));
     for(const image of json.images||[])if(image.uri&&!image.uri.startsWith('data:'))copy(path.resolve(path.dirname(source),image.uri),path.resolve(path.dirname(path.join(output,rel)),image.uri));
   }
+  for (const name of ['favicon.svg','favicon.ico','favicon-96.png','apple-touch-icon.png']) copy(path.join(root,'public',name),path.join(output,name));
   copy(path.join(root,'public/creditos-modelos.html'),path.join(output,'creditos-modelos.html'));
   fs.cpSync(path.join(root,'public/assets/modelos-3d/licencias'),path.join(output,'assets/modelos-3d/licencias'),{recursive:true});
   fs.copyFileSync(path.join(root, 'public/entry-link.js'), path.join(output, 'entry-link.js'));

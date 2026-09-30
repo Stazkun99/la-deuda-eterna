@@ -51,6 +51,12 @@ test('compilación genera SEO del origen real y solo publica archivos de portada
   assert.ok(!html.includes('__SITE_URL__'));
   const json = JSON.parse(html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)[1]);
   assert.equal(json.url, 'https://portada.example/');
+  assert.equal(json['@id'], 'https://portada.example/#juego');
+  assert.equal(json.creator.name, 'Staz');
+  assert.equal((html.match(/<h1\b/g) || []).length, 1);
+  assert.match(html, /<title>La Deuda Eterna Online \| Juega gratis con amigos<\/title>/);
+  assert.match(html, /¿Puedo jugar solo contra bots\?/);
+  assert.ok(!/__SITE_URL__|__GAME_URL__|__RULES_HTML__/.test(html));
   assert.match(fs.readFileSync(path.join(output, 'sitemap.xml'), 'utf8'), /<loc>https:\/\/portada.example\/<\/loc>/);
   assert.match(fs.readFileSync(path.join(output, 'robots.txt'), 'utf8'), /Sitemap: https:\/\/portada.example\/sitemap.xml/);
   assert.ok(fs.existsSync(path.join(output, 'preview.png')));

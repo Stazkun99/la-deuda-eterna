@@ -601,3 +601,27 @@ Los pagos confirmados de intereses presentan una animación en la sede FMI, con 
 Cada nivel de construcción incorpora maquinaria visible dentro de su parcela: volante o ventilación en el primero, cinta de carga en el segundo y válvula de silo o extractor en el tercero. Las nacionales mantienen taller y tejados de teja; las de exportación conservan naves, oficinas y depósitos. La maquinaria se detiene con cierre, barrera aplicable, pausa o movimiento reducido. Las ampliaciones nuevas conservan su animación de construcción.
 
 Los modelos de eventos comparten un ciclo de 18 segundos: atraque, trabajo, descarga y salida. En pedidos se coordinan barco, contenedor y grúa; los vehículos y tractores tienen fases de trabajo y reposo. La bomba de escasez permanece parada. Son ciclos visuales: la duración y reglas de los eventos por vueltas no cambian.
+### Presentación sin avisos duplicados y gestión continua
+
+En 3D los cobros propios, rentas y el tributo animado de 12 de Octubre no repiten su importe en un aviso grande. Las demás interacciones se muestran sobre la mesa; los préstamos conservan el aviso y las decisiones que requieren respuesta siguen disponibles. La vista 2D y movimiento reducido mantienen la alternativa textual.
+
+Al pagar intereses durante un recorrido, el cliente conserva la ficha en la sede FMI hasta terminar la animación confirmada, y después reproduce los pasos restantes. Los intereses colectivos se presentan por jugador en secuencia. El inicio de un evento enfoca su escena durante cinco segundos con la explicación situada debajo, antes de regresar a la vista general.
+
+El préstamo propone cubrir el saldo negativo, limitado por la capacidad disponible; si no hay saldo negativo conserva la propuesta habitual. Amortizar propone el menor importe entre deuda y efectivo. Ambos campos siguen siendo editables. La ventana de propiedad permanece abierta al construir y actualiza niveles, costes y disponibilidad de los botones tras cada compra.
+### Ayudas de gestión y margen de presentación
+
+- El préstamo propone el importe que falta para un pago pendiente, incluso si el saldo aún es positivo. Respeta la capacidad de deuda y sigue siendo editable.
+- La decisión de pago anticipa el efectivo o los lingotes restantes, sin cambiar las reglas de saldo negativo.
+- Las propiedades incluyen anterior, siguiente y regreso al patrimonio. Los botones de construcción explican sus requisitos o la falta de efectivo.
+- Una puja escrita se conserva al actualizarse la subasta mientras siga dentro del mínimo y el efectivo disponible. Hay incrementos de $100/$500 y validación antes de enviar.
+- Cambiar el rival conserva las propiedades y el dinero que tú ofreces. Los espectadores pueden abrir la negociación voluntariamente.
+- El servidor concede una compensación temporal acotada por cada nueva animación de tirada, carta, evento o pago FMI. Se aplica una vez por identificador y no depende de peticiones del navegador. No constituye una pausa ilimitada para leer cartas; la pausa compartida sigue disponible.
+
+
+### Informes de equilibrio de partidas
+
+En **Sala → Descargar informe de partida** se descarga un JSON con el historial económico, acciones confirmadas, tiradas, cartas, eventos, cambios de propiedades y resultado. También funciona durante la partida. El historial se registra en el servidor y no se envía con cada actualización del tablero. Incluye identificadores de partida y jugador, apodos, bots, opciones y una huella de las reglas para comparar versiones. No incluye chat, credenciales ni cartas futuras.
+
+Descarga el informe antes de abandonar la sala o de un reinicio del alojamiento gratuito. Al preparar una revancha se conserva el anterior hasta que haya una nueva partida; el botón descarga la partida actual cuando esta empieza. Las partidas que ya estaban iniciadas cuando se actualizó el servidor se marcan como parciales. Un límite de 8 MB por historial protege el servidor: si se alcanza, el archivo indica que el registro está incompleto.
+
+Los registros `estadoInicial` y `cambios` permiten reconstruir el estado: cada cambio sustituye los campos superiores que contiene. `estadoFinal` contiene la última situación observada incluso si el historial se truncó. Los registros económicos usan los IDs de participantes cuando están disponibles. La descarga es accesible a los participantes de la sala; colocar el botón en el menú no lo hace privado.

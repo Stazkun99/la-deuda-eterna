@@ -11,7 +11,7 @@ const controls3d = Game3DUI.createMount([
   [document.querySelector('.activity'), $('actividad-3d')],
   [$('interaccion'), $('avisos-3d')], [$('ultima-carta'), $('ultima-carta-3d')],
   [$('aviso'), $('notificaciones-3d')],
-  ...['conexion','sonido','ambiente-volumen-control','reglas','invitar','copiar','salir'].map(id=>[$(id),$('utilidades-3d')])
+  ...['conexion','sonido','ambiente-volumen-control','reglas','invitar','copiar','descargar-informe','salir'].map(id=>[$(id),$('utilidades-3d')])
 ]);
 dialog3d.addEventListener('close', () => { if(dialog3d.open)return; ctx.board3d?.setActive(false); controls3d.restore(); });
 $('abrir-3d').onclick = async () => {

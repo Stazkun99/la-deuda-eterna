@@ -4,7 +4,7 @@ const {$,element,button,amount,me,myTurn,myProperty,action,notice,socket,openDia
 function showProperty(id) {
   const original=ctx.state.tablero[id],c=original.region==='norte'?ctx.state.tablero.find(s=>s.nombre===original.baseSur):original;
   ctx.selectedProperty=c.nombre;
-  const box=$('detalle-contenido');box.replaceChildren(element('p',(original.region||'CASILLA ESPECIAL').toUpperCase(),'eyebrow'),element('h2',original.nombre));
+  const box=$('detalle-contenido');box.dataset.cellId=id;box.replaceChildren(element('p',(original.region||'CASILLA ESPECIAL').toUpperCase(),'eyebrow'),element('h2',original.nombre));
   if(c.tipo!=='propiedad'){
       const art=ctx.specialCatalog[c.id];
       if(art){const img=element('img');img.src=art.imagen;img.alt='Ilustración original de '+original.nombre;img.className='special-detail-art';box.append(img);}
@@ -25,13 +25,21 @@ function showProperty(id) {
       const cost=me()?.costesConstruccion?.[c.nombre]?.[type] ?? (price===undefined?null:Math.floor(price*(ctx.state.descuento?0.5:1)));
       const text=level>=3?label+' · Máximo alcanzado':label+(cost===null?'':' · '+amount(cost));
       const b=button(text,()=>action('construirIndustria',{nombrePropiedad:c.nombre,tipo:type}),'secondary');
-      b.disabled=!socket.connected||ctx.busy||level>=3||(!national&&c.industriasNac<=level)||!(ctx.state.fase==='tirada'||ctx.state.fase==='gestion'&&ctx.state.descuento);
+      b.dataset.buildType=type;
+      b.disabled=!socket.connected||ctx.busy||ctx.state.pausa||cost!==null&&me().dinero<cost||level>=3||(!national&&c.industriasNac<=level)||!(ctx.state.fase==='tirada'||ctx.state.fase==='gestion'&&ctx.state.descuento);
       actions.append(b);
+      const reason=level>=3?'Máximo de tres industrias alcanzado.':!national&&c.industriasNac<=level?'Necesitas otra industria nacional para ampliar la exportación.':!(ctx.state.fase==='tirada'||ctx.state.fase==='gestion'&&ctx.state.descuento)?'Solo puedes construir antes de tirar o durante el descuento de industrialización.':cost!==null&&me().dinero<cost?'Te faltan '+amount(cost-me().dinero)+'.':ctx.state.pausa?'Partida en pausa.':!socket.connected?'Esperando conexión.':'';
+      if(reason){b.title=reason;actions.append(element('small',reason,'card-note'));}
     }
     if(me().dinero<0||ctx.state.pendiente?.tipo==='pago'&&me().dinero<ctx.state.pendiente.monto)actions.append(button('Subastar terreno e industrias',()=>action('subastarPropiedad',{nombrePropiedad:c.nombre})));
   }
   if(myTurn()&&ctx.state.monopolio&&c.id===me().posicion&&owner&&!myProperty(c))actions.append(button('Monopolizar terreno e industrias',()=>action('expropiarPropiedad',{nombrePropiedad:c.nombre})));
-  box.append(actions);openDialog();
+  box.append(actions);
+  const nav=element('nav',undefined,'detail-actions');nav.setAttribute('aria-label','Navegar por propiedades');
+  const owned=ctx.state.tablero.filter(s=>s.region==='sur'&&(owner?(s.dueño===owner.id||owner.alianzaId&&ctx.state.jugadores.some(q=>q.id===s.dueño&&q.alianzaId===owner.alianzaId)):myProperty(s)));
+  const index=owned.findIndex(s=>s.id===c.id);
+  if(index>=0&&owned.length>1){nav.append(button('← Anterior',()=>showProperty(owned[(index+owned.length-1)%owned.length].id)),button('Siguiente →',()=>showProperty(owned[(index+1)%owned.length].id)));}
+  nav.append(button('Volver a mis propiedades',()=>ctx.showProperties()));box.append(nav);openDialog();
 }
 
 function specialText(id){return ({0:'Habilita una votación de alianza. No se vota al iniciar la partida.',4:'Roba una carta de Solidaridad.',8:'Roba una condición si tienes deuda al FMI.',10:'Construye a mitad de precio durante este turno.',12:'Paga $1.000 por punto: primera vuelta solo 1; segunda 1–2, hasta 1–6 desde la sexta. Cada jugador lleva su cuenta. No admite oro.',16:'Roba una carta de Solidaridad.',18:'Entregas el 50% de tu efectivo en tus primeras dos vueltas y el 100% desde la tercera, salvo resguardo.',19:'Roba una condición si tienes deuda.',20:'Activa o retira la barrera para todos. Con ella, las multinacionales no generan beneficios.',24:'Elige un terreno libre y recibe su primera industria. Si no hay terrenos libres, mejora una industria propia.',28:'Roba una condición si tienes deuda.',30:'Recibes $1.500 de Ayuda USA para el desarrollo, sin generar deuda. Importe de esta edición web.',32:'Quien cae entrega un lingote, si tiene.',36:'Roba una carta de Solidaridad.',38:'No pagarás intereses en el siguiente paso por el FMI.',39:'Al llegar o pasar pagas intereses. Reabren las industrias cerradas.'})[id]||'Consulta el registro para ver el efecto.';}

@@ -35,7 +35,7 @@ export function createEconomyArrival(scene){
       ctx.fillStyle=collect?'#133d32':'#4b2526';ctx.beginPath();ctx.roundRect(4,4,760,184,35);ctx.fill();
       ctx.strokeStyle=accent;ctx.lineWidth=4;ctx.stroke();ctx.textAlign='center';ctx.fillStyle=color;ctx.font='bold 64px sans-serif';
       ctx.fillText(data.oro?'1 lingote':(data.fmi?'−$':collect?'+$':'Renta $')+data.monto.toLocaleString('es-ES'),384,85);
-      ctx.fillStyle='#fff7e4';ctx.font='30px sans-serif';ctx.fillText(data.fmi?'Intereses pagados al FMI':data.tributo?'Tributo de 12 de Octubre':chained?(data.conjunto==='completo'?'Cadena completa':'Bono de pareja'):(collect?'Producción cobrada':'Por pagar'),384,144);
+      ctx.fillStyle='#fff7e4';ctx.font='30px sans-serif';ctx.fillText(data.fmi?(data.jugadorNombre||'Jugador')+' · intereses FMI':data.tributo?'Tributo de 12 de Octubre':chained?(data.conjunto==='completo'?'Cadena completa':'Bono de pareja'):(collect?'Producción cobrada':'Por pagar'),384,144);
       const texture=new THREE.CanvasTexture(canvas);texture.colorSpace=THREE.SRGBColorSpace;
       label=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,transparent:true,depthTest:false,depthWrite:false}));label.position.copy(center);label.position.y=1.35;label.scale.set(1.85,.4625,1);label.renderOrder=30;root.add(label);
     }

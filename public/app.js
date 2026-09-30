@@ -20,6 +20,7 @@ const socket = io({ autoConnect: false });
 let state = null, catalog = [], busy = false, joinedRoom = null, noticeTimer, selectedProperty = null;
 let lastDecisionKey = null, lastResult = null, lastCardShown = null, currentCard = null;
 let seenRoll = null, diceTimer, specialCatalog = {}, tradeShown = null;
+let activeInteraction=null, constructionNotice=null, constructionTimer, constructionBatch=null;
 let interactionRoom = null, seenInteractions = new Set(), interactionQueue = [], interactionTimer, showingInteraction = false;
 let presentationBusy=false, displayedBarrier=false;
 let cardStops=new Map();
@@ -30,12 +31,19 @@ const groups = { cafe_agricola:'#c99a4b',textil_agricola:'#bfa64e',ganaderia_pes
 const me = () => state?.jugadores.find(p => p.userId === userId);
 const myTurn = () => !!state?.enJuego && state.jugadores[state.turnoActual]?.id === me()?.id && !me()?.enQuiebra;
 const myProperty = c => !!me() && (c.dueño === me().id || !!me().alianzaId && state.jugadores.some(p => p.id === c.dueño && p.alianzaId === me().alianzaId));
-const uiContext={$,element,button,amount,me,myTurn,myProperty,action,notice,socket,openDialog,
+const uiContext={$,element,button,amount,me,myTurn,myProperty,action,notice,socket,openDialog,showProperties,
  get state(){return state;},get busy(){return busy || !!state?.pausa || !!movement || presentationBusy;},get catalog(){return catalog;},get specialCatalog(){return specialCatalog;},
  get selectedProperty(){return selectedProperty;},set selectedProperty(value){selectedProperty=value;},
  get tradeShown(){return tradeShown;},set tradeShown(value){tradeShown=value;}};
 const {showTradeForm,showTradeOffer}=GameTrade.create(uiContext);
 const {showProperty}=GameProperty.create(uiContext);
+function refreshProperty(){
+ if(!$('detalle').open||!selectedProperty)return;
+ const id=Number($('detalle-contenido').dataset.cellId);if(!Number.isInteger(id))return;
+ const scroll=$('detalle').scrollTop,focused=document.activeElement?.dataset.buildType;
+ showProperty(id);$('detalle').scrollTop=scroll;
+ if(focused)$('detalle-contenido').querySelector('[data-build-type="'+focused+'"]')?.focus({preventScroll:true});
+}
 const results=GameResults.create(uiContext);
 function notice(text) { clearTimeout(noticeTimer); $('aviso').textContent = text; $('aviso').hidden = false; noticeTimer = setTimeout(() => $('aviso').hidden = true, 3000); }
 function remember(key, value) { if (storageAvailable) { try { if (value === null) localStorage.removeItem(key); else localStorage.setItem(key, value); } catch { storageAvailable = false; } } }
@@ -47,7 +55,8 @@ function action(event, data = {}) {
     busy = false; updateControls();
     if (error) notice('No llegó la confirmación. Comprueba el estado antes de repetir.');
     else if (!result?.ok && result?.error) notice(result.error);
-    if (result?.ok && $('detalle').open && selectedProperty) $('detalle').close();
+    if (result?.ok && $('detalle').open && selectedProperty && event!=='construirIndustria') $('detalle').close();
+    if(event==='construirIndustria')refreshProperty();
     renderDecision(true);
   });
 }
@@ -84,6 +93,16 @@ $('salir').onclick = () => {
   if (confirm('¿Abandonar la sala? Tu plaza se eliminará y tus propiedades se liberarán o pasarán a tu alianza.')) socket.emit('abandonarSala', {}, result => { if (!result?.ok) notice('No se pudo abandonar la sala.'); });
 };
 GameInvites.create({$,getRoom:()=>state?.codigo,notice});
+$('descargar-informe').onclick=()=>{
+  const button=$('descargar-informe');if(button.disabled)return;button.disabled=true;
+  socket.timeout(20000).emit('descargarInforme',{},(error,result)=>{
+    button.disabled=false;
+    if(error||!result?.ok)return notice(result?.error||'No se pudo descargar el informe. Comprueba la conexión.');
+    const report=result.informe,url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
+    const link=document.createElement('a');link.href=url;link.download='deuda-eterna-'+new Date(report.inicio).toISOString().slice(0,10)+'-'+report.id+'.json';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);
+    if(!report.completa)notice('Informe descargado con registro parcial: '+report.motivoIncompleto);
+  });
+};
 $('agregar-bot').onclick=()=>action('agregarBot');
 $('copiar').onclick = async () => { try { await navigator.clipboard.writeText(state.codigo); notice('Código copiado: ' + state.codigo); } catch { notice('Código de sala: ' + state.codigo); } };
 $('dado-inicial').onclick=()=>action('tirarDadoInicial');
@@ -98,7 +117,7 @@ const loanBorrower = () => {
 $('prestamo').onclick = () => {
   const borrower = loanBorrower(); if (!borrower || $('prestamo').disabled) return;
   const max = 30000 - borrower.deudaPersonal, input = $('prestamo-importe');
-  input.max = max; input.value = Math.min(5000, max);
+  input.max = max; input.value = Math.min(max,Math.max(0,(state.pendiente?.tipo==='pago'&&state.pendiente.jugadorId===me().id?state.pendiente.monto:0)-me().dinero)||5000);
   $('prestamo-capacidad').textContent = 'Deuda a nombre de ' + borrower.nombre + '. Puedes pedir hasta ' + amount(max) + '.';
   $('prestamo-dialog').showModal(); input.focus(); input.select();
 };
@@ -114,7 +133,7 @@ $('prestamo-form').onsubmit = e => {
 $('amortizar').onclick = () => {
   const p = me(); if (!p || $('amortizar').disabled) return;
   const max = Math.min(p.deudaPersonal, p.dinero), input = $('amortizar-importe');
-  input.max = max; input.value = Math.min(5000, max);
+  input.max = max; input.value = max;
   $('amortizar-capacidad').textContent = 'Tu deuda: ' + amount(p.deudaPersonal) + '. Puedes devolver hasta ' + amount(max) + ' con tu efectivo disponible.';
   $('amortizar-dialog').showModal(); input.focus(); input.select();
 };
@@ -161,7 +180,32 @@ socket.on('nuevoMensajeChat', data => log($('chat'), data.texto, data.nombre, da
 socket.on('mensajeLog', text => log($('registro'), text));
 socket.on('mostrarCartaModal', data => { pendingCard = data; });
 socket.on('finDeJuegoModal', () => {}); // The following state renders the result after movement.
-socket.on('actualizarEstado', next => {
+let stateSerial=Promise.resolve(),presentationGeneration=0;
+const prepaidInteractions=new Set();
+socket.on('disconnect',()=>{presentationGeneration++;presentationBusy=false;prepaidInteractions.clear();});
+socket.on('salaAbandonada',()=>{presentationGeneration++;presentationBusy=false;prepaidInteractions.clear();});
+socket.on('actualizarEstado',next=>{
+ const generation=presentationGeneration;
+ stateSerial=stateSerial.then(()=>receiveState(next,generation)).catch(error=>{presentationBusy=false;console.error('Presentación de estado:',error);});
+});
+async function receiveState(next,generation){
+ if(generation!==presentationGeneration)return;
+ // Hold the previous displayed position at FMI until the confirmed payment is presented.
+ const continuation=next.ultimaTirada?.tipo==='continuacion'&&next.ultimaTirada.id!==state?.ultimaTirada?.id;
+ if(animateNextState&&state?.codigo===next.codigo&&continuation&&board3d?.canPresent){
+  const previousIds=new Set((state.interacciones||[]).map(i=>i.id));
+  const payments=(next.interacciones||[]).filter(i=>i.pagoIntereses&&!previousIds.has(i.id));
+  for(const item of payments){
+   while(generation===presentationGeneration&&(movement||pendingLanding!==null||presentationBusy||pendingCard))await new Promise(resolve=>setTimeout(resolve,50));
+   if(generation!==presentationGeneration)return;
+   presentationBusy=true;updateControls();
+   const duration=board3d.interestPayment(item.pagoIntereses);
+   if(duration){prepaidInteractions.add(item.id);globalThis.GameAudio?.interaction(item,me()?.nombre);await new Promise(resolve=>setTimeout(resolve,duration));}
+   if(generation!==presentationGeneration)return;
+   presentationBusy=false;
+  }
+ }
+
   const previousState = state, previousRoom = state?.codigo;
   state = next;
   if(!state.resultado)results.reset();
@@ -200,12 +244,12 @@ socket.on('actualizarEstado', next => {
   // Subsequent updates and reconnects respect a manual switch to 2D or a WebGL fallback.
   if (previousRoom !== state.codigo) void $('abrir-3d').onclick();
   renderLastCard(state.ultimaCarta); renderInteractions();
-  renderBoard(); board3d?.update({animate}); renderPlayers(); updateControls(); renderDecision(); updateClock();
+  renderBoard(); board3d?.update({animate}); renderPlayers(); updateControls(); refreshProperty(); renderDecision(); updateClock();
   if (movement && !movement.started) { movement.started = true; void movePiece(movement); }
   if (!movement) flushLanding();
   if (state.resultado && !movement) showResult(state.resultado);
   else if (!state.finalizada) lastResult = null;
-});
+}
 let portraitsStarted = false;
 globalThis.CharacterPortraits = Object.create(null);
 function renderCharacters() {
@@ -256,7 +300,7 @@ function flushLanding() {
     if(arrivalDuration>0){presentationBusy=true;updateControls();setTimeout(()=>{presentationBusy=false;updateControls();flushLanding();},arrivalDuration);return;}
   }
   renderPlayers();
-  const eventNotice=globalThis.WorldEventUI?.present();
+  const eventNotice=globalThis.WorldEventUI?.present(()=>board3d?.focusEvent()||0);
   if(eventNotice){presentationBusy=true;updateControls();eventNotice.finally(()=>{presentationBusy=false;updateControls();flushLanding();});return;}
   if (pendingCard) {
     const card=pendingCard;pendingCard=null;presentationBusy=true;renderLastCard(card);updateControls();
@@ -434,6 +478,7 @@ function updateControls() {
   const phases = { tirada:'Construye o gestiona tu deuda antes de tirar.', gestion:state.descuento ? 'Ayuda Solidaria: construye al 50% antes de terminar.' : 'Resuelve tus finanzas y termina el turno.', compra:'Hay una compra pendiente.', fuga:'Fuga de Capitales: tira un dado para conocer el pago.', pago:'Hay un pago pendiente.', votacion:'La mesa está votando una alianza.', subasta:'Subasta abierta: cierra tras 10 segundos sin nuevas pujas.', comercio:'Hay una oferta de comercio pendiente.', eleccion:'Hay una elección pendiente.' };
   $('fase').textContent = movement ? 'Moviendo ficha casilla a casilla…' : state.enJuego ? phases[state.fase] || '' : state.finalizada ? 'Consulta el resultado o prepara la revancha.' : 'Juega con amigos o añade bots. Cada participante debe tirar su dado inicial.';
   $('ver-resultado').hidden=!state.resultado;
+  $('descargar-informe').hidden=!state.informeDisponible;
   $('inicio').hidden = state.enJuego || state.finalizada || !p?.esLider;
   $('agregar-bot').disabled=locked||state.jugadores.length>=4;
   $('iniciar').disabled = locked || state.jugadores.filter(j => j.conectado).length < 2 || !state.jugadores.filter(j=>j.conectado).every(j=>j.dadoInicial) || Date.now()<(state.inicioAnimacionHasta||0);
@@ -459,33 +504,52 @@ function updateControls() {
   $('levantar').hidden = !state.barreraProteccionista;
   $('levantar').disabled = locked || !mine || !['tirada','gestion'].includes(state.fase) || p.dinero < 2000;
 }
+function showConstruction(item) {
+  if(!constructionNotice){constructionNotice=element('div',undefined,'construction-notice');constructionNotice.setAttribute('role','status');}
+  const parent=dialog3d.open?$('tablero-3d-dialog'):document.body;parent.append(constructionNotice);
+  if(!constructionBatch||constructionBatch.turno!==state.turnoId||constructionBatch.origen!==item.origen)constructionBatch={turno:state.turnoId,origen:item.origen,count:0,total:0};
+  constructionBatch.count++;constructionBatch.total+=item.monto||0;
+  constructionNotice.textContent=item.origen+' · '+constructionBatch.count+' '+(constructionBatch.count===1?'construcción':'construcciones')+' · '+amount(constructionBatch.total)+' · '+item.detalle;
+  constructionNotice.hidden=false;clearTimeout(constructionTimer);constructionTimer=setTimeout(()=>{constructionNotice.hidden=true;constructionBatch=null;},3000);
+}
 function resetInteractions() {
+  activeInteraction=null;clearTimeout(constructionTimer);if(constructionNotice)constructionNotice.hidden=true;constructionBatch=null;
   clearTimeout(interactionTimer); interactionRoom=null; seenInteractions.clear(); interactionQueue=[]; showingInteraction=false; $('interaccion').hidden=true;
 }
 function renderInteractions() {
-  if (movement || pendingLanding !== null || presentationBusy || pendingCard) return;
   const items=state.interacciones || [];
+  const current=item=>item.pagoIntereses||((item.turnoId==null||item.turnoId===state.turnoId)&&(!item.fecha||!state.actualizado||state.actualizado-item.fecha<12000));
+  interactionQueue=interactionQueue.filter(current);
+  if(activeInteraction&&!activeInteraction.pagoIntereses&&(!current(activeInteraction)||movement)){clearTimeout(interactionTimer);showingInteraction=false;activeInteraction=null;$('interaccion').hidden=true;}
+  if(constructionBatch&&(constructionBatch.turno!==state.turnoId||movement)){clearTimeout(constructionTimer);constructionNotice.hidden=true;constructionBatch=null;}
   if(interactionRoom!==state.codigo){resetInteractions();interactionRoom=state.codigo;for(const item of items)seenInteractions.add(item.id);return;}
   if(!items.length){resetInteractions();interactionRoom=state.codigo;return;}
   const fresh=items.filter(item=>!seenInteractions.has(item.id));
   for(const item of fresh)seenInteractions.add(item.id);
   if(seenInteractions.size>180)seenInteractions=new Set(items.map(item=>item.id));
-  interactionQueue.push(...fresh);
+  for(const item of fresh){
+    if(prepaidInteractions.delete(item.id)||!current(item))continue;
+    if(item.accion==='Construcción'){if(!movement)showConstruction(item);continue;}
+    if(!(item.animacionCasilla&&board3d?.canPresent))interactionQueue.push(item);
+  }
+  // Routine messages are a live digest, not a replay of an old turn. Payments retain their sequence.
+  const routine=interactionQueue.filter(item=>!item.pagoIntereses).slice(-3);
+  interactionQueue=interactionQueue.filter(item=>item.pagoIntereses||routine.includes(item));
   if(!showingInteraction&&interactionQueue.length)nextInteraction();
 }
 function nextInteraction() {
   clearTimeout(interactionTimer);
   if(movement||pendingLanding!==null||presentationBusy||pendingCard){interactionTimer=setTimeout(nextInteraction,150);return;}
-  const item=interactionQueue.shift();
+  const item=interactionQueue.shift();activeInteraction=item||null;
   if(!item){showingInteraction=false;$('interaccion').hidden=true;return;}
-  if(item.pagoIntereses&&!item.interesesAnimados){
-    item.interesesAnimados=true;const duration=board3d?.interestPayment(item.pagoIntereses)||0;
-    if(duration){interactionQueue.unshift(item);presentationBusy=true;$('interaccion').hidden=true;updateControls();interactionTimer=setTimeout(()=>{presentationBusy=false;updateControls();nextInteraction();},duration);return;}
+  if(item.pagoIntereses){
+    const duration=board3d?.interestPayment(item.pagoIntereses)||0;
+    if(duration){showingInteraction=true;presentationBusy=true;$('interaccion').hidden=true;globalThis.GameAudio?.interaction(item,me()?.nombre);updateControls();const generation=presentationGeneration;interactionTimer=setTimeout(()=>{if(generation!==presentationGeneration)return;presentationBusy=false;showingInteraction=false;updateControls();nextInteraction();},duration);return;}
   }
   showingInteraction=true;
   globalThis.GameAudio?.interaction(item, me()?.nombre);
   if (!$('dados-panel').classList.contains('rolling')) $('dados-panel').hidden = true;
-  const box=$('interaccion');box.hidden=false;box.style.setProperty('--actor',item.color||'#214f43');
+  const box=$('interaccion');box.classList.toggle('compact-notice',!/préstamo/i.test(item.accion));box.hidden=false;box.style.setProperty('--actor',item.color||'#214f43');
   $('interaccion-accion').textContent=item.accion;
   $('interaccion-partes').textContent=item.origen+' → '+item.destino;
   $('interaccion-importe').textContent=item.monto===null?'':amount(item.monto);
@@ -499,7 +563,7 @@ function nextInteraction() {
   let remaining=3000,last=performance.now();
   const tick=()=>{
     const now=performance.now();
-    if(!document.hidden&&!Game3DUI.hasBlockingDialog())remaining-=now-last;
+    remaining-=now-last;
     last=now;
     if(remaining<=0)nextInteraction();else interactionTimer=setTimeout(tick,250);
   };
@@ -560,6 +624,7 @@ function renderDecision(force = false) {
   if (d?.tipo !== 'comercio' && tradeShown) { $('comercio-dialog').close(); tradeShown = null; }
   const key = JSON.stringify([d, state.pausa, state.turnoId, p?.dinero, p?.oro, socket.connected, busy]);
   if (!force && key === lastDecisionKey) return;
+  const oldBid=container.querySelector('[data-auction-input]'),savedBid=oldBid&&{id:oldBid.dataset.auctionInput,value:oldBid.value,focused:document.activeElement===oldBid};
   lastDecisionKey = key; container.replaceChildren();
   if (d?.efecto !== 'industrializar' || d.jugadorId !== p?.id) $('industrial-dialog').close();
   if (!d || !p) return;
@@ -585,8 +650,9 @@ function renderDecision(force = false) {
     if(mine)card.append(element('p','Tu propiedad está en subasta. Puedes seguir las pujas aquí.'));
     const owner = state.jugadores.find(j=>j.id===d.jugadorId);
     if (!mine && !p.enQuiebra && !(p.alianzaId && p.alianzaId===owner?.alianzaId)) {
-      const input=element('input');input.type='number';input.min=d.oferta?d.oferta.monto+1:d.base;input.step='1';input.max=p.dinero;input.value=input.min;input.setAttribute('aria-label','Importe de la puja');container.append(input);
-      const b=button('Pujar',()=>action('pujarSubasta',{decisionId:d.id,monto:Number(input.value)}),'primary');b.disabled=busy||!socket.connected;container.append(b);
+      const input=element('input');input.type='number';input.min=d.oferta?d.oferta.monto+1:d.base;input.step='1';input.max=p.dinero;input.value=savedBid?.id===d.id&&Number(savedBid.value)>=Number(input.min)&&Number(savedBid.value)<=p.dinero?savedBid.value:input.min;input.required=true;input.dataset.auctionInput=d.id;input.setAttribute('aria-label','Importe de la puja');container.append(input);if(savedBid?.focused)input.focus({preventScroll:true});
+      const b=button('Pujar',()=>{if(input.reportValidity())action('pujarSubasta',{decisionId:d.id,monto:Number(input.value)});},'primary');b.disabled=busy||!socket.connected||p.dinero<Number(input.min);container.append(b);
+      const quick=element('div',undefined,'button-pair');for(const step of [100,500]){const extra=button('+'+amount(step),()=>{input.value=Math.min(p.dinero,Math.max(Number(input.min),Number(input.value)||0)+step);input.focus();});extra.disabled=b.disabled;quick.append(extra);}container.append(quick);if(p.dinero<Number(input.min))container.append(element('p','No tienes efectivo suficiente para la puja mínima.','card-note'));
     }
   } else if (mine && myTurn()) {
     if (d.tipo === 'compra') {
@@ -597,7 +663,8 @@ function renderDecision(force = false) {
       container.append(element('h3','Fuga de Capitales'),element('p','Vuelta '+(d.vuelta || (p.vueltasCompletadas || 0)+1)+': el dado puede sacar de 1 a '+(d.maximo || Math.min(6,(p.vueltasCompletadas || 0)+1))+'. Pagarás $1.000 por punto. No admite oro.'));
       add('Tirar dado de Fuga de Capitales','tirarDadoFuga',{},false,true);
     } else if (d.tipo === 'pago') {
-      container.append(element('h3','Pago pendiente · '+amount(d.monto)),element('p',d.motivo));
+      container.append(element('h3','Pago pendiente · '+amount(d.monto)),element('p',d.motivo),element('p','Con efectivo te quedarán '+amount(p.dinero-d.monto)+(p.dinero<d.monto?' · te faltan '+amount(d.monto-p.dinero)+' para cubrirlo.':'.'),'finance-preview'));
+      if(d.oroPermitido&&p.oro>0)container.append(element('p','Con oro conservarás '+amount(p.dinero)+' y te quedarán '+(p.oro-1)+' lingotes.','card-note'));
       add('Pagar con efectivo','responderDecisionPago',{usarOro:false},false,true);
       if(d.oroPermitido)add('Usar un lingote de oro','responderDecisionPago',{usarOro:true},p.oro<1);
       if(state.monopolio){const c=state.tablero[p.posicion];if(c.region==='sur'&&c.dueño===d.dueñoId)add('Ver opción de monopolio','expropiarPropiedad',{nombrePropiedad:c.nombre});}

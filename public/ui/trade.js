@@ -31,7 +31,7 @@ function showTradeForm() {
     area.append(list,moneyLabel,input);sides.append(area);return [list,input];
   };
   const fill=()=>{sides.replaceChildren();[giveList,payInput]=side('Tú entregas',p,'pago');[receiveList,chargeInput]=side('Tú recibes',rivals.find(q=>q.id===select.value),'cobro');};
-  select.onchange=fill;fill();
+  select.onchange=()=>{const selected=[...giveList.querySelectorAll('input:checked')].map(i=>i.value),cash=payInput.value;fill();for(const input of giveList.querySelectorAll('input'))input.checked=selected.includes(input.value);payInput.value=cash;};fill();
   form.append(element('p','Para comprar: ofrece dinero y selecciona la propiedad que recibes. Para vender: selecciona la que entregas e indica cuánto cobras. También puedes intercambiar varias propiedades.','card-note'));
   const send=element('button','Enviar oferta · esperar aceptación','primary');send.type='submit';form.append(send);
   form.onsubmit=e=>{
@@ -64,7 +64,7 @@ function showTradeOffer(d, force=false) {
   if(mine)answer('Cancelar oferta',false,'secondary');
   else if(p.id===d.destinatarioId) {answer('Aceptar este trato',true,'primary');answer('Rechazar',false,'secondary');}
   if(!mine&&p.id!==d.destinatarioId)box.append(element('p','Estás viendo esta oferta como observador. Solo los participantes pueden responder.','card-note'));
-  if((first||force)&&!dialog.open)dialog.showModal();
+  if((force||first&&(mine||p.id===d.destinatarioId))&&!dialog.open)dialog.showModal();
 }
 
 return {showTradeForm,showTradeOffer};

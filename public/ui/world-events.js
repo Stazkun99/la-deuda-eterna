@@ -15,7 +15,8 @@ globalThis.WorldEventUI={
  current=state.enJuego?state.eventoActual:null;const change=state.eventoCambio;
  if(change?.id!==seen){seen=change?.id;if(change&&animate&&state.enJuego)queue.push(change);}
  if(!animate){queue=[];cancel();paint();if(!current)clearHighlights();}},
- present(){paint();if(!current)clearHighlights();queue=queue.filter(c=>c.tipo==='fin'||c.evento.instancia===current?.instancia);if(!queue.length)return null;const change=queue.shift(),e=change.evento,ending=change.tipo==='fin';
+ present(focusScene){paint();if(!current)clearHighlights();queue=queue.filter(c=>c.tipo==='fin'||c.evento.instancia===current?.instancia);if(!queue.length)return null;const change=queue.shift(),e=change.evento,ending=change.tipo==='fin';
+ toast.classList.toggle('scene-focus',!ending&&!!focusScene?.());
  toast.dataset.mood=e.positivo?'good':'bad';toast.dataset.visual=e.visual;toast.querySelector('.event-kicker').textContent=ending?'EL MERCADO VUELVE A LA NORMALIDAD':'ACONTECIMIENTO MUNDIAL · '+(e.positivo?'OPORTUNIDAD':'CRISIS');toast.querySelector('.event-symbol').textContent=icons[e.visual];toast.querySelector('h2').textContent=e.titulo;toast.querySelector('.event-story').textContent=ending?'Este acontecimiento ha terminado. El próximo cruce por Salida podrá activar uno nuevo.':e.historia;toast.querySelector('.event-effect').textContent=ending?'Se restablecen las rentas y los costes habituales.':e.efecto;toast.querySelector('small').textContent=ending?'Evento finalizado':duration(e);toast.hidden=false;banner.hidden=true;
  const bar=toast.querySelector('.event-progress');bar.getAnimations().forEach(a=>a.cancel());if(!matchMedia('(prefers-reduced-motion: reduce)').matches)bar.animate([{transform:'scaleX(1)'},{transform:'scaleX(0)'}],{duration:5000,fill:'forwards'});
  return new Promise(done=>{resolve=done;timer=setTimeout(()=>{toast.hidden=true;paint();resolve=null;done();},5000);});}
