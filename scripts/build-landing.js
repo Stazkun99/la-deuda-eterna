@@ -16,6 +16,7 @@ function build({ siteUrl, gameUrl = 'https://la-deuda-eterna.onrender.com', outp
     const content = fs.readFileSync(path.join(root, 'landing', name), 'utf8').replaceAll('__SITE_URL__', site).replaceAll('__GAME_URL__', game).replace('__RULES_HTML__', rules.map(([title,text])=>`<details><summary>${escapeHtml(title)}</summary><p>${escapeHtml(text)}</p></details>`).join('')).replace('__RULES_MD__', rules.map(([title,text])=>`### ${title}\n\n${text}`).join('\n\n'));
     fs.writeFileSync(path.join(output, name), content);
   }
+  fs.cpSync(path.join(root, 'landing/media'), path.join(output, 'media'), { recursive: true });
   const copy=(from,to)=>{fs.mkdirSync(path.dirname(to),{recursive:true});fs.copyFileSync(from,to);};
   for(const file of ['build/three.module.js','build/three.core.js','examples/jsm/loaders/GLTFLoader.js','examples/jsm/utils/BufferGeometryUtils.js','examples/jsm/utils/SkeletonUtils.js','LICENSE'])copy(path.join(root,'node_modules/three',file),path.join(output,'vendor/three',file.replace('build/','').replace('examples/jsm/','addons/')));
   for(const file of ['naturaleza/palmera','maquinaria/tractor','naturaleza/vaca','maquinaria/bomba-petrolera','industrial/fabrica-chocolate','industrial/planta-conservas','comercial/oficinas-fmi','maquinaria/caja-suministros']){
