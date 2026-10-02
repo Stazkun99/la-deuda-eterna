@@ -1,3 +1,4 @@
+import {createBanker} from './board3d-banker.mjs';
 import {createBoardMessages} from './board3d-messages.mjs';
 import {createTableFinish} from './board3d-finish.mjs';
 import {createEconomyArrival} from './board3d-economy.mjs';
@@ -23,7 +24,7 @@ import { tilePosition, tileAnchor, pieceKind, sceneryPlayerSlot, rollPath } from
 export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=>null, onInspect=()=>{}, onPlayer=()=>{}, onError, legend, onDiceLabel, onCinematic=()=>{}}) {
   const renderer = new THREE.WebGLRenderer({antialias:true, alpha:false});
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 1.5));
-  renderer.setClearColor('#142c2b');
+  renderer.setClearColor('#18151a');
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.06;
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
@@ -35,7 +36,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   controls.enablePan=false; controls.enableDamping=false;
   controls.minDistance=4; controls.maxDistance=100;
   controls.minPolarAngle=.01; controls.maxPolarAngle=1.15;
-  scene.add(new THREE.HemisphereLight(0xfff4df,0x385653,1.8));
+  scene.add(new THREE.HemisphereLight(0xfff4df,0x443a39,1.8));
   const light=new THREE.DirectionalLight(0xffe4bc,2.65);light.position.set(-5,13,6);light.castShadow=true;
   light.shadow.mapSize.set(1024,1024);Object.assign(light.shadow.camera,{left:-10,right:10,top:10,bottom:-10,near:1,far:35});light.shadow.camera.updateProjectionMatrix();light.shadow.normalBias=.025;light.shadow.bias=-.00015;light.shadow.radius=2;scene.add(light);
   const fill=new THREE.DirectionalLight(0xc0e2ed,1.05);fill.position.set(8,7,-5);scene.add(fill);
@@ -55,7 +56,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     const m=new THREE.Mesh(own(new THREE.BoxGeometry(w,h,d)),own(new THREE.MeshStandardMaterial({color,roughness:.72})));
     m.position.set(x,y,z);scene.add(m);return m;
   }
-  const table=box(18,.18,18,'#173b36',0,-.64);table.receiveShadow=true;
+  const table=box(160,.18,160,'#30211d',0,-.64);table.receiveShadow=true;
   function roundedBase(size,radius,depth,y,color){
     const s=new THREE.Shape(),a=size/2,k=a-radius;
     s.moveTo(-k,-a);s.lineTo(k,-a);s.quadraticCurveTo(a,-a,a,-k);s.lineTo(a,k);s.quadraticCurveTo(a,a,k,a);s.lineTo(-k,a);s.quadraticCurveTo(-a,a,-a,k);s.lineTo(-a,-k);s.quadraticCurveTo(-a,-a,-k,-a);
@@ -72,7 +73,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
   const surface=new THREE.Mesh(own(new THREE.PlaneGeometry(8.92,8.92)),mat);surface.rotation.x=-Math.PI/2;surface.position.y=.07;scene.add(surface);
   const textureLoader=new THREE.TextureLoader();
   const decks=createDeckLayer({scene,loadTexture:(url,done)=>textureLoader.load(url,done),onChange:schedule});
-  const economy=createEconomyArrival(scene),messages=createBoardMessages(scene);
+  const banker=createBanker(scene),economy=createEconomyArrival(scene),messages=createBoardMessages(scene);
   let choreography,machines,ambientEnabled=true;
   let ambient,lastPaint=0,lastAmbientShadow=0,celebration=null;
   const sides=own(new THREE.MeshStandardMaterial({color:'#b5a17a',roughness:.7}));
@@ -82,6 +83,8 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     let charactersMoving=false;for(const piece of pieces.values()){if(piece.tick&&!piece.travel)piece.model.rotation.y=Math.atan2(camera.position.x-piece.root.position.x,camera.position.z-piece.root.position.z);if(piece.tick?.(now,piece.travel||false,reduced))charactersMoving=true;}
     const machineMoving=machines?.tick(now,reduced,ambientEnabled&&models.root.visible)||false;
     const eventMoving=eventLayer.tick(now,reduced);
+    const bankerMoving=banker.tick(now,reduced,!!getState().pausa,ambientEnabled);
+    if(bankerMoving&&now-lastAmbientShadow>250){renderer.shadowMap.needsUpdate=true;lastAmbientShadow=now;}
     const economyMoving=economy.tick(now,reduced),messageMoving=messages.tick(now);
     const tileMoving=choreography?.tick(now,reduced||!models.root.visible,ambientEnabled)||false;
     const ambientMoving=ambient?.tick(now,matchMedia('(prefers-reduced-motion: reduce)').matches||!models.root.visible)||false;
@@ -93,9 +96,9 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     let zone=null;if(soundState.enJuego&&!soundState.pausa&&active){let nearest=null,distance=Infinity;for(const c of soundState.tablero){if(!c.region)continue;const p=tilePosition(c.id),d=Math.hypot(p.x-controls.target.x,p.z-controls.target.z);if(d<distance){distance=d;nearest=c;}}zone=distance>3?'campo':nearest?.region==='norte'||[13,14,15,17].includes(nearest?.id)?'industria':nearest?.id===9?'costa':'campo';}
     globalThis.GameAudio?.setZone(zone);
     onCinematic(moving||rolling||drawing);
-    const fast=messageMoving||economyMoving||choreography?.active||machines?.firing||moving||rolling||barrierMoving||cameraMoving||drawing;
+    const fast=(bankerMoving&&banker.active)||messageMoving||economyMoving||choreography?.active||machines?.firing||moving||rolling||barrierMoving||cameraMoving||drawing;
     if(fast||(!ambientMoving&&!charactersMoving)||now-lastPaint>=33){renderer.render(scene,camera);lastPaint=now;}
-    if(fast||industryMoving||tileMoving||machineMoving||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
+    if(fast||bankerMoving||industryMoving||tileMoving||machineMoving||ambientMoving||charactersMoving||celebration||eventMoving)schedule();
   });}
   function settle(piece){piece.finish?.();piece.motion=null;piece.teleport=null;piece.travel=null;piece.lookAhead=null;piece.root.position.copy(piece.target);piece.root.scale.setScalar(piece.scale);piece.model.rotation.z=0;}
   function animatePieces(now){let moving=false;for(const piece of pieces.values()){
@@ -138,7 +141,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
       b.ondblclick=()=>{const piece=pieces.get(player.id);if(!piece)return;overview=false;cameraRig.focus(piece.root.position);select(player.posicion);onPlayer(player.id);schedule();};b.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();onPlayer(player.id);}};b.title='Doble clic para ver propiedades';legend.append(b);
     }}
   }
-  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){messages.finish();economy.finish();choreography?.finish();machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
+  function visibility(){renderer.shadowMap.needsUpdate=true;if(document.hidden){messages.finish();banker.finish();economy.finish();choreography?.finish();machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}else schedule();}
   function wrap(ctx,text,y){const words=text.split(' ');let line='';for(const word of words){const next=line?line+' '+word:word;if(ctx.measureText(next).width>222&&line){ctx.fillText(line,128,y);y+=23;line=word;}else line=next;}ctx.fillText(line,128,y);}
   function paint(tile){
     if(disposed)return;
@@ -208,8 +211,8 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     get canPresent(){return active&&!disposed&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches;},
     message(item){if(!active||disposed||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return 0;const duration=messages.start(item,{x:0,z:.3});schedule();return duration;},
     focusEvent(){if(!active||disposed||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return 0;cameraRig.follow(()=>({point:{x:0,z:-3.15},moving:false}),performance.now());cameraRig.holdArrival(5000);schedule();return 5000;},
-    interestPayment(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return 0;const duration=economy.start(data);const point=tileAnchor(39);cameraRig.follow(()=>({point,moving:false}),performance.now());cameraRig.holdArrival(duration);schedule();return duration;},
-    landing(id,data){if(active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const duration=Math.max(1500,economy.start(data?.casilla===id?data:null));cameraRig.holdArrival(duration);choreography.land(id);ambient.land(id);if(id===18)machines.fire();schedule();return duration;}return 0;},
+    interestPayment(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return 0;const duration=economy.start(data);banker.start(data,duration);const point=tileAnchor(39);cameraRig.follow(()=>({point,moving:false}),performance.now());cameraRig.holdArrival(duration);schedule();return duration;},
+    landing(id,data){if(active&&!document.hidden&&!matchMedia('(prefers-reduced-motion: reduce)').matches){const duration=Math.max(1500,economy.start(data?.casilla===id?data:null));if(data?.casilla===id)banker.start(data,duration);cameraRig.holdArrival(duration);choreography.land(id);ambient.land(id);if(id===18)machines.fire();schedule();return duration;}return 0;},
     celebrate(ids,color){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;setCelebration.start(ids,color);celebration={ids,start:performance.now()};schedule();},
     drawCard(data){if(!active||document.hidden||matchMedia('(prefers-reduced-motion: reduce)').matches)return Promise.resolve();reset();const result=decks.draw(data);schedule();return result;},
     setAmbient(value){ambientEnabled=!!value;ambient.setEnabled(value);schedule();},
@@ -220,7 +223,7 @@ export function createBoard3D({host, getState, getArt, onSelect, getViewerId=()=
     rotate(){overview=false;cameraRig.cancel();controls.rotateLeft(Math.PI/4);controls.update();schedule();},
     zoom(factor){overview=false;cameraRig.cancel();camera.position.sub(controls.target).multiplyScalar(factor).add(controls.target);controls.update();schedule();},
     overhead(){overview=false;const target=controls.target.clone(),distance=camera.position.distanceTo(target);cameraRig.move(target.clone().add(new THREE.Vector3(0,distance,.01)),target);schedule();},
-    setActive(value){if(!value)globalThis.GameAudio?.setZone(null);renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{messages.finish();economy.finish();choreography?.finish();machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
-    dispose(){messages.dispose();finish.dispose();economy.dispose();choreography?.dispose();placeDetails.dispose();machines?.dispose();setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
+    setActive(value){if(!value)globalThis.GameAudio?.setZone(null);renderer.shadowMap.needsUpdate=true;active=value;if(value){resize();schedule();}else{messages.finish();banker.finish();economy.finish();choreography?.finish();machines?.finish();cameraRig.cancel();decks.finish();industries.finish();diceTray.finish();for(const p of pieces.values())settle(p);cancelAnimationFrame(frame);frame=0;}},
+    dispose(){banker.dispose();messages.dispose();finish.dispose();economy.dispose();choreography?.dispose();placeDetails.dispose();machines?.dispose();setCelebration.dispose();globalThis.GameAudio?.setZone(null);eventLayer.dispose();seats.dispose();cameraRig.cancel();stopCenter();decks.dispose();ambient.dispose();models.dispose();modelStatus.remove();light.shadow.map?.dispose();light.shadow.mapPass?.dispose();industries.dispose();diceTray.dispose();disposed=true;active=false;cancelAnimationFrame(frame);observer.disconnect();controls.dispose();document.removeEventListener('visibilitychange',visibility);renderer.domElement.removeEventListener('webglcontextlost',lost);renderer.domElement.removeEventListener('pointerdown',pointerDown);renderer.domElement.removeEventListener('pointerup',pointerUp);for(const img of images.values())img.onload=null;for(const p of pieces.values())p.dispose();pieces.clear();legend?.replaceChildren();for(const r of resources)r.dispose();renderer.dispose();host.replaceChildren();}
   };
 }
